@@ -75,18 +75,21 @@ export interface PriceInfo {
 }
 
 const ADMISSION_CUE =
-  /\b(admission|admissions|tickets?|entry|entrance|cover|door|doors|registration|register|cost|costs|fee|fees|price|prices|pricing|tuition|per (?:person|player|couple|class|session|team)|general|adults?|members?|non-?members?|students?|seniors?|seats?|rsvp|advance|pre-?sale|day[- ]of|pass(?:es)?|dues|buy-?in|class|workshop|tour|session|participation|play)\b/gi;
+  /\b(admission|admissions|tickets?|entry|entrance|cover|door|doors|registration|register|cost|costs|fee|fees|price|prices|pricing|tuition|per (?:person|player|couple|class|session|team)|general|adults?|members?|non-?members?|students?|seniors?|seats?|rsvp|advance|pre-?sale|day[- ]of|pass(?:es)?|dues|buy-?in|class|workshop|tour|session|participation)\b/gi;
 const OTHER_CUE =
-  /\b(parking|park|valet|drinks?|beers?|wines?|cocktails?|bar|food|snacks?|menu|merch(?:andise)?|donations?|donate|off|discount|discounts|save|savings|tips?|raffle|gift ?cards?|gifts?|prizes?|pot|payout|bonus|value|worth|deposit|purchase|purchases|for sale|sale|sold|shop|store|retail|raise|raised|goal|sponsor(?:ship)?s?|vendors?|booth)\b/gi;
+  /\b(parking|park|valet|drinks?|beers?|wines?|cocktails?|bar|food|snacks?|menu|merch(?:andise)?|donations?|donate|off|discount|discounts|save|savings|tips?|raffle|gift ?cards?|gifts?|prizes?|pot|payout|bonus|value|worth|deposit|for sale|sale|sold|shop|store|retail|raise|raised|goal|sponsor(?:ship)?s?|vendors?|booth|awards?|commission(?:ed)?|scholarships?|grants?|deals?|specials?|combo|package|unlimited play)\b/gi;
 const AMOUNT =
   /\$\s?(\d{1,4}(?:,\d{3})*(?:\.\d{2})?)(?:\s?(?:-|–|—|to)\s?\$?\s?(\d{1,4}(?:,\d{3})*(?:\.\d{2})?))?(?!\s?%)/g;
 const FREE = /(?<![\w-])(free(?: of charge)?|no charge|no cost|no cover(?: charge)?|complimentary)(?![\w-])/gi;
 const FREE_OTHER_AFTER =
   /^\s*(?:and\s+)?(?:parking|valet|gift ?wrap(?:ping)?|wrap|drinks?|beers?|wine|food|snacks?|refreshments|popcorn|coffee|wi-?fi|shuttle|trolley|tote|totes|gifts?|giveaways?|samples?|swag|posters?|t-?shirts?|consultations?|downloads?|appetizers?|tastings?)\b/i;
-const FREE_INCLUDED_AFTER = /^\s*(?:with|w\/)\s+(?:paid\s+|museum\s+|general\s+)?(?:admission|ticket|entry|purchase|membership)/i;
+const FREE_INCLUDED_AFTER = /^\s*(?:with|w\/)\s+(?:[\w'’.-]+\s+){0,2}?(?:admission|ticket|entry|purchase|membership)/i;
 const QUALIFIERS =
-  'members?|kids|children|child|students?|seniors?|veterans?|military|residents?|teachers?|first responders|ages?|under \\d+|youth|toddlers?|babies|infants|guests? of|those';
-const FREE_QUALIFIED_AFTER = new RegExp(`^\\s*(?:for|to)\\s+(?:all\\s+)?(?:[\\w'’.-]+\\s+){0,3}?(?:${QUALIFIERS})\\b`, 'i');
+  'members?|kids|children|child|students?|seniors?|veterans?|military|residents?|teachers?|first responders|ages?|under \\d+|youth|toddlers?|babies|infants|guests? of|those|qualifying|eligible|(?:local |community )?heroes';
+const FREE_QUALIFIED_AFTER = new RegExp(`^[^.;!?]{0,30}?\\b(?:for|to)\\s+(?:all\\s+)?(?:[\\w'’.-]+\\s+){0,3}?(?:${QUALIFIERS})\\b`, 'i');
+/** Membership pitches ("Not yet a member? Enjoy free admission…") describe member perks, not this event. */
+const MEMBER_CONTEXT = /\bmember(?:s|ship)?\b/i;
+const EVERYONE = /\b(?:for (?:everyone|all)|open to (?:all|everyone|the public))\b/i;
 const FREE_QUALIFIED_BEFORE = new RegExp(`\\b(?:${QUALIFIERS})\\s+(?:get in |enter |are |is |go |get )?$`, 'i');
 
 const money = (s: string) => Number(s.replace(/,/g, ''));
@@ -129,6 +132,7 @@ export function priceFrom(text: string): PriceInfo {
   let freeQualified = false;
   let otherInSameSentence = false;
 
+  let previous = '';
   for (const sentence of sentencesOf(text)) {
     AMOUNT.lastIndex = 0;
     for (let m = AMOUNT.exec(sentence); m; m = AMOUNT.exec(sentence)) {
@@ -149,13 +153,16 @@ export function priceFrom(text: string): PriceInfo {
       const after = sentence.slice(m.index + m[0].length, m.index + m[0].length + 40);
       const before = sentence.slice(Math.max(0, m.index - 40), m.index);
       if (FREE_OTHER_AFTER.test(after) || FREE_INCLUDED_AFTER.test(after)) continue;
-      if (FREE_QUALIFIED_AFTER.test(after) || FREE_QUALIFIED_BEFORE.test(before)) freeQualified = true;
+      // "Not yet a member? Enjoy free admission…" — the member mention can sit in the sentence before.
+      const memberPerk = (MEMBER_CONTEXT.test(sentence) || /member(?:ship)?\?\s*$/i.test(previous)) && !EVERYONE.test(sentence);
+      if (memberPerk || FREE_QUALIFIED_AFTER.test(after) || FREE_QUALIFIED_BEFORE.test(before)) freeQualified = true;
       else freeGeneral = true;
     }
+    previous = sentence;
   }
 
   // A single uncued amount is the listing's price; several (or one beside a non-admission word) are unclear.
-  if (!paid.length && uncued.length === 1 && !otherInSameSentence) paid.push(uncued[0]);
+  if (!paid.length && !freeGeneral && uncued.length === 1 && !otherInSameSentence) paid.push(uncued[0]);
 
   if (freeGeneral && paid.length) return { priceNote: 'Free and paid options (see listing)' };
   if (freeGeneral) return { priceNote: 'Free (per listing)', free: true, priceMin: 0, priceMax: 0 };

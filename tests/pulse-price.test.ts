@@ -62,6 +62,21 @@ test('a lone amount is the price; several unexplained amounts are unknown', () =
   assert.deepEqual(priceFrom('Bring $10. Or $20.'), {});
 });
 
+test('real-world phrasings from the branch price report (paraphrased)', () => {
+  assert.deepEqual(priceFrom('Admission: FREE for qualifying local heroes plus one guest.'), { priceNote: 'Free for some visitors (see listing)' });
+  assert.deepEqual(priceFrom('Free museum admission for qualifying community heroes this month.'), { priceNote: 'Free for some visitors (see listing)' });
+  assert.deepEqual(priceFrom('The live competition is free. Finalists compete for a $5,000 commissioned portrait.'), free);
+  assert.deepEqual(
+    priceFrom('Trivia tickets are $5 per person. Gallery admission $16 for non-members. Not yet a member? Enjoy free admission, special access and discounts.'),
+    { priceNote: '$5–$16 · free for some (per listing)', priceMin: 5, priceMax: 16 },
+  );
+  assert.deepEqual(priceFrom('Adults are free with MFA membership or general admission.'), {}, 'included with membership or admission — not free');
+  assert.deepEqual(priceFrom('Gallery concert. $22 purchase tickets ahead.'), { priceNote: '$22 (per listing)', priceMin: 22, priceMax: 22 });
+  assert.deepEqual(priceFrom('Get the $20 Eat & Play Deal: three tacos and a draft.'), {});
+  assert.deepEqual(priceFrom('Enjoy $8 Unlimited Play on our arcade cabinets all night.'), {});
+  assert.deepEqual(priceFrom('This event is free for everyone, members and non-members alike.'), free);
+});
+
 test('mixed free and paid admission is reported as unclear, not as free', () => {
   assert.deepEqual(priceFrom('Free admission. Workshop registration $25.'), { priceNote: 'Free and paid options (see listing)' });
 });
