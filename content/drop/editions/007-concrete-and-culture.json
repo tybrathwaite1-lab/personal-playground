@@ -18,7 +18,7 @@
       "body": [
         "In the late 1970s and early ’80s, New York’s subway cars were covered in some of the most inventive lettering ever painted — whole-car pieces with names in interlocking, arrow-studded wildstyle, rolling through the city for everyone to see. The writers knew the work wouldn’t last. Two photographers made sure it did.",
         "Martha Cooper, a newspaper photographer, and Henry Chalfant, a sculptor, worked separately at first and then together, documenting painted trains and the young writers who made them. Chalfant developed a method of photographing a whole moving car in sections and stitching the prints into one long image. Their book Subway Art came out in 1984 and traveled further than any train ever could — it became a bible for graffiti writers around the world, passed hand to hand, studied page by page.",
-        "Watch Style Wars alongside it. The 1983 documentary by Tony Silver and Henry Chalfant captures the writers, the city’s campaign against them and the early days of breaking and rap, at the moment before the transit authority finished cleaning the trains. It’s both a history lesson and one of the best films ever made about young people and art.",
+        "Watch Style Wars alongside it. The 1983 documentary directed by Tony Silver and co-produced by Henry Chalfant captures the writers, the city’s campaign against them and the early days of breaking and rap, at the moment before the transit authority finished cleaning the trains. It’s both a history lesson and one of the best films ever made about young people and art.",
         "For your blackbook, pay attention to the lettering. Study how the best pieces build letters from simple skeletons — a plain capital that you can still read underneath — and then add connections, arrows and breaks. Pick one page from the book, draw its skeleton first, and only then decorate it."
       ],
       "why": "Graffiti is one of your core interests — this is the archive that the whole culture learned from.",
@@ -54,13 +54,19 @@
           "url": "https://en.wikipedia.org/wiki/Martha_Cooper",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Style Wars: official film credits",
+          "url": "https://www.stylewars.com/about",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
         }
       ],
       "related": [
         {
           "to": "style-wars",
           "relation": "companion film",
-          "note": "Chalfant co-directed the 1983 documentary Style Wars.",
+          "note": "Henry Chalfant co-produced Style Wars with director Tony Silver.",
           "basis": "fact"
         },
         {
@@ -189,7 +195,7 @@
       "title": "Vivian Maier’s Street",
       "dek": "A nanny who shot more than 100,000 photographs that almost nobody saw while she lived.",
       "body": [
-        "Vivian Maier worked as a nanny in Chicago and photographed the streets on her days off, mostly with a Rolleiflex held at waist level, so subjects saw her looking down, not at them. Her negatives were found at an auction in 2007, and her work became known only after she died in 2009. Try her waist-level habit with your phone: it changes how people react."
+        "Vivian Maier worked as a nanny in Chicago and photographed the streets on her days off, mostly with a Rolleiflex held at waist level, so subjects saw her looking down, not at them. Her negatives were found at an auction in 2007, and her work became known only after she died in 2009. Try her waist-level habit with your phone: it changes your viewpoint. Respect people’s privacy and requests not to be photographed."
       ],
       "why": "Street photography with a practical technique you can try this week.",
       "freshness": "archive",
@@ -234,7 +240,7 @@
       "sources": [
         {
           "label": "St. Petersburg Arts Alliance — ArtWalk",
-          "url": "https://stpeteartsalliance.org/jc92",
+          "url": "https://stpeteartsalliance.org/find-arts/artwalk/",
           "kind": "official",
           "verifiedAt": "2026-11-17"
         }
