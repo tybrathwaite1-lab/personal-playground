@@ -140,9 +140,9 @@ export default function Home() {
         <div className="mb-3">
           <WeatherStrip />
         </div>
-        <ul className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 border-l border-t border-line md:grid-cols-2 lg:grid-cols-4">
           {local.list.map((e) => (
-            <li key={e.id} className="bg-ink p-4">
+            <li key={e.id} className="border-b border-r border-line bg-ink p-4">
               <p className="label text-rust">{formatWhen(e)}</p>
               <a href={href('pulse', { view: 'upcoming' })} className="display mt-1 block text-xl hover:text-rust">
                 {e.title}
@@ -151,7 +151,7 @@ export default function Home() {
             </li>
           ))}
           {local.community && (
-            <li className="bg-ink p-4">
+            <li className="border-b border-r border-line bg-ink p-4">
               <p className="label text-rust">
                 {formatYmd(local.community.next!)}
                 {ruleTime(local.community.c, local.community.next!) && ` · ${ruleTime(local.community.c, local.community.next!)}`}
@@ -163,7 +163,7 @@ export default function Home() {
             </li>
           )}
           {local.place && (
-            <li className="bg-ink p-4">
+            <li className="border-b border-r border-line bg-ink p-4">
               <p className="label">Somewhere new to you</p>
               <a href={href('local', { place: local.place.id })} className="display mt-1 block text-xl hover:text-rust">
                 {local.place.name}
