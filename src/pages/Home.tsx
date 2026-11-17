@@ -3,6 +3,7 @@ import { ArrowRight, Dices, Shuffle } from 'lucide-react';
 import { CuratedEditions } from '../components/Curated';
 import { ExperienceTile } from '../components/ExperienceCard';
 import { NAV } from '../components/Layout';
+import { WeatherStrip } from '../components/WeatherStrip';
 import { href, navigate } from '../hooks/useRoute';
 import { useStore } from '../hooks/useStore';
 import { formatCost, formatDuration } from '../utils/discovery';
@@ -14,10 +15,12 @@ const KIND_LABEL: Record<string, string> = {
   website: 'Website',
   interest: 'Interest',
   discovery: 'Discovery',
+  plan: 'Day plan',
 };
 
 const BLURBS: Record<string, string> = {
   discover: 'Six optional dials, one good idea.',
+  plan: 'Two or three stops, one good day.',
   interests: 'Everything you’re into, in one index.',
   local: 'St. Pete & Tampa Bay, verified.',
   digital: 'The good corners of the internet.',
@@ -60,7 +63,9 @@ export default function Home() {
           <h1 id="cover-title" className="display pr-6 text-[clamp(3rem,15vw,9rem)]">
             Personal
             <br />
-            Playground<span className="text-rust">.</span>
+            <span className="whitespace-nowrap">
+              Playground<span className="text-rust">.</span>
+            </span>
           </h1>
           <p className="mt-5 font-mono text-xs uppercase tracking-label text-muted">
             No goals. No quotas. Just curiosity.
@@ -80,6 +85,9 @@ export default function Home() {
               <Dices size={16} aria-hidden /> Surprise me
             </button>
           </div>
+        </div>
+        <div className="mt-4">
+          <WeatherStrip />
         </div>
       </section>
 
@@ -142,13 +150,6 @@ export default function Home() {
               </li>
             );
           })}
-          <li className="bg-ink">
-            <a href={href('backup')} className="group flex h-full flex-col p-4 transition-colors hover:bg-ink2">
-              <span className="font-mono text-xs text-rust">08</span>
-              <span className="display mt-6 text-2xl">Backup</span>
-              <span className="mt-1 text-xs text-muted">Export, import, privacy.</span>
-            </a>
-          </li>
         </ul>
       </section>
 

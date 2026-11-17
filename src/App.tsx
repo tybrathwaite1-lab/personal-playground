@@ -9,6 +9,7 @@ import FieldNotes from './pages/FieldNotes';
 import Home from './pages/Home';
 import Interests from './pages/Interests';
 import Local from './pages/Local';
+import Plan from './pages/Plan';
 import Rediscover from './pages/Rediscover';
 
 export default function App() {
@@ -23,6 +24,8 @@ export default function App() {
     switch (route.name) {
       case 'discover':
         return <Discover params={route.params} />;
+      case 'plan':
+        return <Plan />;
       case 'interests':
         return <Interests />;
       case 'local':

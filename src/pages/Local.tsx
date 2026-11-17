@@ -1,5 +1,7 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Heart, Plus, RotateCcw } from 'lucide-react';
+import { Suspense, lazy, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Heart, List, Map as MapIcon, Plus, RotateCcw } from 'lucide-react';
+
+const PlacesMap = lazy(() => import('../components/PlacesMap'));
 import { PlaceCard } from '../components/PlaceCard';
 import { Empty, Field, Modal, SearchBox, SectionHeader, Select } from '../components/ui';
 import { PLACE_CATEGORIES } from '../data/places';
@@ -103,6 +105,11 @@ export default function Local({ params }: { params: URLSearchParams }) {
   const [favOnly, setFavOnly] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const highlight = params.get('place');
+  const [view, setView] = useState<'list' | 'map'>('list');
+  // A link to a specific place always lands on the list, where its card is highlighted.
+  useEffect(() => {
+    if (highlight) setView('list');
+  }, [highlight]);
 
   const usedCategories = PLACE_CATEGORIES.filter((c) => places.some((p) => p.categories.includes(c)));
   const hoods = useMemo(() => [...new Set(places.map((p) => p.neighborhood))].sort(), [places]);
@@ -153,18 +160,32 @@ export default function Local({ params }: { params: URLSearchParams }) {
         </button>
       </section>
 
-      <div className="mb-4 flex items-center justify-between">
-        <p className="label" aria-live="polite">
-          {results.length} of {places.length} places
-        </p>
-        {filtered && (
-          <button type="button" className="btn-ghost text-xs" onClick={reset}>
-            <RotateCcw size={14} aria-hidden /> Reset
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <p className="label" aria-live="polite">
+            {results.length} of {places.length} places
+          </p>
+          {filtered && (
+            <button type="button" className="btn-ghost text-xs" onClick={reset}>
+              <RotateCcw size={14} aria-hidden /> Reset
+            </button>
+          )}
+        </div>
+        <div className="flex" role="group" aria-label="View">
+          <button type="button" className="chip" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+            <List size={14} aria-hidden /> List
           </button>
-        )}
+          <button type="button" className="chip -ml-px" aria-pressed={view === 'map'} onClick={() => setView('map')}>
+            <MapIcon size={14} aria-hidden /> Map
+          </button>
+        </div>
       </div>
 
-      {results.length === 0 ? (
+      {view === 'map' ? (
+        <Suspense fallback={<p className="label animate-flicker">Unfolding the map…</p>}>
+          <PlacesMap places={results} />
+        </Suspense>
+      ) : results.length === 0 ? (
         <Empty>{favOnly ? 'No favorites match yet — tap the heart on a place.' : 'Nothing matches those filters.'}</Empty>
       ) : (
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">

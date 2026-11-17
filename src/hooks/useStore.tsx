@@ -53,6 +53,7 @@ interface Store {
   deleteFieldNote: (id: string) => void;
 
   setShowAutopilot: (v: boolean) => void;
+  setSettings: (patch: Partial<PersonalData['settings']>) => void;
   replaceAll: (d: PersonalData) => void;
   mergeIn: (d: PersonalData) => void;
   resetAll: () => void;
@@ -193,6 +194,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteFieldNote: (id) => update((d) => ({ ...d, fieldNotes: d.fieldNotes.filter((n) => n.id !== id) })),
 
     setShowAutopilot: (v) => update((d) => ({ ...d, settings: { ...d.settings, showAutopilot: v } })),
+    setSettings: (patch) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } })),
     replaceAll: (d) => setData(normalizeData(d)),
     mergeIn: (incoming) => update((d) => mergeData(d, incoming)),
     resetAll: () => setData({ ...EMPTY_DATA }),

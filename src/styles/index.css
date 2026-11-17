@@ -99,3 +99,80 @@
     background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgba(233, 223, 201, 0.06) 6px 7px);
   }
 }
+
+/* ── Map (Leaflet) ─────────────────────────────────────────────── */
+.pp-map {
+  background: #141614;
+}
+.pp-map img {
+  max-width: none !important;
+}
+.pp-map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.9) saturate(0.35);
+}
+.pp-map .leaflet-control-attribution {
+  background: rgba(20, 22, 20, 0.85);
+  color: #a8aa99;
+}
+.pp-map .leaflet-control-attribution a {
+  color: #e9dfc9;
+}
+.pp-map .leaflet-bar a {
+  background: #212520;
+  color: #e9dfc9;
+  border-color: #3d453b;
+}
+.pp-pin {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: #e9dfc9;
+  border: 2px solid #141614;
+  box-shadow: 0 0 0 1px #e9dfc9;
+}
+.pp-pin--fav {
+  background: #b76940;
+  box-shadow: 0 0 0 1px #b76940;
+}
+.pp-pin--approx {
+  background: transparent;
+  border: 2px dashed #e9dfc9;
+  box-shadow: none;
+}
+.pp-map .leaflet-popup-content-wrapper,
+.pp-map .leaflet-popup-tip {
+  background: #212520;
+  color: #e9dfc9;
+  border-radius: 2px;
+  border: 1px solid #3d453b;
+}
+.pp-popup p {
+  margin: 0;
+}
+.pp-popup__cat {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #a8aa99;
+}
+.pp-popup__name {
+  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 1.05;
+  margin-top: 4px !important;
+}
+.pp-popup__hood {
+  font-size: 12px;
+  color: #a8aa99;
+}
+.pp-popup__links {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px !important;
+}
+.pp-popup__links a {
+  color: #b76940;
+  font-size: 13px;
+}

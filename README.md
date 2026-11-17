@@ -13,9 +13,11 @@ A personal lifestyle discovery app: part independent culture magazine, part digi
 | Section | What it does |
 |---|---|
 | **Home** | A magazine cover: today's question, a featured experience (changes daily), Surprise Me, a shuffleable rotation, eight curated "editions", and recently saved items. |
+| **Plan a Day** | Strings two or three experiences into a loose itinerary with times, a meal break, real places and directions. Pick start time, length, area (St. Pete & Pinellas / Tampa), mood, company and budget. Stops respect sensible hours (live music in the evening, museums by day). Swap any single stop; save whole days to your collection. |
 | **Discovery Engine** | Six optional filters (mood, company, time, budget, energy, environment). Genuinely random picks that don't repeat until every match has been shown. When nothing matches, it offers to loosen specific filters (and shows how many results each would open up) — it never silently drops one. Full searchable catalogue + add your own experiences. |
 | **My Interests** | The interest directory in five categories. Add, rename, move between categories, remove. Each interest links to related experiences. The *Habit & Autopilot* section is hidden by default and ships empty (see Privacy). |
-| **Local Playground** | 27 St. Pete / Tampa Bay entries with search and filters (category, neighborhood, budget, favorites), Google Maps directions, favorites, personal notes and verification status. Add your own places. |
+| **Local Playground** | 27 St. Pete / Tampa Bay entries with search and filters (category, neighborhood, budget, favorites), Google Maps directions, favorites, personal notes and verification status. **List or Map view** (OpenStreetMap; favorites in orange, approximate pins hollow). Add your own places. |
+| **Weather-aware picks** | Today's forecast on Home, Discover and Plan. On wet or stormy days, outdoor-only ideas are skipped (toggleable, with a count of what's hidden). |
 | **Digital Playground** | Curated websites by category, random site button, favorites, edit/add/remove. |
 | **Rediscover** | Old interests with gentle ways back in, nearby places, and a "good in the right setting" footnote. |
 | **My Collection** | Everything you've saved (experiences, places, websites, interests, personal discoveries) with search, type filter, notes and removal. |
@@ -24,7 +26,7 @@ A personal lifestyle discovery app: part independent culture magazine, part digi
 
 ## Tech stack
 
-React 18 · TypeScript · Vite 5 · Tailwind CSS 3 · Lucide icons · LocalStorage · a hand-written service worker for offline use. No backend, no API keys, no paid services. Fonts: Anton, IBM Plex Sans and IBM Plex Mono from Google Fonts (cached for offline after the first visit).
+React 18 · TypeScript · Vite 5 · Tailwind CSS 3 · Lucide icons · Leaflet + OpenStreetMap · LocalStorage · a hand-written service worker for offline use. No backend, no API keys, no paid services. Fonts (Anton, IBM Plex Sans, IBM Plex Mono) are bundled via Fontsource, so they work offline from the first launch.
 
 ## Run it locally
 
@@ -106,6 +108,8 @@ Never add hours, prices or events you haven't confirmed. Directions links are ge
 ### Digital resources — `src/data/websites.ts`
 Add `{ id, name, url, category, description, tags }`. Categories: Music, Art and design, Internet exploration, Gaming, History, Technology, DIY, Cultural discoveries.
 
+Optional `when: ['morning' | 'afternoon' | 'evening']` tells Plan a Day when an experience makes sense (omit for any time).
+
 ### Curated editions — `src/data/curated.ts`
 Each edition lists `experienceIds` from the experience database.
 
@@ -153,8 +157,5 @@ public/
 ## Ideas for later
 
 - Optional sync (e.g. a private GitHub Gist or iCloud file) so phone and laptop share data.
-- "Plan a day" mode that strings 2–3 experiences and nearby places together.
-- Weather-aware suggestions (outdoor picks on nice days).
-- An OpenStreetMap view for the Local Playground.
 - A small, hand-picked events calendar maintained by you.
-- Self-hosted fonts for a fully offline first launch.
+- Offline map tiles for favorite neighborhoods.

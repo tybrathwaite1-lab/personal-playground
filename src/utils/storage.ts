@@ -14,10 +14,16 @@ export const EMPTY_DATA: PersonalData = {
   hiddenWebsiteIds: [],
   interests: null,
   fieldNotes: [],
-  settings: { showAutopilot: false },
+  settings: { showAutopilot: false, weatherAware: true, location: null },
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+function validLocation(v: unknown): PersonalData['settings']['location'] {
+  if (!isObj(v)) return null;
+  const { lat, lon, label } = v;
+  if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { lat, lon, label: typeof label === 'string' ? label : 'My location' };
+}
 const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
 /** Accept partial / older data and fill in anything missing. Never throws. */
@@ -35,7 +41,11 @@ export function normalizeData(raw: unknown): PersonalData {
     hiddenWebsiteIds: arr<string>(raw.hiddenWebsiteIds),
     interests: Array.isArray(raw.interests) ? (raw.interests as PersonalData['interests']) : null,
     fieldNotes: arr(raw.fieldNotes),
-    settings: { showAutopilot: settings.showAutopilot === true },
+    settings: {
+      showAutopilot: settings.showAutopilot === true,
+      weatherAware: settings.weatherAware !== false,
+      location: validLocation(settings.location),
+    },
   };
 }
 

@@ -4,6 +4,9 @@ import { ExperienceCard, ExperienceTile } from '../components/ExperienceCard';
 import { ExperienceForm } from '../components/ExperienceForm';
 import { ChipGroup, Empty, Modal, SearchBox, SectionHeader } from '../components/ui';
 import { useStore } from '../hooks/useStore';
+import { useWeather } from '../hooks/useWeather';
+import { WeatherStrip } from '../components/WeatherStrip';
+import { isIndoorDay, isOutdoorOnly } from '../utils/weather';
 import type { DiscoveryFilters, Experience } from '../types';
 import {
   DEFAULT_FILTERS,
@@ -30,7 +33,15 @@ function loadFilters(): DiscoveryFilters {
 }
 
 export default function Discover({ params }: { params: URLSearchParams }) {
-  const { experiences, addExperience, deleteExperience, notify } = useStore();
+  const { experiences, addExperience, deleteExperience, notify, data } = useStore();
+  const { weather } = useWeather();
+  const weatherFiltering = data.settings.weatherAware && isIndoorDay(weather);
+  // On wet/stormy days (and only if weather-aware is on), outdoor-only ideas sit this one out.
+  const pool = useMemo(
+    () => (weatherFiltering ? experiences.filter((e) => !isOutdoorOnly(e)) : experiences),
+    [experiences, weatherFiltering],
+  );
+  const weatherHidden = experiences.length - pool.length;
   const [filters, setFilters] = useState<DiscoveryFilters>(loadFilters);
   const [current, setCurrent] = useState<Experience | null>(null);
   const [pickCount, setPickCount] = useState(0);
@@ -47,7 +58,7 @@ export default function Discover({ params }: { params: URLSearchParams }) {
   const seenRef = useRef<Record<string, string[]>>(loadSeen());
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const matches = useMemo(() => filterExperiences(experiences, filters), [experiences, filters]);
+  const matches = useMemo(() => filterExperiences(pool, filters), [pool, filters]);
   const active = activeFilterKeys(filters);
 
   useEffect(() => {
@@ -60,7 +71,7 @@ export default function Discover({ params }: { params: URLSearchParams }) {
 
   const generate = useCallback(
     (f: DiscoveryFilters = filters, scroll = true) => {
-      const candidates = filterExperiences(experiences, f);
+      const candidates = filterExperiences(pool, f);
       if (candidates.length === 0) {
         setCurrent(null);
         setNoMatch(true);
@@ -76,7 +87,7 @@ export default function Discover({ params }: { params: URLSearchParams }) {
       if (cycled && candidates.length > 1) notify(`You've seen all ${candidates.length} — starting fresh`);
       if (scroll) requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     },
-    [experiences, filters, current, notify],
+    [pool, filters, current, notify],
   );
 
   // Deep links: #/discover?exp=<id> shows a specific card; ?surprise=1 rolls immediately.
@@ -114,8 +125,8 @@ export default function Discover({ params }: { params: URLSearchParams }) {
     setNoMatch(false);
   };
 
-  const relaxations = noMatch ? suggestRelaxations(experiences, filters) : [];
-  const pair = noMatch && relaxations.length === 0 ? suggestPairRelaxation(experiences, filters) : null;
+  const relaxations = noMatch ? suggestRelaxations(pool, filters) : [];
+  const pair = noMatch && relaxations.length === 0 ? suggestPairRelaxation(pool, filters) : null;
   const catalogue = experiences.filter((e) =>
     includesText([e.name, e.description, ...e.interests, ...e.activities], query),
   );
@@ -128,6 +139,10 @@ export default function Discover({ params }: { params: URLSearchParams }) {
         jp="発見装置"
         blurb="Set as many or as few dials as you like. Every filter is optional — leave them all alone for a pure surprise."
       />
+
+      <div className="mb-3">
+        <WeatherStrip toggle hiddenCount={weatherHidden} />
+      </div>
 
       <section aria-label="Filters" className="card p-4 sm:p-6">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -161,6 +176,11 @@ export default function Discover({ params }: { params: URLSearchParams }) {
             <p className="label mb-2 text-rust">No exact match</p>
             <h2 className="display text-3xl">Nothing fits all six dials.</h2>
             <p className="mt-2 text-muted">Loosen one filter? Here’s what each would open up:</p>
+            {weatherHidden > 0 && (
+              <p className="mt-1 text-sm text-muted">
+                Weather-aware mode is also skipping {weatherHidden} outdoor-only ideas today — switch it off above to include them.
+              </p>
+            )}
             {relaxations.length > 0 ? (
               <ul className="mt-4 flex flex-wrap gap-2">
                 {relaxations.map((r) => (

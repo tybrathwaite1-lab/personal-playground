@@ -3,6 +3,7 @@ export type Mood = 'relax' | 'create' | 'explore' | 'play' | 'connect';
 export type Company = 'solo' | 'partner' | 'friends';
 export type Energy = 'low' | 'medium' | 'high';
 export type Environment = 'home' | 'outdoors' | 'indoor' | 'online';
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
 export type MoodFilter = Mood | 'surprise';
 export type CompanyFilter = Company | 'anyone';
@@ -48,6 +49,8 @@ export interface Experience {
   environments: Environment[];
   interests: string[];
   links?: Link[];
+  /** When in the day it works best. Omit for "any time". Used by Plan a Day. */
+  when?: TimeOfDay[];
   /** Ids of Local Playground places that pair well. */
   placeIds?: string[];
   custom?: boolean;
@@ -155,7 +158,7 @@ export interface CuratedEdition {
 }
 
 // ─── Personal data ───────────────────────────────────────────────────
-export type SavedKind = 'experience' | 'place' | 'website' | 'interest' | 'discovery';
+export type SavedKind = 'experience' | 'place' | 'website' | 'interest' | 'discovery' | 'plan';
 
 export interface SavedItem {
   id: string;
@@ -204,5 +207,9 @@ export interface PersonalData {
   fieldNotes: FieldNote[];
   settings: {
     showAutopilot: boolean;
+    /** Nudge picks toward indoor ideas when the forecast is bad. */
+    weatherAware: boolean;
+    /** null = default St. Petersburg location. Rounded to ~1 km when set from the device. */
+    location: { lat: number; lon: number; label: string } | null;
   };
 }

@@ -1,7 +1,7 @@
 {
   "name": "personal-playground",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A personal lifestyle discovery app. Stay curious. Play more. Explore freely.",
   "type": "module",
   "scripts": {
@@ -12,12 +12,17 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@fontsource/anton": "^5.1.0",
+    "@fontsource/ibm-plex-mono": "^5.1.0",
+    "@fontsource/ibm-plex-sans": "^5.1.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/leaflet": "^1.9.12",
     "@types/node": "^20.17.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

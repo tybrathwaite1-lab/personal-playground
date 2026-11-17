@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   Archive,
+  CalendarDays,
   Compass,
   Globe,
   House,
@@ -19,6 +20,7 @@ import { useStore } from '../hooks/useStore';
 export const NAV: { route: RouteName; label: string; short: string; num: string; jp: string; icon: typeof House }[] = [
   { route: 'home', label: 'Home', short: 'Home', num: '00', jp: '表紙', icon: House },
   { route: 'discover', label: 'Discovery Engine', short: 'Discover', num: '01', jp: '発見', icon: Compass },
+  { route: 'plan', label: 'Plan a Day', short: 'Plan', num: '01B', jp: '計画', icon: CalendarDays },
   { route: 'interests', label: 'My Interests', short: 'Interests', num: '02', jp: '興味', icon: Sparkles },
   { route: 'local', label: 'Local Playground', short: 'Local', num: '03', jp: '地元', icon: MapPin },
   { route: 'digital', label: 'Digital Playground', short: 'Digital', num: '04', jp: '電子', icon: Globe },
@@ -70,7 +72,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
             <span className="display text-xl tracking-normal">
               Personal Playground<span className="text-rust">.</span>
             </span>
-            <span className="label hidden sm:inline">Vol. 01</span>
+            <span className="label hidden sm:inline lg:hidden xl:inline">Vol. 01</span>
           </a>
           <nav aria-label="Main" className="hidden lg:block">
             <ul className="flex items-center gap-0.5">
@@ -79,7 +81,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
                   <a
                     href={href(n.route)}
                     aria-current={current === n.route ? 'page' : undefined}
-                    className="block px-2.5 py-2 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:text-paper aria-[current=page]:text-paper aria-[current=page]:underline aria-[current=page]:decoration-rust aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8"
+                    className="block px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:text-paper aria-[current=page]:text-paper aria-[current=page]:underline aria-[current=page]:decoration-rust aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8"
                   >
                     {n.short}
                   </a>

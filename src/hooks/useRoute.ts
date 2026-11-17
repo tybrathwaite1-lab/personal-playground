@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 export type RouteName =
   | 'home'
   | 'discover'
+  | 'plan'
   | 'interests'
   | 'local'
   | 'digital'
@@ -18,6 +19,7 @@ export type RouteName =
 export const ROUTES: RouteName[] = [
   'home',
   'discover',
+  'plan',
   'interests',
   'local',
   'digital',
