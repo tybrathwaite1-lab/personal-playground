@@ -16,6 +16,7 @@ export interface ValidationResult {
 
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
+const PERSONAL = /\byour (favou?rite|era|list)\b|\bon your list\b|\byou already (love|know)\b|\byour girlfriend\b/i;
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
@@ -67,6 +68,9 @@ export function validateEdition(raw: unknown, ctx: { knownImages?: Set<string>; 
       if (item.format === 'feature' && (w < 220 || w > 800)) warn(`${p}.body`, `feature is ${w} words (aim 300–700)`);
       if (body.some((para) => /<[a-z][^>]*>/i.test(para as string))) err(`${p}.body`, 'must be plain text (no HTML)');
     }
+    // The site is public: don't publish the reader's private taste profile ("your favorite film is…").
+    const personal = [item.why, item.dek, ...(body ?? [])].find((t) => typeof t === 'string' && PERSONAL.test(t));
+    if (personal) warn(`${p}`, `reads like it names the reader’s own tastes (“${(personal as string).match(PERSONAL)![0]}”) — the site is public, so phrase it generally`);
     if (!['archive', 'timeless', 'contemporary', 'emerging'].includes(item.freshness as string)) err(`${p}.freshness`, 'must be archive, timeless, contemporary or emerging');
     if (!['accessible', 'lesser-known', 'obscure'].includes(item.depth as string)) err(`${p}.depth`, 'must be accessible, lesser-known or obscure');
     if (['contemporary', 'emerging'].includes(item.freshness as string) && !str(item.year))

@@ -220,6 +220,11 @@ export interface PersonalData {
     /** Everyday travel radius for local discovery, in miles. */
     radiusMiles: number;
     transport: Transport;
+    /**
+     * Private notes about your tastes, used only to build the Weekly Drop assistant prompt.
+     * Lives on your devices and in your private sync repo — never in the public site.
+     */
+    readerNotes: string;
   };
 }
 

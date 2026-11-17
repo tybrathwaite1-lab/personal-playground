@@ -41,3 +41,13 @@ test('validator catches common import mistakes', () => {
   const contemporary = { ...editions[0], items: editions[0].items.map((it) => ({ ...it, freshness: 'contemporary', year: undefined })) };
   assert.ok(validateEdition(contemporary).errors.some((e) => e.path.endsWith('.year')), 'recent items must state a year');
 });
+
+test('published editions never name the reader’s private tastes', () => {
+  for (const ed of editions) {
+    const r = validateEdition(ed);
+    const leaks = r.warnings.filter((w) => /reader’s own tastes/.test(w.message));
+    assert.deepEqual(leaks, [], `issue ${ed.issue}: ${leaks.map((l) => l.path).join(', ')}`);
+  }
+  const leaky = { ...editions[0], items: editions[0].items.map((it, i) => (i === 0 ? { ...it, why: 'Drive is your favorite film.' } : it)) };
+  assert.ok(validateEdition(leaky).warnings.some((w) => /reader’s own tastes/.test(w.message)));
+});

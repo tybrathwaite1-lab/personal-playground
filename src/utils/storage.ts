@@ -16,7 +16,7 @@ export const EMPTY_DATA: PersonalData = {
   fieldNotes: [],
   feedback: {},
   customPresets: [],
-  settings: { showAutopilot: false, weatherAware: true, location: null, radiusMiles: 10, transport: 'car' },
+  settings: { showAutopilot: false, weatherAware: true, location: null, radiusMiles: 10, transport: 'car', readerNotes: '' },
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -53,6 +53,7 @@ export function normalizeData(raw: unknown): PersonalData {
       transport: (['car', 'bike', 'transit', 'walk'] as const).includes(settings.transport as never)
         ? (settings.transport as PersonalData['settings']['transport'])
         : 'car',
+      readerNotes: typeof settings.readerNotes === 'string' ? settings.readerNotes.slice(0, 6000) : '',
     },
   };
 }

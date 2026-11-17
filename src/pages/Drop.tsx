@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Clock, GitBranch, Upload, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Clock, Copy, GitBranch, Upload, X } from 'lucide-react';
 import { EditorialImage } from '../components/EditorialImage';
 import { FeedbackBar } from '../components/FeedbackBar';
 import { Empty, SaveButton, SectionHeader } from '../components/ui';
@@ -10,6 +10,7 @@ import { useDrop } from '../hooks/useDrop';
 import { href } from '../hooks/useRoute';
 import { useStore } from '../hooks/useStore';
 import { COLUMN_META, type DropEdition, type DropItem, type DropRelation, type ThreadNode } from '../types/drop';
+import { buildAssistantPrompt } from '../utils/dropPrompt';
 import { validateEdition, type ValidationResult } from '../utils/dropValidate';
 import { formatYmd } from '../utils/community';
 import { hostname } from '../utils/helpers';
@@ -351,6 +352,8 @@ function ThreadPanel({ startId, onClose }: { startId: string; onClose: () => voi
 // ─── Editorial desk: import, validate, preview ───────────────────────
 function EditorialDesk({ onClose }: { onClose: () => void }) {
   const drop = useDrop();
+  const { data, setSettings, notify } = useStore();
+  const [notes, setNotes] = useState(data.settings.readerNotes);
   const [text, setText] = useState('');
   const [result, setResult] = useState<(ValidationResult & { edition?: DropEdition }) | null>(null);
   const [leads, setLeads] = useState<{ generatedAt: string; candidates: { id: string; feedName: string; column: string; title: string; url: string; published?: string; linkOk: boolean }[] } | null>(null);
@@ -400,6 +403,40 @@ function EditorialDesk({ onClose }: { onClose: () => void }) {
           <X size={18} aria-hidden />
         </button>
       </div>
+      <details className="mt-5 border-y border-line py-4">
+        <summary className="label cursor-pointer">Prepare issue {drop.next.issue} with an assistant</summary>
+        <p className="mt-3 max-w-2xl text-sm text-paper/85">
+          Your reader notes — favorite artists, games, films, eras — make the assistant’s picks personal. They stay on your devices and in your
+          private sync repo, and are added to the prompt only when you copy it. They are never part of the public site.
+        </p>
+        <label className="mt-3 block">
+          <span className="label mb-1 block">Reader notes (private)</span>
+          <textarea
+            className="input min-h-[120px] text-sm"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            onBlur={() => notes !== data.settings.readerNotes && setSettings({ readerNotes: notes.slice(0, 6000) })}
+            placeholder="Music: … · Games: … · Anime & manga: … · Film: … · Eras I love: …"
+          />
+        </label>
+        <button
+          type="button"
+          className="btn mt-3"
+          onClick={async () => {
+            if (notes !== data.settings.readerNotes) setSettings({ readerNotes: notes.slice(0, 6000) });
+            const prompt = buildAssistantPrompt({ issue: drop.next.issue, publishDate: drop.next.publishDate, notes });
+            try {
+              await navigator.clipboard.writeText(prompt);
+              notify('Prompt copied — attach the schema and an example edition');
+            } catch {
+              setText(prompt);
+              notify('Couldn’t copy — the prompt is in the box below');
+            }
+          }}
+        >
+          <Copy size={14} aria-hidden /> Copy prompt for issue {drop.next.issue} · {formatYmd(drop.next.publishDate)}
+        </button>
+      </details>
       <textarea
         className="input mt-4 min-h-[160px] font-mono text-xs"
         value={text}

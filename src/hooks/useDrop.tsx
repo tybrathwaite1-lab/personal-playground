@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { DropEdition, DropFile, DropItem, ThreadNode } from '../types/drop';
 import { visibleEditions } from '../utils/dropValidate';
+import { nextFriday } from '../utils/dropPrompt';
 import { nyDate } from '../utils/pulse';
 
 /**
@@ -19,6 +20,8 @@ interface DropState {
   setPreviews: (p: DropEdition[]) => void;
   itemById: (id: string) => { item: DropItem; edition: DropEdition } | null;
   nodeById: (id: string) => ThreadNode | null;
+  /** Issue number and Friday for the next edition after everything already scheduled. */
+  next: { issue: number; publishDate: string };
 }
 
 const Ctx = createContext<DropState | null>(null);
@@ -66,7 +69,13 @@ export function DropProvider({ children }: { children: ReactNode }) {
 
   const editions = useMemo(() => visibleEditions(file?.editions ?? [], nyDate(Date.now())), [file]);
   const all = useMemo(() => [...editions, ...previews], [editions, previews]);
-  const nodes = file?.nodes ?? [];
+  const nodes = useMemo(() => file?.nodes ?? [], [file]);
+  const next = useMemo(() => {
+    const all = file?.editions ?? [];
+    const issue = all.reduce((m, e) => Math.max(m, e.issue), 0) + 1;
+    const last = all.reduce((m, e) => (e.publishDate > m ? e.publishDate : m), nyDate(Date.now()));
+    return { issue, publishDate: nextFriday(last) };
+  }, [file]);
 
   const itemById = useCallback(
     (id: string) => {
@@ -81,7 +90,7 @@ export function DropProvider({ children }: { children: ReactNode }) {
   const nodeById = useCallback((id: string) => nodes.find((n) => n.id === id) ?? null, [nodes]);
 
   return (
-    <Ctx.Provider value={{ loading, error, editions, latest: editions[0] ?? null, nodes, previews, setPreviews, itemById, nodeById }}>
+    <Ctx.Provider value={{ loading, error, editions, latest: editions[0] ?? null, nodes, previews, setPreviews, itemById, nodeById, next }}>
       {children}
     </Ctx.Provider>
   );

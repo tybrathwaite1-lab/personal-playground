@@ -57,13 +57,15 @@ Valid ids for `local.placeId` and `local.communityId` are in `src/data/places.ts
 - **Never fabricate.** Every factual claim needs a source a reader can open. No invented quotes, dates, releases or events.
 - **Archive ≠ new.** Old things are labelled `archive`. Only call something `contemporary` or `emerging` if a dated source shows it's recent, and set `year`.
 - **Fact vs. recommendation.** Thread links marked `fact` must be documented (e.g. "scored by"). Comparisons and pairings are `editorial`.
-- **Reference points, not repeats.** The reader already knows MF DOOM, Nujabes, Cowboy Bebop, Drive… Use them as doorways to adjacent, less-obvious things.
+- **Reference points, not repeats.** The reader's favorites are doorways to adjacent, less-obvious things, not recommendations. Those favorites live in your private **reader notes** (Editorial desk), never in this public repo — and the published text shouldn't name them as the reader's ("your favorite film"), because the site is public.
 - **Voice:** a knowledgeable friend who loves underground culture. No clickbait, no hype, no motivational lines.
 - **Guidelines, not quotas:** roughly half archive/nostalgia, a third timeless, some contemporary; mostly lesser-known, some accessible, a few obscure; mostly briefs plus one feature.
 
 ## 4. Preparing an edition with ChatGPT (or any assistant)
 
-Paste this prompt, then attach or paste `content/drop/edition.schema.json` and one existing edition as an example:
+The easiest way: open **The Weekly Drop → Editorial desk → Prepare issue N with an assistant**. Fill in your private reader notes once (they sync between your devices), tap **Copy prompt**, and paste it into the assistant along with `content/drop/edition.schema.json` and one existing edition as an example. The issue number and Friday date are filled in for you.
+
+Or paste this generic version yourself:
 
 > You're the editor of "The Weekly Drop", a personal culture magazine. Prepare issue **N**, titled "**…**", theme "**…**", publishDate **YYYY-MM-DD** (a Friday), status "draft".
 > Research real things only. For every item give working https sources you have verified, and set `verifiedAt` to today. Label old material `"freshness": "archive"`; only use `contemporary`/`emerging` with a dated source and a `year`.
