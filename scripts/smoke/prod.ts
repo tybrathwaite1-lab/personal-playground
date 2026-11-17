@@ -66,24 +66,30 @@ async function main() {
   const home = await get('');
   if (!home.ok) return fail(`home page HTTP ${home.status}`);
   const html = await home.text();
-  html.includes('id="root"') ? ok('home page serves the app shell') : fail('home page has no app root');
+  if (html.includes('id="root"')) ok('home page serves the app shell');
+  else fail('home page has no app root');
   const scripts = [...html.matchAll(/src="([^"]+\.js)"/g)].map((m) => m[1]);
   if (!scripts.length) fail('no script bundle referenced');
   for (const s of scripts) {
     const r = await get(s);
-    r.ok ? ok(`bundle ${s.split('/').pop()} loads`) : fail(`bundle ${s} HTTP ${r.status}`);
+    if (r.ok) ok(`bundle ${s.split('/').pop()} loads`);
+    else fail(`bundle ${s} HTTP ${r.status}`);
   }
 
   for (const path of ['sw.js', 'manifest.webmanifest']) {
     const r = await get(path);
-    r.ok ? ok(`${path} loads`) : fail(`${path} HTTP ${r.status}`);
+    if (r.ok) ok(`${path} loads`);
+    else fail(`${path} HTTP ${r.status}`);
   }
 
   const ver = await get('version.json', 1);
   if (ver.ok) {
     const v = (await ver.json()) as { commit?: string; builtAt?: string };
     console.log(`  · deployed commit ${v.commit?.slice(0, 7)} built ${v.builtAt}`);
-    if (expectCommit) v.commit === expectCommit ? ok('deployed commit matches') : fail(`deployed ${v.commit} ≠ expected ${expectCommit}`);
+    if (expectCommit) {
+      if (v.commit === expectCommit) ok('deployed commit matches');
+      else fail(`deployed ${v.commit} ≠ expected ${expectCommit}`);
+    }
   } else if (expectCommit) fail('version.json missing, cannot confirm the deployed commit');
   else console.log('  · no version.json (deployed before build stamping existed)');
 

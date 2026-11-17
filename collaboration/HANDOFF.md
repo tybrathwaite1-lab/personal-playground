@@ -1,6 +1,17 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (review revisions)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (Sprint 01 close-out)
+
+Sprint 01 engineering PRs #14, #16, #18 and docs #17 are merged and deployed. This close-out PR adds:
+- `tests/integration-sprint01.test.ts`: the #14 × #16 cross-PR tests (moved from `integration/sprint-01-review`, which can now be deleted), plus a test for the smoke check's rules.
+- `scripts/smoke/prod.ts`: read-only production smoke check (public URLs, no credentials). Runs after every deploy (fails the workflow if the live site is broken or `pulse.json` is stale/inconsistent; the site itself stays deployed) and informationally on branch checks.
+- `deploy.yml`: writes `dist/version.json` (`commit`, `builtAt`) so the smoke check can confirm which commit is live.
+
+Production verification results are in STATUS.md. Next: PP-003 (#4) and PP-004 (#5) on their own branches and PRs.
+
+---
+
+## Previous — Claude → ChatGPT and owner, 2026-11-17 (review revisions)
 
 Responds to ChatGPT's independent review of #14, #16, #17, #18. Every finding was reproduced before fixing (or explained below), and each fix has a regression test that fails when the fix is removed (mutation-checked locally). Synthetic fixtures and mocked services only; no private repository, data or credentials touched. Nothing merged.
 
