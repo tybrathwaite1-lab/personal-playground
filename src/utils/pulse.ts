@@ -82,7 +82,9 @@ const AMOUNT =
   /\$\s?(\d{1,4}(?:,\d{3})*(?:\.\d{2})?)(?:\s?(?:-|–|—|to)\s?\$?\s?(\d{1,4}(?:,\d{3})*(?:\.\d{2})?))?(?!\s?%)/g;
 const FREE = /(?<![\w-])(free(?: of charge)?|no charge|no cost|no cover(?: charge)?|complimentary)(?![\w-])/gi;
 const FREE_OTHER_AFTER =
-  /^\s*(?:and\s+)?(?:parking|valet|gift ?wrap(?:ping)?|wrap|drinks?|beers?|wine|food|snacks?|refreshments|popcorn|coffee|wi-?fi|shuttle|trolley|tote|totes|gifts?|giveaways?|samples?|swag|posters?|t-?shirts?|consultations?|downloads?|appetizers?|tastings?)\b/i;
+  /^\s*(?:and\s+)?(?:parking|valet|gift ?wrap(?:ping)?|wrap|drinks?|beers?|wine|food|snacks?|refreshments|popcorn|coffee|wi-?fi|shuttle|trolley|tote|totes|gifts?|giveaways?|samples?|swag|posters?|t-?shirts?|consultations?|downloads?|appetizers?|tastings?|cancell?ations?|refunds?|returns?|shipping|exchanges?|rescheduling|photo ?booths?|photos?|face ?painting|childcare|coat ?check|activities|crafts?)\b/i;
+/** "not free", "isn't free": never a free signal. */
+const NEGATED_BEFORE = /\b(?:not|isn['’]t|aren['’]t|never|no longer)\s+(?:\w+\s+)?$/i;
 const FREE_INCLUDED_AFTER = /^\s*(?:with|w\/)\s+(?:[\w'’.-]+\s+){0,2}?(?:admission|ticket|entry|purchase|membership)/i;
 const QUALIFIERS =
   'members?|kids|children|child|students?|seniors?|veterans?|military|residents?|teachers?|first responders|ages?|under \\d+|youth|toddlers?|babies|infants|guests? of|those|qualifying|eligible|(?:local |community )?heroes';
@@ -95,6 +97,15 @@ const FREE_PERK_AFTER = /^\s*admission\s*,\s*(?:special|exclusive|early|priority
 const RESTRICTED = /\b(?:qualifying|eligible|(?:local |community )?heroes)\b/i;
 const EVERYONE = /\b(?:for (?:everyone|all)|open to (?:all|everyone|the public))\b/i;
 const FREE_QUALIFIED_BEFORE = new RegExp(`\\b(?:${QUALIFIERS})\\s+(?:get in |enter |are |is |go |get )?$`, 'i');
+
+/** A charge added on top of a ticket ("service fee $8", "$3 processing fee"). */
+const FEE_WORDS = '(?:(?:mandatory|required)\\s+)?(?:(?:service|processing|booking|handling|facility|convenience|ticketing|admin(?:istrative)?)\\s+(?:fees?|charges?)|surcharge)';
+/** Fee wording directly before the amount ("service fee $8", "Surcharge: $2") or after it ("$8 service fee"). */
+const FEE_BEFORE = new RegExp(`\\b${FEE_WORDS}\\s*(?:of|is|:)?\\s*$`, 'i');
+const FEE_AFTER = new RegExp(`^\\s*(?:\\w+\\s+)?${FEE_WORDS}\\b`, 'i');
+/** Fees mentioned without an amount ("$20 + fees", "plus fees", "fees apply"). */
+const UNSTATED_FEES = /\+\s*(?:[\w&]+\s+){0,3}?fees?\b|\bplus\s+(?:[\w&]+\s+){0,3}?fees?\b|\bfees?\s+(?:apply|extra|not included)\b|\bnot including\s+(?:\w+\s+)?fees?\b/i;
+const RSVP = /\b(?:rsvp|registration (?:is )?required|reservations? (?:is |are )?required|pre-?registration|register (?:in advance|online|ahead))\b/i;
 
 const money = (s: string) => Number(s.replace(/,/g, ''));
 const fmt = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
@@ -131,6 +142,7 @@ export function priceEvidence(text: string): string[] {
 
 export function priceFrom(text: string): PriceInfo {
   const paid: { min: number; max: number }[] = [];
+  const fees: number[] = [];
   const uncued: { min: number; max: number }[] = [];
   let freeGeneral = false;
   let freeQualified = false;
@@ -144,6 +156,15 @@ export function priceFrom(text: string): PriceInfo {
       const min = money(m[1]);
       const max = m[2] ? money(m[2]) : min;
       if (!(min >= 0) || max < min) continue;
+      // An amount next to "service fee", "surcharge"… is an add-on, not another ticket tier.
+      const before = sentence.slice(Math.max(0, m.index - 40), m.index);
+      const after = sentence.slice(m.index + m[0].length, m.index + m[0].length + 40);
+      if (!m[2] && (FEE_BEFORE.test(before) || FEE_AFTER.test(after))) {
+        // "(service fee $8 included)", "price includes a $3 fee": already part of the ticket price.
+        if (/^[^.;$]{0,25}?\b(?:included|incl\.?|inclusive)\b/i.test(after) || /\b(?:includes?|including|incl\.?|inclusive of)\s+(?:an?\s+)?[\w\s]{0,30}$/i.test(before)) continue;
+        fees.push(min);
+        continue;
+      }
       const cue = nearestCue(sentence, m.index, m.index + m[0].length);
       if (!cue) {
         uncued.push({ min, max });
@@ -157,7 +178,7 @@ export function priceFrom(text: string): PriceInfo {
     for (let m = FREE.exec(sentence); m; m = FREE.exec(sentence)) {
       const after = sentence.slice(m.index + m[0].length, m.index + m[0].length + 40);
       const before = sentence.slice(Math.max(0, m.index - 40), m.index);
-      if (FREE_OTHER_AFTER.test(after) || FREE_INCLUDED_AFTER.test(after)) continue;
+      if (FREE_OTHER_AFTER.test(after) || FREE_INCLUDED_AFTER.test(after) || NEGATED_BEFORE.test(before)) continue;
       // "Complimentary" only counts for admission itself ("complimentary admission"), not food or drinks.
       if (/^complimentary$/i.test(m[0]) && !/^\s*(?:museum |general )?(?:admission|entry|tickets?)\b/i.test(after)) continue;
       if (RESTRICTED.test(`${before} ${after}`)) freeRestricted = true;
@@ -179,15 +200,31 @@ export function priceFrom(text: string): PriceInfo {
   if (!paid.length && !freeGeneral && uncued.length === 1 && !otherInSameSentence) paid.push(uncued[0]);
 
   if (freeGeneral && paid.length) return { priceNote: 'Free and paid options (see listing)' };
-  if (freeGeneral) return { priceNote: 'Free (per listing)', free: true, priceMin: 0, priceMax: 0 };
+  if (freeGeneral) {
+    const rsvp = RSVP.test(text) ? ' · RSVP' : '';
+    return { priceNote: `Free${rsvp} (per listing)`, free: true, priceMin: 0, priceMax: 0 };
+  }
   if (!paid.length) return freeQualified ? { priceNote: 'Free for some visitors (see listing)' } : {};
 
-  // Several amounts (adult/student, advance/door, fee + entry) are shown as a range; whether
-  // they add up or are alternatives isn't knowable from text, so the listing link stays primary.
-  const priceMin = Math.min(...paid.map((p) => p.min));
-  const priceMax = Math.max(...paid.map((p) => p.max));
-  const range = priceMin === priceMax ? fmt(priceMin) : `${fmt(priceMin)}–${fmt(priceMax)}`;
-  return { priceNote: `${range}${freeQualified ? ' · free for some' : ''} (per listing)`, priceMin, priceMax };
+  // Several amounts (adult/student, advance/door) are shown as a range.
+  let priceMin = Math.min(...paid.map((p) => p.min));
+  let priceMax: number | undefined = Math.max(...paid.map((p) => p.max));
+  let range = priceMin === priceMax ? fmt(priceMin) : `${fmt(priceMin)}–${fmt(priceMax)}`;
+  const some = freeQualified ? ' · free for some' : '';
+  const fee = fees.reduce((a, b) => a + b, 0);
+  if (fees.length && paid.length === 1 && priceMin === priceMax) {
+    // One ticket price plus stated mandatory fees: the total is known.
+    priceMin = priceMax = priceMin + fee;
+    return { priceNote: `${fmt(priceMin)} incl. ${fmt(fee)} fees${some} (per listing)`, priceMin, priceMax };
+  }
+  if (fees.length || UNSTATED_FEES.test(text)) {
+    // Fees on top of several tiers, or fees with no amount: the total isn't reliably known.
+    // Keep the lowest ticket price for reference but no maximum, so budget filters treat it as unknown.
+    range += fees.length ? ` + ${fmt(fee)} fees` : ' + fees';
+    priceMax = undefined;
+    return { priceNote: `${range}${some} (see listing for total)`, priceMin };
+  }
+  return { priceNote: `${range}${some} (per listing)`, priceMin, priceMax };
 }
 
 /**
@@ -197,6 +234,8 @@ export function priceFrom(text: string): PriceInfo {
 export function eventPriceRange(e: Pick<PulseEvent, 'free' | 'priceNote' | 'priceMin' | 'priceMax'>): [number, number] | null {
   if (e.free) return [0, 0];
   if (typeof e.priceMin === 'number' && typeof e.priceMax === 'number') return [e.priceMin, e.priceMax];
+  // A minimum without a maximum means the total (fees) isn't known: unknown, not a guess.
+  if (typeof e.priceMin === 'number') return null;
   const amounts = [...(e.priceNote ?? '').matchAll(/\$\s?(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
   return amounts.length ? [Math.min(...amounts), Math.max(...amounts)] : null;
 }

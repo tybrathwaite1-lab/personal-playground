@@ -100,3 +100,54 @@ test('budget range uses structured fields, with a fallback for older data', () =
   assert.equal(eventPriceRange({ priceNote: 'Free and paid options (see listing)' }), null);
   assert.equal(eventPriceRange({}), null);
 });
+
+// ─── Review revisions (independent review of #16) ─────────────────────
+/** What the Pulse "cheap" filter does: an unknown range never counts as ≤ $25. */
+const cheap = (t: string) => (eventPriceRange(priceFrom(t))?.[1] ?? Infinity) <= 25;
+
+test('review fixture: "Free cancellation…" is a policy, not free admission → unknown', () => {
+  assert.deepEqual(priceFrom('Free cancellation up to 24 hours before the event.'), {});
+  assert.deepEqual(priceFrom('Free refunds and free returns on merch.'), {});
+});
+
+test('review fixture: "not free" is never classified as free', () => {
+  assert.deepEqual(priceFrom('This event is not free.'), {});
+  assert.deepEqual(priceFrom("Sorry, it isn't free this year."), {});
+  assert.equal(priceFrom('Not free: $10 at the door.').free, undefined);
+});
+
+test('review fixture: free admission with RSVP stays free and keeps the RSVP note', () => {
+  assert.deepEqual(priceFrom('Free admission with RSVP.'), { priceNote: 'Free · RSVP (per listing)', free: true, priceMin: 0, priceMax: 0 });
+  assert.equal(priceFrom('Free. Registration required.').priceNote, 'Free · RSVP (per listing)');
+});
+
+test('review fixture: a stated mandatory fee is added to the ticket → $28, not "under $25"', () => {
+  const p = priceFrom('Tickets $20. Mandatory service fee $8.');
+  assert.deepEqual(p, { priceNote: '$28 incl. $8 fees (per listing)', priceMin: 28, priceMax: 28 });
+  assert.equal(cheap('Tickets $20. Mandatory service fee $8.'), false);
+  assert.equal(priceFrom('Tickets $20 plus $8 service fee.').priceMin, 28);
+});
+
+test('review fixture: a free perk at a paid event → the admission price', () => {
+  assert.deepEqual(priceFrom('Tickets $25. Free photo booth.'), { priceNote: '$25 (per listing)', priceMin: 25, priceMax: 25 });
+});
+
+test('fees with no amount, or on several tiers: total uncertain, never "cheap"', () => {
+  const plus = priceFrom('Tickets $20 + fees.');
+  assert.deepEqual(plus, { priceNote: '$20 + fees (see listing for total)', priceMin: 20 });
+  assert.equal(eventPriceRange(plus), null);
+  assert.equal(cheap('Tickets $20 + fees.'), false);
+  assert.equal(cheap('Tickets $15 plus taxes and fees.'), false);
+  const tiers = priceFrom('Adults $20, kids $10. Service fee $4.');
+  assert.equal(tiers.priceMax, undefined);
+  assert.equal(cheap('Adults $20, kids $10. Service fee $4.'), false);
+});
+
+test('a fee already included is not added again; a registration fee is the price itself', () => {
+  assert.equal(priceFrom('Tickets $20 (service fee $8 included).').priceMax, 20);
+  assert.deepEqual(priceFrom('$15 registration fee.'), { priceNote: '$15 (per listing)', priceMin: 15, priceMax: 15 });
+});
+
+test('owner decision preserved: a lone uncued dollar amount is the price', () => {
+  assert.deepEqual(priceFrom('Join us Saturday. $12.'), { priceNote: '$12 (per listing)', priceMin: 12, priceMax: 12 });
+});
