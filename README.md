@@ -22,7 +22,7 @@ A personal lifestyle discovery app: part independent culture magazine, part digi
 | **Rediscover** | Old interests with gentle ways back in, nearby places, and a "good in the right setting" footnote. |
 | **My Collection** | Everything you've saved (experiences, places, websites, interests, personal discoveries) with search, type filter, notes and removal. |
 | **Field Notes** | A low-pressure notebook: title, category, notes, URL, tags, date. Never a daily journal. |
-| **Backup & Settings** | JSON export/import (merge or replace), privacy controls, iPhone install steps, erase data. |
+| **Backup & Settings** | Sync between devices, JSON export/import (merge or replace), weather location, privacy controls, iPhone install steps, erase data. |
 
 ## Tech stack
 
@@ -122,9 +122,25 @@ Personal data (saves, notes, favorites, custom entries, interest edits) is store
 
 Backup filenames are in `.gitignore` so they don't get committed by accident.
 
+## Sync between devices
+
+Optional. Your data is stored as one JSON file (`playground-data.json`) in a **private** GitHub repository that you own — separate from this public app repo.
+
+**Set up (once):**
+1. Create a new repository, e.g. `playground-data`, and set it to **Private**.
+2. Create a **fine-grained personal access token** (GitHub → Settings → Developer settings → Fine-grained tokens):
+   - Repository access: *Only select repositories* → `playground-data`
+   - Repository permissions: *Contents* → **Read and write**. Nothing else.
+   - Pick an expiration you'll remember; renew it when it lapses.
+3. In the app: **Backup & Settings → Sync between devices**, paste `yourname/playground-data` and the token. Repeat on each device.
+
+**How it works:** every change is timestamped per item (each saved item, note, favorite, place note, interest…). Syncing merges item-by-item — the most recent change wins, deletions are remembered so they don't come back, and offline edits sync later. It runs a few seconds after you change something, when you open the app, and when you reconnect. The app refuses to sync to a public repository.
+
+**Security:** the token lives only in that browser's storage (never in exports or this repo) and can only touch the one data repo. If a device is lost, delete the token on GitHub. "Erase personal data" affects only the current device and disconnects it from sync.
+
 ## LocalStorage limitations
 
-- Data lives in one browser on one device. No sync between devices.
+- Without sync, data lives in one browser on one device.
 - Clearing site data, Safari's "Clear History and Website Data", or private browsing will lose it. iOS Safari may also evict storage for sites not used in a long time; installed home-screen apps are treated more generously, but **export a backup now and then**.
 - Roughly 5 MB per site — far more than this app needs.
 - If storage is blocked (private mode), the app shows a warning banner.
@@ -156,6 +172,5 @@ public/
 
 ## Ideas for later
 
-- Optional sync (e.g. a private GitHub Gist or iCloud file) so phone and laptop share data.
 - A small, hand-picked events calendar maintained by you.
 - Offline map tiles for favorite neighborhoods.

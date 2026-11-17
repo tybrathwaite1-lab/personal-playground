@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { href, type RouteName } from '../hooks/useRoute';
 import { useStore } from '../hooks/useStore';
+import { useSync } from '../hooks/useSync';
 
 export const NAV: { route: RouteName; label: string; short: string; num: string; jp: string; icon: typeof House }[] = [
   { route: 'home', label: 'Home', short: 'Home', num: '00', jp: '表紙', icon: House },
@@ -50,6 +51,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
   const [menuOpen, setMenuOpen] = useState(false);
   const { toast, storageOk } = useStore();
   const online = useOnline();
+  const sync = useSync();
 
   useEffect(() => setMenuOpen(false), [current]);
   useEffect(() => {
@@ -90,6 +92,11 @@ export function Layout({ current, children }: { current: RouteName; children: Re
             </ul>
           </nav>
           <div className="flex items-center gap-1">
+            {sync.status === 'error' && (
+              <a href={href('backup')} className="label flex items-center gap-1.5 text-rust" title={sync.error ?? ''}>
+                <span className="inline-block h-2 w-2 bg-rust" aria-hidden /> Sync issue
+              </a>
+            )}
             {!online && (
               <span className="label flex items-center gap-1.5 text-rust" role="status">
                 <WifiOff size={14} aria-hidden /> Offline

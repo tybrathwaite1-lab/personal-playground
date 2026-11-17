@@ -15,6 +15,7 @@ import type {
 } from '../types';
 import { uid } from '../utils/helpers';
 import { EMPTY_DATA, STORAGE_KEY, loadData, mergeData, normalizeData, saveData } from '../utils/storage';
+import { EMPTY_META, loadMeta, saveMeta, stampChanges, syncEntries, type Entries, type SyncMeta } from '../utils/sync';
 
 type SaveInput = Omit<SavedItem, 'id' | 'savedAt'>;
 
@@ -57,6 +58,13 @@ interface Store {
   replaceAll: (d: PersonalData) => void;
   mergeIn: (d: PersonalData) => void;
   resetAll: () => void;
+
+  // ── Sync plumbing ──
+  /** Increments whenever the user changes something locally. */
+  localVersion: number;
+  getSyncState: () => { entries: Entries; meta: SyncMeta; version: number };
+  /** Apply a merged result. Returns false if the user changed something meanwhile (caller should retry). */
+  applySynced: (d: PersonalData, meta: SyncMeta, expectedVersion: number) => boolean;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -67,8 +75,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
 
+  // Sync bookkeeping: every local change is timestamped per entry so devices can merge.
+  const metaRef = useRef<SyncMeta>(loadMeta());
+  const prevEntries = useRef<Entries>(syncEntries(data));
+  const quietNextChange = useRef(false);
+  const versionRef = useRef(0);
+  const [localVersion, setLocalVersion] = useState(0);
+
   useEffect(() => {
     setStorageOk(saveData(data));
+    const next = syncEntries(data);
+    if (quietNextChange.current) {
+      // Came from sync or another tab — not a new local edit.
+      quietNextChange.current = false;
+    } else {
+      const before = metaRef.current;
+      metaRef.current = stampChanges(prevEntries.current, next, before);
+      if (metaRef.current !== before) {
+        saveMeta(metaRef.current);
+        versionRef.current += 1;
+        setLocalVersion(versionRef.current);
+      }
+    }
+    prevEntries.current = next;
   }, [data]);
 
   // Keep multiple open tabs in sync.
@@ -76,6 +105,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
+          quietNextChange.current = true;
+          metaRef.current = loadMeta();
           setData(normalizeData(JSON.parse(e.newValue)));
         } catch {
           /* ignore */
@@ -197,7 +228,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSettings: (patch) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } })),
     replaceAll: (d) => setData(normalizeData(d)),
     mergeIn: (incoming) => update((d) => mergeData(d, incoming)),
-    resetAll: () => setData({ ...EMPTY_DATA }),
+    // Erase is local-only: no deletions are sent to other devices.
+    resetAll: () => {
+      quietNextChange.current = true;
+      metaRef.current = EMPTY_META;
+      saveMeta(EMPTY_META);
+      setData({ ...EMPTY_DATA });
+    },
+
+    localVersion,
+    getSyncState: () => ({ entries: prevEntries.current, meta: metaRef.current, version: versionRef.current }),
+    applySynced: (d, meta, expectedVersion) => {
+      if (versionRef.current !== expectedVersion) return false;
+      metaRef.current = meta;
+      saveMeta(meta);
+      if (JSON.stringify(syncEntries(d)) !== JSON.stringify(prevEntries.current)) {
+        quietNextChange.current = true;
+        setData(d);
+      }
+      return true;
+    },
   };
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;

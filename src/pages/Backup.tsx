@@ -1,12 +1,15 @@
 import { useRef, useState } from 'react';
 import { Download, Eye, EyeOff, Smartphone, Trash2, Upload } from 'lucide-react';
 import { SectionHeader } from '../components/ui';
+import { SyncPanel } from '../components/SyncPanel';
+import { useSync } from '../hooks/useSync';
 import { useStore } from '../hooks/useStore';
 import type { PersonalData } from '../types';
 import { downloadBackup, parseBackup } from '../utils/storage';
 
 export default function Backup() {
   const store = useStore();
+  const sync = useSync();
   const { data } = store;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<PersonalData | null>(null);
@@ -36,8 +39,15 @@ export default function Backup() {
         number="08"
         title="Backup & Settings"
         jp="保管"
-        blurb="Your playground lives in this browser only. Export a backup now and then — especially before clearing Safari data or switching phones."
+        blurb="Your playground lives in this browser — and, if you turn on sync, in a private GitHub repo you own. Exports are still a good safety net."
       />
+
+      <section className="card mb-6 p-5" aria-labelledby="sync-title">
+        <p id="sync-title" className="label mb-2">
+          Sync between devices
+        </p>
+        <SyncPanel />
+      </section>
 
       <section className="card mb-6 p-5">
         <p className="label mb-1">On this device</p>
@@ -178,12 +188,16 @@ export default function Backup() {
 
       <section className="border border-dashed border-line p-5">
         <p className="label mb-2">Start over</p>
-        <p className="text-sm text-muted">Clears saved items, notes, favorites and custom entries on this device. Export first if in doubt.</p>
+        <p className="text-sm text-muted">
+          Clears saved items, notes, favorites and custom entries on this device only, and disconnects sync here. Your other
+          devices and the GitHub copy are untouched. Export first if in doubt.
+        </p>
         <button
           type="button"
           className="btn mt-3"
           onClick={() => {
             if (confirm('Erase all personal data on this device? This cannot be undone.')) {
+              sync.disconnect();
               store.resetAll();
               store.notify('Personal data cleared');
             }
