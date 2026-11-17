@@ -103,6 +103,11 @@ export interface Stop {
   minutes: number;
   /** Published time for events/communities; otherwise null (hours not verified). */
   time: string | null;
+  /**
+   * When it can be attended, in minutes after midnight New York time. Events: fixed start
+   * (earliest = latest). Communities: their published window. Places: undefined (flexible).
+   */
+  window?: { earliest: number; latest: number };
   /** Venue coordinates when verified, else the city center (see precision). */
   coords: LatLon | null;
   /** 'venue' = verified venue coordinates; 'city' = city center only; 'unknown' = no location. */
@@ -123,7 +128,12 @@ export interface Adventure {
   primary: Stop;
   secondary?: Stop;
   food?: { label: string; near: Stop };
-  cost: { min: number; max: number; unknown: boolean };
+  /** Known admission for the stops, per person. Food is never included. */
+  cost: { min: number; max: number; unknown: boolean; excludesFood: boolean };
+  /** Minutes: time at the stops, rough travel between them, any wait for a fixed start, and the total. */
+  time: { stops: number; travel: number; wait: number; total: number; budget: number };
+  /** Plain-language disclosures: filters that couldn't be applied, anchor conflicts, budget edges. */
+  notes: string[];
   travel: string;
   /** How the travel line was worked out: never a route, at best a straight line between venues. */
   proximity: Proximity;
@@ -155,6 +165,20 @@ function locate(venue: LatLon | undefined, city?: string): { coords: LatLon | nu
   const c = cityCoords(city);
   return c ? { coords: c, precision: 'city' } : { coords: null, precision: 'unknown' };
 }
+
+function nyMinutes(iso: string): number {
+  const [h, m] = new Date(iso)
+    .toLocaleTimeString('en-GB', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false })
+    .split(':')
+    .map(Number);
+  return (h % 24) * 60 + m;
+}
+const hm = (t: string) => {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + (m || 0);
+};
+/** Part-of-day windows in minutes after midnight. */
+const SLOT_WINDOW: Record<Slot, [number, number]> = { morning: [6 * 60, 12 * 60], afternoon: [12 * 60, 17 * 60], evening: [17 * 60, 24 * 60] };
 
 function slotOf(iso: string): Slot {
   const h = Number(new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false })) % 24;
@@ -203,13 +227,24 @@ export function eventStop(e: PulseEvent): Stop {
     directions: { name: e.venue ?? e.title, address: e.address, city: e.city ?? 'St. Petersburg' },
     event: e,
     hoursNote: e.ongoing ? 'Exhibition — check the venue’s hours' : 'Time from the venue’s calendar',
+    ...(e.ongoing || e.allDay ? {} : { window: { earliest: nyMinutes(e.start), latest: nyMinutes(e.start) } }),
   };
+}
+
+/** A community's published window on that date, if its schedule gives a start time. */
+function communityWindow(c: Community, date: string, minutes: number): Stop['window'] {
+  const wd = new Date(`${date}T12:00:00Z`).getUTCDay();
+  const r = c.rules?.find((x) => x.weekday === wd);
+  if (!r?.start) return undefined;
+  const start = hm(r.start);
+  return { earliest: start, latest: r.end ? Math.max(start, hm(r.end) - minutes) : start };
 }
 
 export function communityStop(c: Community, date: string, places: Place[] = []): Stop {
   // A community held at a known place can use that place's verified coordinates.
   const venue = c.coords ?? places.find((p) => p.id === c.placeId)?.coords;
   return {
+    window: communityWindow(c, date, 120),
     key: `community:${c.id}`,
     kind: 'community',
     title: c.name,
@@ -242,6 +277,12 @@ function vibesOfEvent(e: PulseEvent): Atmosphere[] {
   if (/Outdoors/.test(c) || e.indoor === false) v.push('outdoorsy');
   if (/Reset|Tea|Art|History/.test(c)) v.push('chill');
   return v.length ? v : ['cultured'];
+}
+
+/** Can a stop with this attendance window be started during the slot? */
+function inWindow(w: NonNullable<Stop['window']>, slot: Slot): boolean {
+  const [from, to] = SLOT_WINDOW[slot];
+  return w.latest >= from && w.earliest < to;
 }
 
 /** All stops available on the chosen date/slot that pass the hard filters. */
@@ -290,6 +331,8 @@ export function candidates(inp: Inputs, o: AdventureOptions, now = Date.now()): 
     if (!occurrences(c, o.date, o.date).length) continue;
     if (!c.company.includes(o.company)) continue;
     const s = communityStop(c, o.date, inp.places);
+    // A published time must fall in the chosen part of the day (e.g. a 5–9 PM meetup isn't a morning plan).
+    if (s.window && !inWindow(s.window, o.slot)) continue;
     if (withinRadius(s) && (cap === Infinity || s.cost)) out.push(s);
   }
   return out;
@@ -351,42 +394,111 @@ function group(s: Stop): string {
 }
 
 /**
+ * Can `b` follow `a`? Returns the travel and any wait (minutes) between them, or null if the
+ * fixed times make it impossible (e.g. two events whose times overlap).
+ */
+export function sequence(a: Stop, b: Stop, transport: Transport): { travel: number; wait: number } | null {
+  const travel = travelMinutes(proximity(a, b), transport);
+  if (!a.window || !b.window) return { travel, wait: 0 }; // a flexible stop can be moved to fit
+  const aDone = a.window.earliest + a.minutes;
+  const bStart = Math.max(b.window.earliest, aDone + travel);
+  if (bStart > b.window.latest) return null;
+  return { travel, wait: bStart - (aDone + travel) };
+}
+
+const fmtHours = (m: number) => (m % 60 ? `${Math.floor(m / 60)} hr ${m % 60} min` : `${m / 60} hr`);
+
+/** Which of the user's filters this stop doesn't meet (only checked for anchors, which bypass filters). */
+function anchorConflicts(s: Stop, o: AdventureOptions, now: number): string[] {
+  const out: string[] = [];
+  const cap = BUDGET_CAP[o.budget];
+  if (s.event) {
+    const e = s.event;
+    if (e.cancelled) out.push('it’s listed as cancelled');
+    else if (isExpired(e, now)) out.push('it has already ended');
+    const from = nyDate(Date.parse(e.start));
+    const to = nyDate(effectiveEnd(e) - 1);
+    if (!(from <= o.date && to >= o.date)) out.push(`it isn’t on the date you chose (${from})`);
+    else if (!e.ongoing && !e.allDay && slotOf(e.start) !== o.slot) out.push(`it starts in the ${slotOf(e.start)}, not the ${o.slot}`);
+  }
+  if (s.community) {
+    if (!occurrences(s.community, o.date, o.date).length) out.push('it doesn’t meet on the date you chose');
+    else if (s.window && !inWindow(s.window, o.slot)) out.push(`its published time isn’t in the ${o.slot}`);
+  }
+  if (s.place) {
+    const prof = CATEGORY_PROFILE[s.place.categories[0]];
+    if (o.slot === 'evening' && prof.daytimeOnly) out.push('it’s usually a daytime place');
+    if (o.slot !== 'evening' && prof.eveningOnly) out.push('it’s usually an evening place');
+  }
+  if (cap !== Infinity) {
+    if (!s.cost) out.push('its cost isn’t listed');
+    else if (cap === 0 ? s.cost[1] > 0 : s.cost[0] > cap) out.push('it’s over your budget');
+  }
+  if (s.coords && milesBetween(HOME, s.coords) > o.radius) out.push(`it’s outside your ${o.radius}-mile radius`);
+  return out;
+}
+
+/**
  * Pick a primary (events and communities first — they're the "what's on" of the day),
- * then a compatible secondary in a different category within an easy hop.
+ * then a compatible secondary in a different category within an easy hop. The pair must fit
+ * the per-person budget together, fit the time available including travel, and never overlap.
  */
 export function buildAdventure(inp: Inputs, o: AdventureOptions, rand: () => number = Math.random, now = Date.now()): Adventure | null {
   const pool = candidates(inp, o, now);
+  const budgetMinutes = o.hours * 60;
+  const cap = BUDGET_CAP[o.budget];
+  const notes: string[] = [];
+
   let primary: Stop | undefined;
   if (o.anchor) {
-    primary = pool.find((s) => s.key === o.anchor) ?? anchorStop(inp, o);
+    primary = pool.find((s) => s.key === o.anchor);
+    if (!primary) {
+      primary = anchorStop(inp, o);
+      if (!primary) notes.push('The pick you planned around isn’t listed any more, so here’s another idea.');
+      else {
+        const why = anchorConflicts(primary, o, now);
+        if (why.length) notes.push(`Planned around your pick even though ${why.join(', ')}.`);
+      }
+    }
+    if (primary && primary.minutes > budgetMinutes) notes.push(`Your pick runs about ${fmtHours(primary.minutes)} — longer than the ~${o.hours} hours you set.`);
   }
   if (!primary) {
-    const timed = pool.filter((s) => s.kind !== 'place');
-    const pickFrom = timed.length && rand() < 0.65 ? timed : pool;
+    // Never pick something longer than the time available.
+    const fitsTime = pool.filter((s) => s.minutes <= budgetMinutes);
+    const timed = fitsTime.filter((s) => s.kind !== 'place');
+    const pickFrom = timed.length && rand() < 0.65 ? timed : fitsTime;
     if (!pickFrom.length) return null;
     primary = pickFrom[Math.floor(rand() * pickFrom.length)];
   }
 
-  const budgetMinutes = o.hours * 60;
+  // Pair costs: the cheapest way to do both must fit the budget ("free" = both known free).
+  const pairCostOk = (a: Stop, b: Stop) =>
+    cap === Infinity || (a.cost !== null && b.cost !== null && (cap === 0 ? a.cost[1] + b.cost[1] === 0 : a.cost[0] + b.cost[0] <= cap));
 
   let secondary: Stop | undefined;
+  let leg: { travel: number; wait: number } | null = null;
   if (budgetMinutes - primary.minutes >= 60) {
-    const fits = pool.filter((s) => {
-      if (s.key === primary!.key || group(s) === group(primary!)) return false;
-      const p = proximity(primary!, s);
-      if (!withinHop(p, o.transport)) return false;
-      return primary!.minutes + s.minutes + travelMinutes(p, o.transport) <= budgetMinutes + 30;
-    });
+    const fits = pool
+      .map((s) => ({ s, p: proximity(primary!, s) }))
+      .filter(({ s, p }) => {
+        if (s.key === primary!.key || group(s) === group(primary!)) return false;
+        if (!withinHop(p, o.transport) || !pairCostOk(primary!, s)) return false;
+        const l = sequence(primary!, s, o.transport);
+        return l !== null && primary!.minutes + l.travel + l.wait + s.minutes <= budgetMinutes;
+      });
     // Prefer what we know is close: pinned venues within the hop, then the same neighborhood,
     // then the same city (distance unverified), then nearby cities.
-    const rank = (s: Stop) => ({ venue: 0, neighborhood: 1, 'same-city': 2, cities: 3, unknown: 4, single: 5 })[proximity(primary!, s).kind];
-    const best = Math.min(...fits.map(rank));
-    const choice = fits.filter((s) => rank(s) === best);
-    secondary = choice.length ? choice[Math.floor(rand() * choice.length)] : undefined;
+    const rank = (k: Proximity['kind']) => ({ venue: 0, neighborhood: 1, 'same-city': 2, cities: 3, unknown: 4, single: 5 })[k];
+    const best = Math.min(...fits.map((f) => rank(f.p.kind)));
+    const choice = fits.filter((f) => rank(f.p.kind) === best);
+    secondary = choice.length ? choice[Math.floor(rand() * choice.length)].s : undefined;
+    if (secondary) leg = sequence(primary, secondary, o.transport);
   }
 
-  const total = primary.minutes + (secondary?.minutes ?? 0);
-  const wantsFood = budgetMinutes >= 240 || o.slot === 'evening' || (o.slot === 'morning' && total >= 150);
+  const stopsMinutes = primary.minutes + (secondary?.minutes ?? 0);
+  const time = { stops: stopsMinutes, travel: leg?.travel ?? 0, wait: leg?.wait ?? 0, total: stopsMinutes + (leg?.travel ?? 0) + (leg?.wait ?? 0), budget: budgetMinutes };
+
+  const wantsFood = budgetMinutes >= 240 || o.slot === 'evening' || (o.slot === 'morning' && stopsMinutes >= 150);
   const foodLabel =
     o.slot === 'evening' ? 'Dinner nearby' : o.slot === 'morning' ? 'Lunch nearby' : o.company === 'partner' ? 'A café or late lunch nearby' : 'Food nearby';
   const food = wantsFood ? { label: foodLabel, near: secondary ?? primary } : undefined;
@@ -394,10 +506,39 @@ export function buildAdventure(inp: Inputs, o: AdventureOptions, rand: () => num
   const stops = [primary, secondary].filter(Boolean) as Stop[];
   const unknown = stops.some((s) => !s.cost);
   const cost = stops.reduce((a, s) => ({ min: a.min + (s.cost?.[0] ?? 0), max: a.max + (s.cost?.[1] ?? 0) }), { min: 0, max: 0 });
+  if (cap !== Infinity && cap > 0 && cost.max > cap) notes.push(`Could run up to $${cost.max} per person at the top of the listed prices — above your $${cap} budget.`);
+  if (unknown) notes.push('At least one stop doesn’t list a cost.');
+
+  // Filters that can't be checked for some stops are said out loud, not silently skipped.
+  const unchecked = new Set<string>();
+  const wantIndoor = o.weather === 'indoor' || (o.weather === 'auto' && o.indoorDay);
+  for (const st of stops) {
+    if (st.place) {
+      if ((wantIndoor || o.weather === 'outdoor') && CATEGORY_PROFILE[st.place.categories[0]].indoor === undefined) unchecked.add('indoor/outdoor');
+      continue;
+    }
+    if (o.energy !== 'any') unchecked.add('energy level');
+    if (st.kind === 'event' && o.company !== 'solo') unchecked.add('who it suits');
+    if (st.kind === 'community' && o.atmosphere !== 'any') unchecked.add('atmosphere');
+    if ((wantIndoor || o.weather === 'outdoor') && (st.kind === 'community' || st.event?.indoor === undefined)) unchecked.add('indoor/outdoor');
+  }
+  if (unchecked.size) notes.push(`Listings don’t say their ${[...unchecked].join(', ')}, so ${unchecked.size > 1 ? 'those filters weren’t' : 'that filter wasn’t'} applied to them.`);
+
   const prox: Proximity = secondary ? proximity(primary, secondary) : { kind: 'single' };
   const travel = describeTravel(prox, o.transport);
   const milesFromHome = primary.coords ? Math.round(milesBetween(HOME, primary.coords)) : undefined;
-  return { primary, secondary, food, cost: { ...cost, unknown }, travel, proximity: prox, milesFromHome, homeBasis: primary.precision };
+  return {
+    primary,
+    secondary,
+    food,
+    cost: { ...cost, unknown, excludesFood: true },
+    time,
+    notes,
+    travel,
+    proximity: prox,
+    milesFromHome,
+    homeBasis: primary.precision,
+  };
 }
 
 /** A stop for an anchor that fell outside the filters (the user asked for it explicitly). */

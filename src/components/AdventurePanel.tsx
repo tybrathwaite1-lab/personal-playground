@@ -35,6 +35,8 @@ function nextDates(now: number): { value: string; label: string }[] {
   return out;
 }
 
+const fmtMinutes = (m: number) => (m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} hr ${m % 60} min` : `${m / 60} hr`);
+
 function defaultSlot(now: number): Slot {
   const h = Number(new Date(now).toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false })) % 24;
   return h < 11 ? 'morning' : h < 16 ? 'afternoon' : 'evening';
@@ -288,14 +290,30 @@ export function AdventurePanel({ anchor }: { anchor?: string | null }) {
         )}
         {result && (
           <article className="card animate-rise" aria-label="Your adventure">
-            <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-hunter/40 px-4 py-2">
-              <span className="label text-paper/80">{result.travel}</span>
-              <span className="label text-paper/80">
-                Est. ${result.cost.min}
-                {result.cost.max !== result.cost.min && `–$${result.cost.max}`} pp{result.cost.unknown && ' + unlisted costs'}
-                {result.food && ' + food'}
-              </span>
+            <header className="border-b border-line bg-hunter/40 px-4 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="label text-paper/80">{result.travel}</span>
+                <span className="label text-paper/80">
+                  Est. ${result.cost.min}
+                  {result.cost.max !== result.cost.min && `–$${result.cost.max}`} pp{result.cost.unknown && ' + unlisted costs'}
+                  {result.food && ' · food not included'}
+                </span>
+              </div>
+              <p className="label mt-1 text-paper/60">
+                About {fmtMinutes(result.time.total)} of your ~{result.time.budget / 60} hr
+                {result.time.travel > 0 && ` · incl. ~${result.time.travel} min between stops (rough)`}
+                {result.time.wait > 0 && ` · ${result.time.wait} min wait for the start time`}
+              </p>
             </header>
+            {result.notes.length > 0 && (
+              <ul className="border-b border-line px-4 py-3 text-sm text-muted">
+                {result.notes.map((n) => (
+                  <li key={n} className="border-l-2 border-rust pl-2 [&:not(:first-child)]:mt-1">
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            )}
             <StopCard s={result.primary} label="First" onSwap={() => generate()} />
             {result.food && (
               <div className="stripe flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 text-sm">
