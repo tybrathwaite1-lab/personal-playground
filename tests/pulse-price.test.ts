@@ -36,6 +36,7 @@ test('free with admission, or free for some visitors, is not free', () => {
   assert.deepEqual(priceFrom('Free for members; $20 general admission.'), { priceNote: '$20 · free for some (per listing)', priceMin: 20, priceMax: 20 });
   assert.deepEqual(priceFrom('Kids under 12 free, adults $15.'), { priceNote: '$15 · free for some (per listing)', priceMin: 15, priceMax: 15 });
   assert.deepEqual(priceFrom('Members free.'), { priceNote: 'Free for some visitors (see listing)' });
+  assert.deepEqual(priceFrom('Free for MFA members; $15 non-members.'), { priceNote: '$15 · free for some (per listing)', priceMin: 15, priceMax: 15 });
 });
 
 test('explicit admission amounts and ranges are kept', () => {

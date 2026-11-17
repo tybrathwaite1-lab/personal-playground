@@ -86,7 +86,7 @@ const FREE_OTHER_AFTER =
 const FREE_INCLUDED_AFTER = /^\s*(?:with|w\/)\s+(?:paid\s+|museum\s+|general\s+)?(?:admission|ticket|entry|purchase|membership)/i;
 const QUALIFIERS =
   'members?|kids|children|child|students?|seniors?|veterans?|military|residents?|teachers?|first responders|ages?|under \\d+|youth|toddlers?|babies|infants|guests? of|those';
-const FREE_QUALIFIED_AFTER = new RegExp(`^\\s*(?:for|to)\\s+(?:all\\s+)?(?:${QUALIFIERS})\\b`, 'i');
+const FREE_QUALIFIED_AFTER = new RegExp(`^\\s*(?:for|to)\\s+(?:all\\s+)?(?:[\\w'’.-]+\\s+){0,3}?(?:${QUALIFIERS})\\b`, 'i');
 const FREE_QUALIFIED_BEFORE = new RegExp(`\\b(?:${QUALIFIERS})\\s+(?:get in |enter |are |is |go |get )?$`, 'i');
 
 const money = (s: string) => Number(s.replace(/,/g, ''));
@@ -115,6 +115,11 @@ function nearestCue(sentence: string, start: number, end: number): Cue | null {
 
 function sentencesOf(text: string): string[] {
   return text.split(/(?<=[.!?;])\s+|\n+|\s+\|\s+/).filter((x) => x.trim());
+}
+
+/** The sentences that mention money or "free" — what priceFrom() looked at (for review reports). */
+export function priceEvidence(text: string): string[] {
+  return sentencesOf(text).filter((x) => /\$\s?\d|(?<![\w-])free(?![\w-])|no (charge|cost|cover)|complimentary/i.test(x));
 }
 
 export function priceFrom(text: string): PriceInfo {
