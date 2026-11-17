@@ -8,7 +8,7 @@ import type { PulseEvent } from '../types/pulse';
 import { occurrences, ruleTime } from './community';
 import { HOME, cityFor, milesBetween, type LatLon } from './geo';
 import { applyFamiliarity } from './novelty';
-import { effectiveEnd, isExpired, nyDate } from './pulse';
+import { effectiveEnd, eventPriceRange, isExpired, nyDate } from './pulse';
 
 export type Atmosphere = 'any' | 'chill' | 'creative' | 'playful' | 'cultured' | 'outdoorsy';
 export type Slot = 'morning' | 'afternoon' | 'evening';
@@ -134,9 +134,7 @@ function slotOf(iso: string): Slot {
 }
 
 function priceRange(e: PulseEvent): [number, number] | null {
-  if (e.free) return [0, 0];
-  const m = e.priceNote?.match(/\$\s?(\d+)(?:\.\d+)?(?:\s?[-–]\s?\$?(\d+))?/);
-  return m ? [Number(m[1]), Number(m[2] ?? m[1])] : null;
+  return eventPriceRange(e);
 }
 
 // ─── Candidate building ─────────────────────────────────────────────

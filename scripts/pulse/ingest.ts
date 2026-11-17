@@ -14,7 +14,8 @@ import { dirname } from 'node:path';
 import { PULSE_SOURCES } from '../../src/data/pulseSources.ts';
 import type { PulseEvent, PulseFile, PulseSource } from '../../src/types/pulse.ts';
 import { parseIcs } from '../../src/utils/ics.ts';
-import { dedupe, isExpired, normalizeIcs } from '../../src/utils/pulse.ts';
+import { dedupe, isExpired, normalizeIcs, priceEvidence } from '../../src/utils/pulse.ts';
+import { stripHtml } from '../../src/utils/ics.ts';
 
 const args = process.argv.slice(2);
 const arg = (name: string, def: string) => {
@@ -25,6 +26,8 @@ const OUT = arg('--out', 'public/data/pulse.json');
 const PREVIOUS = arg('--previous', process.env.PULSE_PREVIOUS ?? '');
 const UA = 'PersonalPlaygroundBot/1.0 (+https://github.com/tybrathwaite1-lab/personal-playground; personal, non-commercial; 1 request/source/day)';
 const HORIZON_DAYS = 120;
+const REPORT = args.includes('--report');
+const evidence = new Map<string, string[]>();
 
 async function loadPrevious(): Promise<PulseFile | null> {
   if (!PREVIOUS) return null;
@@ -63,6 +66,11 @@ async function main() {
     const prevSource = previous?.sources.find((s) => s.id === def.id);
     try {
       const raw = parseIcs(await fetchText(def.feed));
+      if (REPORT)
+        for (const r of raw) {
+          const n = normalizeIcs(r, def.id, nowIso);
+          if (n) evidence.set(n.id, priceEvidence(`${r.summary}.\n${r.description ? stripHtml(r.description) : ''}`));
+        }
       const items = raw
         .map((e) => normalizeIcs(e, def.id, nowIso))
         .filter((e): e is PulseEvent => Boolean(e))
@@ -97,6 +105,17 @@ async function main() {
   writeFileSync(OUT, JSON.stringify(file));
   const ok = sources.filter((s) => s.ok).length;
   console.log(`\nLocal Pulse: ${events.length} events from ${ok}/${sources.length} sources → ${OUT}`);
+  if (REPORT) {
+    // Reviewer aid (branch checks): how each listing's admission price was read.
+    const kinds = { free: 0, paid: 0, mixed: 0, partial: 0, unknown: 0 };
+    for (const e of events) {
+      const k = e.free ? 'free' : e.priceMin !== undefined ? 'paid' : /Free and paid/.test(e.priceNote ?? '') ? 'mixed' : e.priceNote ? 'partial' : 'unknown';
+      kinds[k]++;
+      console.log(`price  ${(e.priceNote ?? 'unknown').padEnd(36)} | ${e.sourceIds.join('+').padEnd(14)} | ${e.title.slice(0, 60)}`);
+      for (const line of (evidence.get(e.id) ?? []).slice(0, 4)) console.log(`         ↳ ${line.replace(/\s+/g, ' ').slice(0, 220)}`);
+    }
+    console.log('Price summary:', Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(' · '));
+  }
   const byCat = new Map<string, number>();
   events.forEach((e) => e.categories.forEach((c) => byCat.set(c, (byCat.get(c) ?? 0) + 1)));
   console.log('By category:', [...byCat].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${n}`).join(' · '));
