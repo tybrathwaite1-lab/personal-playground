@@ -7,6 +7,8 @@ import { formatCost, formatDuration } from '../utils/discovery';
 import { COMPANY_LABEL, ENERGY_LABEL } from '../utils/labels';
 import { directionsLink, isSafeUrl } from '../utils/helpers';
 import { SaveButton } from './ui';
+import { EditorialImage } from './EditorialImage';
+import { imageFor } from '../data/images';
 
 function Meta({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
   return (
@@ -20,7 +22,7 @@ function Meta({ icon: Icon, label, value }: { icon: typeof Clock; label: string;
 }
 
 /** The full editorial result card used by the Discovery Engine and detail views. */
-export function ExperienceCard({ exp, index, footer }: { exp: Experience; index?: string; footer?: ReactNode }) {
+export function ExperienceCard({ exp, index, footer, image = true }: { exp: Experience; index?: string; footer?: ReactNode; image?: boolean }) {
   const { places } = useStore();
   const linkedPlaces = (exp.placeIds ?? [])
     .map((id) => places.find((p) => p.id === id))
@@ -40,6 +42,9 @@ export function ExperienceCard({ exp, index, footer }: { exp: Experience; index?
         )}
       </div>
 
+      {image && imageFor(exp.id, exp.interests) && (
+        <EditorialImage subject={exp.id} fallbackTags={exp.interests} ratio="21/9" className="px-5 pt-5 sm:px-7 sm:pt-7" />
+      )}
       <div className="p-5 sm:p-7">
         <h2 id={`${exp.id}-title`} className="display text-4xl sm:text-5xl">
           {exp.name}

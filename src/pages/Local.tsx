@@ -106,6 +106,7 @@ export default function Local({ params }: { params: URLSearchParams }) {
   const [formOpen, setFormOpen] = useState(false);
   const highlight = params.get('place');
   const [view, setView] = useState<'list' | 'map'>('list');
+  const [visual, setVisual] = useState(false);
   // A link to a specific place always lands on the list, where its card is highlighted.
   useEffect(() => {
     if (highlight) setView('list');
@@ -175,6 +176,11 @@ export default function Local({ params }: { params: URLSearchParams }) {
           <button type="button" className="chip" aria-pressed={view === 'list'} onClick={() => setView('list')}>
             <List size={14} aria-hidden /> List
           </button>
+          {view === 'list' && (
+            <button type="button" className="chip mr-2" aria-pressed={visual} onClick={() => setVisual((v) => !v)}>
+              Photos
+            </button>
+          )}
           <button type="button" className="chip -ml-px" aria-pressed={view === 'map'} onClick={() => setView('map')}>
             <MapIcon size={14} aria-hidden /> Map
           </button>
@@ -192,7 +198,7 @@ export default function Local({ params }: { params: URLSearchParams }) {
           {results.map((p) => (
             <li key={p.id} className="flex">
               <div className="w-full">
-                <PlaceCard place={p} highlight={p.id === highlight} />
+                <PlaceCard place={p} highlight={p.id === highlight} visual={visual} />
               </div>
             </li>
           ))}

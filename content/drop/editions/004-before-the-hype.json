@@ -44,8 +44,8 @@
           "verifiedAt": "2026-11-17"
         },
         {
-          "label": "Wikipedia: Nigo (designer)",
-          "url": "https://en.wikipedia.org/wiki/Nigo_(designer)",
+          "label": "Wikipedia: Nigo",
+          "url": "https://en.wikipedia.org/wiki/Nigo",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
         }
@@ -177,12 +177,6 @@
         {
           "label": "Wikipedia: Nike Dunk",
           "url": "https://en.wikipedia.org/wiki/Nike_Dunk",
-          "kind": "reference",
-          "verifiedAt": "2026-11-17"
-        },
-        {
-          "label": "Wikipedia: Jeff Staple",
-          "url": "https://en.wikipedia.org/wiki/Jeff_Staple",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
         }

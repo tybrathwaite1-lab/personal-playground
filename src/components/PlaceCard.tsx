@@ -4,6 +4,8 @@ import { useStore } from '../hooks/useStore';
 import type { Place } from '../types';
 import { directionsLink, formatDate, hostname, isSafeUrl, mapsLink } from '../utils/helpers';
 import { FavoriteButton, SaveButton } from './ui';
+import { EditorialImage } from './EditorialImage';
+import { imageFor } from '../data/images';
 
 const STATUS: Record<Place['status'], { label: string; cls: string }> = {
   verified: { label: 'Verified', cls: 'border-hunter bg-hunter text-paper' },
@@ -11,7 +13,7 @@ const STATUS: Record<Place['status'], { label: string; cls: string }> = {
   placeholder: { label: 'Placeholder — add yours', cls: 'border-dashed border-line text-muted' },
 };
 
-export function PlaceCard({ place, highlight }: { place: Place; highlight?: boolean }) {
+export function PlaceCard({ place, highlight, visual }: { place: Place; highlight?: boolean; visual?: boolean }) {
   const { data, setPlaceNote, deletePlace } = useStore();
   const [open, setOpen] = useState(Boolean(highlight));
   const [note, setNote] = useState(data.placeNotes[place.id] ?? '');
@@ -28,6 +30,7 @@ export function PlaceCard({ place, highlight }: { place: Place; highlight?: bool
       className={`card flex h-full flex-col ${highlight ? 'outline outline-2 outline-offset-2 outline-rust' : ''}`}
       aria-labelledby={`${place.id}-name`}
     >
+      {visual && imageFor(place.id) && <EditorialImage subject={place.id} ratio="16/9" className="px-4 pt-4" />}
       <div className="flex items-start gap-2 p-4 pb-2">
         <div className="min-w-0 flex-1">
           <p className="label mb-1 truncate">{place.categories.join(' · ')}</p>

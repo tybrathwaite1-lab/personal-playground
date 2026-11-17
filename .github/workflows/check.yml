@@ -28,6 +28,17 @@ jobs:
       - name: Check source links (report only)
         run: npm run links
         continue-on-error: true
+      - name: Cache editorial images
+        uses: actions/cache@v4
+        with:
+          path: public/images/editorial
+          key: images-${{ hashFiles('src/data/images.ts') }}
+          restore-keys: images-
+
+      - name: Fetch and optimize editorial images
+        run: npx tsx scripts/images/fetch.ts
+        continue-on-error: true
+
       - name: Weekly Drop candidate leads (unreviewed, never auto-published)
         run: npx tsx scripts/drop/candidates.ts
         continue-on-error: true

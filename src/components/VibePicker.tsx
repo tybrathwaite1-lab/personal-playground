@@ -86,6 +86,7 @@ export function VibePicker() {
             <ExperienceCard
               key={`${pick.id}-${count}`}
               exp={pick}
+              image={false}
               index={active.name}
               footer={
                 <>

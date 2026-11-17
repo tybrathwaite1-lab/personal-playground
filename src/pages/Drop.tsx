@@ -31,7 +31,7 @@ export default function Drop({ params }: { params: URLSearchParams }) {
 
   const all = [...drop.previews.map((p) => ({ ...p, _preview: true })), ...drop.editions];
   const edition: (DropEdition & { _preview?: boolean }) | null =
-    (issueParam ? all.find((e) => String(e.issue) === issueParam) : null) ?? drop.previews[0] ?? drop.latest;
+    (issueParam ? all.find((e) => String(e.issue) === issueParam) : null) ?? all[0] ?? null;
 
   return (
     <div>
