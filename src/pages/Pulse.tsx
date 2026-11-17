@@ -14,7 +14,7 @@ import { formatYmd, occurrences, ruleTime } from '../utils/community';
 import { HOME, cityFor, milesBetween } from '../utils/geo';
 import { directionsLink, formatDate, hostname, isSafeUrl } from '../utils/helpers';
 import { applyFamiliarity } from '../utils/novelty';
-import { formatWhen, inRange, isExpired, nyDate, viewRange, type PulseView } from '../utils/pulse';
+import { eventPriceRange, formatWhen, inRange, isExpired, nyDate, viewRange, type PulseView } from '../utils/pulse';
 import { isIndoorDay } from '../utils/weather';
 
 type View = PulseView | 'anytime';
@@ -107,7 +107,7 @@ export default function Pulse({ params }: { params: URLSearchParams }) {
     let list = pulse.data.events.filter((e) => !isExpired(e, now) && inRange(e, range));
     list = list.filter((e) => e.miles === undefined || e.miles <= f.radius);
     if (f.budget === 'free') list = list.filter((e) => e.free);
-    if (f.budget === 'cheap') list = list.filter((e) => e.free || /\$\s?([0-9]|1[0-9]|2[0-5])(\.\d\d)?\b(?!\d)/.test(e.priceNote ?? ''));
+    if (f.budget === 'cheap') list = list.filter((e) => (eventPriceRange(e)?.[1] ?? Infinity) <= 25);
     if (f.place === 'indoor') list = list.filter((e) => e.indoor !== false);
     if (f.place === 'outdoor') list = list.filter((e) => e.indoor === false);
     if (indoorDay) list = list.filter((e) => e.indoor !== false);

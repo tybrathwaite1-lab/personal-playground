@@ -39,6 +39,9 @@ export interface PulseEvent {
   /** Only when the listing itself states a price. Otherwise undefined = unknown. */
   priceNote?: string;
   free?: boolean;
+  /** Smallest / largest admission amount the listing states (USD). Undefined = unknown. */
+  priceMin?: number;
+  priceMax?: number;
   tags: string[];
   categories: string[];
   indoor?: boolean;
