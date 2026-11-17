@@ -102,8 +102,12 @@ export function Layout({ current, children }: { current: RouteName; children: Re
                 <WifiOff size={14} aria-hidden /> Offline
               </span>
             )}
-            <a href={href('backup')} className="btn-ghost hidden lg:inline-flex" aria-label="Backup and settings">
-              <Archive size={18} aria-hidden />
+            <a
+              href={href('backup')}
+              aria-current={current === 'backup' ? 'page' : undefined}
+              className="hidden items-center gap-1.5 border border-line px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-paper/60 hover:text-paper aria-[current=page]:border-rust aria-[current=page]:text-paper lg:inline-flex"
+            >
+              <Archive size={14} aria-hidden /> Settings
             </a>
             <button
               type="button"
