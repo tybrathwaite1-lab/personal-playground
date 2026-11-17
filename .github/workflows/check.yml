@@ -44,7 +44,7 @@ jobs:
         continue-on-error: true
 
       - name: Local Pulse ingest (live feeds)
-        run: npx tsx scripts/pulse/ingest.ts --out public/data/pulse.json
+        run: npx tsx scripts/pulse/ingest.ts --out public/data/pulse.json --report
       - name: Build
         run: npm run build
         env:

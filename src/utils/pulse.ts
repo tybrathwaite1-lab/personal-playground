@@ -54,14 +54,125 @@ export function isExcluded(text: string): boolean {
   return EXCLUDE.test(text);
 }
 
-const PRICE = /(free(?: admission| entry| event| and open to the public)?|\$\s?\d+(?:\.\d{2})?(?:\s?[-–]\s?\$?\d+(?:\.\d{2})?)?)/i;
+// ─── Admission price (PP-002) ───────────────────────────────────────
+/**
+ * Only report what the listing itself says about the cost of attending.
+ *
+ *  - A dollar amount counts when an admission word sits nearest to it in its sentence
+ *    ("tickets $15", "$10 entry", "Entry Fee: $5"). Amounts nearest a non-admission word
+ *    ("$5 parking", "$8 drinks", "20% off", "suggested donation") are ignored.
+ *  - A lone amount with no cue at all is accepted only if it is the listing's only amount.
+ *  - "Free" counts only as free admission: "free parking", "free gift wrap", "gluten-free",
+ *    "free with admission" and "free for members" don't make an event free.
+ *  - Mixed or unclear signals → no price (unknown), never a guess.
+ */
+export interface PriceInfo {
+  priceNote?: string;
+  free?: boolean;
+  /** Smallest and largest admission amounts stated, in USD. */
+  priceMin?: number;
+  priceMax?: number;
+}
 
-/** Only report a price the listing states in its own text. */
-export function priceFrom(text: string): { priceNote?: string; free?: boolean } {
-  const m = text.match(PRICE);
-  if (!m) return {};
-  const note = m[1].replace(/\s+/g, ' ');
-  return /^free/i.test(note) ? { priceNote: 'Free (per listing)', free: true } : { priceNote: `${note} (per listing)` };
+const ADMISSION_CUE =
+  /\b(admission|admissions|tickets?|entry|entrance|cover|door|doors|registration|register|cost|costs|fee|fees|price|prices|pricing|tuition|per (?:person|player|couple|class|session|team)|general|adults?|members?|non-?members?|students?|seniors?|seats?|rsvp|advance|pre-?sale|day[- ]of|pass(?:es)?|dues|buy-?in|class|workshop|tour|session|participation|play)\b/gi;
+const OTHER_CUE =
+  /\b(parking|park|valet|drinks?|beers?|wines?|cocktails?|bar|food|snacks?|menu|merch(?:andise)?|donations?|donate|off|discount|discounts|save|savings|tips?|raffle|gift ?cards?|gifts?|prizes?|pot|payout|bonus|value|worth|deposit|purchase|purchases|for sale|sale|sold|shop|store|retail|raise|raised|goal|sponsor(?:ship)?s?|vendors?|booth)\b/gi;
+const AMOUNT =
+  /\$\s?(\d{1,4}(?:,\d{3})*(?:\.\d{2})?)(?:\s?(?:-|–|—|to)\s?\$?\s?(\d{1,4}(?:,\d{3})*(?:\.\d{2})?))?(?!\s?%)/g;
+const FREE = /(?<![\w-])(free(?: of charge)?|no charge|no cost|no cover(?: charge)?|complimentary)(?![\w-])/gi;
+const FREE_OTHER_AFTER =
+  /^\s*(?:and\s+)?(?:parking|valet|gift ?wrap(?:ping)?|wrap|drinks?|beers?|wine|food|snacks?|refreshments|popcorn|coffee|wi-?fi|shuttle|trolley|tote|totes|gifts?|giveaways?|samples?|swag|posters?|t-?shirts?|consultations?|downloads?|appetizers?|tastings?)\b/i;
+const FREE_INCLUDED_AFTER = /^\s*(?:with|w\/)\s+(?:paid\s+|museum\s+|general\s+)?(?:admission|ticket|entry|purchase|membership)/i;
+const QUALIFIERS =
+  'members?|kids|children|child|students?|seniors?|veterans?|military|residents?|teachers?|first responders|ages?|under \\d+|youth|toddlers?|babies|infants|guests? of|those';
+const FREE_QUALIFIED_AFTER = new RegExp(`^\\s*(?:for|to)\\s+(?:all\\s+)?(?:${QUALIFIERS})\\b`, 'i');
+const FREE_QUALIFIED_BEFORE = new RegExp(`\\b(?:${QUALIFIERS})\\s+(?:get in |enter |are |is |go |get )?$`, 'i');
+
+const money = (s: string) => Number(s.replace(/,/g, ''));
+const fmt = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
+
+interface Cue {
+  kind: 'admission' | 'other';
+  dist: number;
+}
+
+/** The nearest admission/other cue to [start, end) within the same sentence. Words before the amount count a bit more. */
+function nearestCue(sentence: string, start: number, end: number): Cue | null {
+  let best: Cue | null = null;
+  for (const [re, kind] of [[ADMISSION_CUE, 'admission'], [OTHER_CUE, 'other']] as const) {
+    re.lastIndex = 0;
+    for (let m = re.exec(sentence); m; m = re.exec(sentence)) {
+      const mEnd = m.index + m[0].length;
+      if (m.index < end && mEnd > start) continue; // overlaps the amount itself
+      const dist = mEnd <= start ? start - mEnd : (m.index - end) * 1.5;
+      if (dist > 45) continue;
+      if (!best || dist < best.dist) best = { kind, dist };
+    }
+  }
+  return best;
+}
+
+function sentencesOf(text: string): string[] {
+  return text.split(/(?<=[.!?;])\s+|\n+|\s+\|\s+/).filter((x) => x.trim());
+}
+
+export function priceFrom(text: string): PriceInfo {
+  const paid: { min: number; max: number }[] = [];
+  const uncued: { min: number; max: number }[] = [];
+  let freeGeneral = false;
+  let freeQualified = false;
+  let otherInSameSentence = false;
+
+  for (const sentence of sentencesOf(text)) {
+    AMOUNT.lastIndex = 0;
+    for (let m = AMOUNT.exec(sentence); m; m = AMOUNT.exec(sentence)) {
+      const min = money(m[1]);
+      const max = m[2] ? money(m[2]) : min;
+      if (!(min >= 0) || max < min) continue;
+      const cue = nearestCue(sentence, m.index, m.index + m[0].length);
+      if (!cue) {
+        uncued.push({ min, max });
+        OTHER_CUE.lastIndex = 0;
+        if (OTHER_CUE.test(sentence)) otherInSameSentence = true;
+      } else if (cue.kind === 'admission') {
+        paid.push({ min, max });
+      }
+    }
+    FREE.lastIndex = 0;
+    for (let m = FREE.exec(sentence); m; m = FREE.exec(sentence)) {
+      const after = sentence.slice(m.index + m[0].length, m.index + m[0].length + 40);
+      const before = sentence.slice(Math.max(0, m.index - 40), m.index);
+      if (FREE_OTHER_AFTER.test(after) || FREE_INCLUDED_AFTER.test(after)) continue;
+      if (FREE_QUALIFIED_AFTER.test(after) || FREE_QUALIFIED_BEFORE.test(before)) freeQualified = true;
+      else freeGeneral = true;
+    }
+  }
+
+  // A single uncued amount is the listing's price; several (or one beside a non-admission word) are unclear.
+  if (!paid.length && uncued.length === 1 && !otherInSameSentence) paid.push(uncued[0]);
+
+  if (freeGeneral && paid.length) return { priceNote: 'Free and paid options (see listing)' };
+  if (freeGeneral) return { priceNote: 'Free (per listing)', free: true, priceMin: 0, priceMax: 0 };
+  if (!paid.length) return freeQualified ? { priceNote: 'Free for some visitors (see listing)' } : {};
+
+  // Several amounts (adult/student, advance/door, fee + entry) are shown as a range; whether
+  // they add up or are alternatives isn't knowable from text, so the listing link stays primary.
+  const priceMin = Math.min(...paid.map((p) => p.min));
+  const priceMax = Math.max(...paid.map((p) => p.max));
+  const range = priceMin === priceMax ? fmt(priceMin) : `${fmt(priceMin)}–${fmt(priceMax)}`;
+  return { priceNote: `${range}${freeQualified ? ' · free for some' : ''} (per listing)`, priceMin, priceMax };
+}
+
+/**
+ * Admission range for budget filters. Uses the structured fields, and falls back to
+ * reading the note for listings generated before priceMin/priceMax existed.
+ */
+export function eventPriceRange(e: Pick<PulseEvent, 'free' | 'priceNote' | 'priceMin' | 'priceMax'>): [number, number] | null {
+  if (e.free) return [0, 0];
+  if (typeof e.priceMin === 'number' && typeof e.priceMax === 'number') return [e.priceMin, e.priceMax];
+  const amounts = [...(e.priceNote ?? '').matchAll(/\$\s?(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
+  return amounts.length ? [Math.min(...amounts), Math.max(...amounts)] : null;
 }
 
 const OUTDOOR = /outdoor|park\b|preserve|beach|waterfront|pier|trail|garden|walk\b|art ?walk|market|festival/i;
@@ -93,7 +204,7 @@ export function normalizeIcs(e: IcsEvent, sourceId: string, nowIso: string): Pul
     city: city?.name,
     miles: city ? Math.round(milesBetween(HOME, city) * 10) / 10 : undefined,
     url: e.url,
-    ...priceFrom(text),
+    ...priceFrom(`${e.summary}.\n${desc}`),
     tags,
     categories: categories.length ? categories : ['Cultural events'],
     indoor: INDOOR.test(loc) ? true : OUTDOOR.test(loc) ? false : undefined,

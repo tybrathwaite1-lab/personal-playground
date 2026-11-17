@@ -94,6 +94,16 @@ async function main() {
   writeFileSync(OUT, JSON.stringify(file));
   const ok = sources.filter((s) => s.ok).length;
   console.log(`\nLocal Pulse: ${events.length} events from ${ok}/${sources.length} sources → ${OUT}`);
+  if (args.includes('--report')) {
+    // Reviewer aid (branch checks): how each listing's admission price was read.
+    const kinds = { free: 0, paid: 0, mixed: 0, partial: 0, unknown: 0 };
+    for (const e of events) {
+      const k = e.free ? 'free' : e.priceMin !== undefined ? 'paid' : /Free and paid/.test(e.priceNote ?? '') ? 'mixed' : e.priceNote ? 'partial' : 'unknown';
+      kinds[k]++;
+      console.log(`price  ${(e.priceNote ?? 'unknown').padEnd(34)} ${e.sourceIds.join('+').padEnd(14)} ${e.title.slice(0, 60)}`);
+    }
+    console.log('Price summary:', Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(' · '));
+  }
   const byCat = new Map<string, number>();
   events.forEach((e) => e.categories.forEach((c) => byCat.set(c, (byCat.get(c) ?? 0) + 1)));
   console.log('By category:', [...byCat].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${n}`).join(' · '));
