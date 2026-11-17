@@ -4,7 +4,7 @@ name: Check (branches)
 # branches, without deploying. Lets changes be verified before merging.
 on:
   push:
-    branches-ignore: [main]
+    branches-ignore: [main, image-scout, image-scout-results]
   workflow_dispatch:
 
 permissions:
