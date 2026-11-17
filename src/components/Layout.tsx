@@ -8,6 +8,7 @@ import {
   Library,
   MapPin,
   Menu,
+  Radio,
   NotebookPen,
   RotateCcw,
   Sparkles,
@@ -21,8 +22,9 @@ import { useSync } from '../hooks/useSync';
 export const NAV: { route: RouteName; label: string; short: string; num: string; jp: string; icon: typeof House }[] = [
   { route: 'home', label: 'Home', short: 'Home', num: '00', jp: '表紙', icon: House },
   { route: 'discover', label: 'Discovery Engine', short: 'Discover', num: '01', jp: '発見', icon: Compass },
-  { route: 'plan', label: 'Plan a Day', short: 'Plan', num: '01B', jp: '計画', icon: CalendarDays },
+  { route: 'plan', label: 'Plan an Outing', short: 'Plan', num: '01B', jp: '計画', icon: CalendarDays },
   { route: 'interests', label: 'My Interests', short: 'Interests', num: '02', jp: '興味', icon: Sparkles },
+  { route: 'pulse', label: 'The Local Pulse', short: 'Pulse', num: '03A', jp: '今', icon: Radio },
   { route: 'local', label: 'Local Playground', short: 'Local', num: '03', jp: '地元', icon: MapPin },
   { route: 'digital', label: 'Digital Playground', short: 'Digital', num: '04', jp: '電子', icon: Globe },
   { route: 'rediscover', label: 'Rediscover', short: 'Rediscover', num: '05', jp: '再発見', icon: RotateCcw },
@@ -30,7 +32,7 @@ export const NAV: { route: RouteName; label: string; short: string; num: string;
   { route: 'notes', label: 'Field Notes', short: 'Notes', num: '07', jp: '手帳', icon: NotebookPen },
 ];
 
-const BOTTOM: RouteName[] = ['home', 'discover', 'local', 'collection'];
+const BOTTOM: RouteName[] = ['home', 'pulse', 'discover', 'collection'];
 
 function useOnline() {
   const [online, setOnline] = useState(() => navigator.onLine);

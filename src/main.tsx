@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { StoreProvider } from './hooks/useStore';
+import { PulseProvider } from './hooks/usePulse';
 import { SyncProvider } from './hooks/useSync';
 import { WeatherProvider } from './hooks/useWeather';
 // Fonts are bundled with the app (no Google Fonts request), so they work offline from the first launch.
@@ -19,7 +20,9 @@ createRoot(document.getElementById('root')!).render(
     <StoreProvider>
       <SyncProvider>
         <WeatherProvider>
-          <App />
+          <PulseProvider>
+            <App />
+          </PulseProvider>
         </WeatherProvider>
       </SyncProvider>
     </StoreProvider>

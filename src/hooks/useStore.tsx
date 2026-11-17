@@ -5,6 +5,8 @@ import { SEED_PLACES } from '../data/places';
 import { SEED_WEBSITES } from '../data/websites';
 import type {
   Experience,
+  Feedback,
+  VibePreset,
   FieldNote,
   Interest,
   PersonalData,
@@ -18,6 +20,16 @@ import { EMPTY_DATA, STORAGE_KEY, loadData, mergeData, normalizeData, saveData }
 import { EMPTY_META, loadMeta, saveMeta, stampChanges, syncEntries, type Entries, type SyncMeta } from '../utils/sync';
 
 type SaveInput = Omit<SavedItem, 'id' | 'savedAt'>;
+export type FeedbackFlag = 'been' | 'want' | 'enjoyed' | 'notInterested' | 'more' | 'familiar';
+
+/** Flags that can't sensibly both be on. */
+const EXCLUSIVE: Partial<Record<FeedbackFlag, FeedbackFlag[]>> = {
+  notInterested: ['want', 'enjoyed', 'more'],
+  want: ['notInterested'],
+  enjoyed: ['notInterested'],
+  more: ['notInterested', 'familiar'],
+  familiar: ['more'],
+};
 
 interface Store {
   data: PersonalData;
@@ -54,6 +66,11 @@ interface Store {
   deleteFieldNote: (id: string) => void;
 
   setShowAutopilot: (v: boolean) => void;
+  /** Toggle one reaction flag on an item. Key format: "<kind>:<id>". */
+  toggleFeedback: (key: string, flag: FeedbackFlag) => void;
+  feedbackFor: (key: string) => Feedback | undefined;
+  savePreset: (p: Omit<VibePreset, 'id' | 'custom'> & { id?: string }) => void;
+  deletePreset: (id: string) => void;
   setSettings: (patch: Partial<PersonalData['settings']>) => void;
   replaceAll: (d: PersonalData) => void;
   mergeIn: (d: PersonalData) => void;
@@ -225,6 +242,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteFieldNote: (id) => update((d) => ({ ...d, fieldNotes: d.fieldNotes.filter((n) => n.id !== id) })),
 
     setShowAutopilot: (v) => update((d) => ({ ...d, settings: { ...d.settings, showAutopilot: v } })),
+    toggleFeedback: (key, flag) =>
+      update((d) => {
+        const cur = d.feedback[key] ?? { at: '' };
+        const on = !cur[flag];
+        const next: Feedback = { ...cur, [flag]: on || undefined, at: new Date().toISOString() };
+        if (on) for (const f of EXCLUSIVE[flag] ?? []) delete next[f];
+        const anyOn = (['been', 'want', 'enjoyed', 'notInterested', 'more', 'familiar'] as const).some((f) => next[f]);
+        const feedback = { ...d.feedback };
+        if (anyOn) feedback[key] = JSON.parse(JSON.stringify(next));
+        else delete feedback[key];
+        return { ...d, feedback };
+      }),
+    feedbackFor: (key) => data.feedback[key],
+    savePreset: (p) =>
+      update((d) => {
+        const id = p.id ?? uid('vibe');
+        const preset: VibePreset = { ...p, id, custom: true };
+        return { ...d, customPresets: [...d.customPresets.filter((x) => x.id !== id), preset] };
+      }),
+    deletePreset: (id) => update((d) => ({ ...d, customPresets: d.customPresets.filter((x) => x.id !== id) })),
     setSettings: (patch) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } })),
     replaceAll: (d) => setData(normalizeData(d)),
     mergeIn: (incoming) => update((d) => mergeData(d, incoming)),

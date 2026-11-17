@@ -13,7 +13,10 @@ const KINDS: { value: 'all' | SavedKind; label: string }[] = [
   { value: 'website', label: 'Websites' },
   { value: 'interest', label: 'Interests' },
   { value: 'discovery', label: 'Discoveries' },
-  { value: 'plan', label: 'Day plans' },
+  { value: 'plan', label: 'Plans' },
+  { value: 'event', label: 'Events' },
+  { value: 'community', label: 'Communities' },
+  { value: 'drop', label: 'Weekly Drop' },
 ];
 
 function linkFor(s: SavedItem): { href: string; external: boolean } | null {

@@ -14,7 +14,9 @@ export const EMPTY_DATA: PersonalData = {
   hiddenWebsiteIds: [],
   interests: null,
   fieldNotes: [],
-  settings: { showAutopilot: false, weatherAware: true, location: null },
+  feedback: {},
+  customPresets: [],
+  settings: { showAutopilot: false, weatherAware: true, location: null, radiusMiles: 10, transport: 'car' },
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -41,10 +43,16 @@ export function normalizeData(raw: unknown): PersonalData {
     hiddenWebsiteIds: arr<string>(raw.hiddenWebsiteIds),
     interests: Array.isArray(raw.interests) ? (raw.interests as PersonalData['interests']) : null,
     fieldNotes: arr(raw.fieldNotes),
+    feedback: isObj(raw.feedback) ? (raw.feedback as PersonalData['feedback']) : {},
+    customPresets: arr(raw.customPresets),
     settings: {
       showAutopilot: settings.showAutopilot === true,
       weatherAware: settings.weatherAware !== false,
       location: validLocation(settings.location),
+      radiusMiles: typeof settings.radiusMiles === 'number' && settings.radiusMiles > 0 ? settings.radiusMiles : 10,
+      transport: (['car', 'bike', 'transit', 'walk'] as const).includes(settings.transport as never)
+        ? (settings.transport as PersonalData['settings']['transport'])
+        : 'car',
     },
   };
 }
@@ -143,6 +151,8 @@ export function mergeData(current: PersonalData, incoming: PersonalData): Person
     hiddenWebsiteIds: [...new Set([...current.hiddenWebsiteIds, ...incoming.hiddenWebsiteIds])],
     interests: incoming.interests ?? current.interests,
     fieldNotes: byId(current.fieldNotes, incoming.fieldNotes),
+    feedback: { ...current.feedback, ...incoming.feedback },
+    customPresets: byId(current.customPresets, incoming.customPresets),
     settings: { ...current.settings, ...incoming.settings },
   };
 }

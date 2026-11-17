@@ -8,6 +8,7 @@ export type RouteName =
   | 'home'
   | 'discover'
   | 'plan'
+  | 'pulse'
   | 'interests'
   | 'local'
   | 'digital'
@@ -20,6 +21,7 @@ export const ROUTES: RouteName[] = [
   'home',
   'discover',
   'plan',
+  'pulse',
   'interests',
   'local',
   'digital',

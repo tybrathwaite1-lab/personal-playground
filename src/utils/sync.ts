@@ -30,7 +30,7 @@ export interface RemoteFile {
 export const EMPTY_META: SyncMeta = { stamps: {}, tombs: {} };
 const TOMB_TTL = 180 * 24 * 60 * 60 * 1000;
 
-const LISTS = ['saved', 'customExperiences', 'customPlaces', 'websites', 'fieldNotes'] as const;
+const LISTS = ['saved', 'customExperiences', 'customPlaces', 'websites', 'fieldNotes', 'customPresets'] as const;
 
 // ─── Flatten / rebuild ───────────────────────────────────────────────
 export function toEntries(d: PersonalData): Entries {
@@ -43,6 +43,7 @@ export function toEntries(d: PersonalData): Entries {
   for (const id of d.favorites) e[`favorites:${id}`] = true;
   for (const id of d.hiddenWebsiteIds) e[`hidden:${id}`] = true;
   for (const [id, note] of Object.entries(d.placeNotes)) if (note) e[`placeNotes:${id}`] = note;
+  for (const [key, fb] of Object.entries(d.feedback)) e[`feedback:${key}`] = fb;
   e.settings = d.settings;
   return e;
 }
@@ -63,6 +64,7 @@ export function fromEntries(e: Entries): PersonalData {
     } else if (kind === 'favorites') d.favorites.push(id);
     else if (kind === 'hidden') d.hiddenWebsiteIds.push(id);
     else if (kind === 'placeNotes') d.placeNotes[id] = String(value);
+    else if (kind === 'feedback') d.feedback[id] = value as PersonalData['feedback'][string];
     else if (key === 'settings') d.settings = value as PersonalData['settings'];
   }
   if (e['interests:__custom']) d.interests = interests.sort((a, b) => (orders.get(a.id) ?? 0) - (orders.get(b.id) ?? 0));

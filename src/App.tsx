@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import Interests from './pages/Interests';
 import Local from './pages/Local';
 import Plan from './pages/Plan';
+import Pulse from './pages/Pulse';
 import Rediscover from './pages/Rediscover';
 
 export default function App() {
@@ -25,7 +26,9 @@ export default function App() {
       case 'discover':
         return <Discover params={route.params} />;
       case 'plan':
-        return <Plan />;
+        return <Plan params={route.params} />;
+      case 'pulse':
+        return <Pulse params={route.params} />;
       case 'interests':
         return <Interests />;
       case 'local':

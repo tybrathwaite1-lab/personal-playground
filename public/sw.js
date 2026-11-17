@@ -4,12 +4,14 @@
  *  - App shell (index.html): network-first, falling back to cache when offline.
  *  - Same-origin static files (hashed JS/CSS, icons): cache-first, filled at runtime.
  *  - Fonts are bundled same-origin, so they're covered by the rule above.
+ *  - /data/*.json (daily Local Pulse listings): network, never served stale by the worker —
+ *    the app keeps its own dated copy for offline use and labels it.
  *  - Map tiles, weather and geocoding always go to the network (they need a connection).
  *  - Everything else (external sites): untouched.
  *
  * Bump VERSION to force old caches to be cleared.
  */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = `pp-${VERSION}`;
 const SCOPE = self.registration.scope; // e.g. https://user.github.io/personal-playground/
 const SHELL = [SCOPE, `${SCOPE}index.html`, `${SCOPE}manifest.webmanifest`, `${SCOPE}icons/icon-192.png`];
@@ -71,6 +73,11 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate' && request.url.startsWith(SCOPE)) {
     event.respondWith(networkFirst(request));
+    return;
+  }
+  // Daily data (Local Pulse listings): always try the network so listings are never silently stale.
+  if (url.origin === self.location.origin && url.pathname.includes('/data/')) {
+    event.respondWith(fetch(request).catch(() => caches.match(request, { ignoreSearch: true }).then((r) => r || Response.error())));
     return;
   }
   if (url.origin === self.location.origin && request.url.startsWith(SCOPE)) {

@@ -96,7 +96,9 @@ export type PlaceCategory =
   | 'Waterfront destinations'
   | 'Plant shops'
   | 'Interesting public spaces'
-  | 'Cultural events';
+  | 'Cultural events'
+  | 'Workshops and classes'
+  | 'Wildcard activities';
 
 /**
  * verified    — address/website confirmed against a published source on `verifiedOn`.
@@ -158,7 +160,7 @@ export interface CuratedEdition {
 }
 
 // ─── Personal data ───────────────────────────────────────────────────
-export type SavedKind = 'experience' | 'place' | 'website' | 'interest' | 'discovery' | 'plan';
+export type SavedKind = 'experience' | 'place' | 'website' | 'interest' | 'discovery' | 'plan' | 'event' | 'community' | 'drop';
 
 export interface SavedItem {
   id: string;
@@ -205,11 +207,84 @@ export interface PersonalData {
   /** null until the user edits interests; then the full edited list lives here. */
   interests: Interest[] | null;
   fieldNotes: FieldNote[];
+  /** Private, synced reactions keyed by "<kind>:<id>" (e.g. "place:pl-weedon"). */
+  feedback: Record<string, Feedback>;
+  /** User-made Pick a Vibe presets. */
+  customPresets: VibePreset[];
   settings: {
     showAutopilot: boolean;
     /** Nudge picks toward indoor ideas when the forecast is bad. */
     weatherAware: boolean;
     /** null = default St. Petersburg location. Rounded to ~1 km when set from the device. */
     location: { lat: number; lon: number; label: string } | null;
+    /** Everyday travel radius for local discovery, in miles. */
+    radiusMiles: number;
+    transport: Transport;
   };
+}
+
+// ─── Phase II: feedback, presets, communities ───────────────────────
+export type Transport = 'car' | 'bike' | 'transit' | 'walk';
+
+/** Optional private reactions. Never shown as scores or counts. */
+export interface Feedback {
+  been?: boolean;
+  want?: boolean;
+  enjoyed?: boolean;
+  notInterested?: boolean;
+  more?: boolean;
+  familiar?: boolean;
+  at: string;
+}
+
+export type Familiarity = 'new' | 'mix' | 'favorites';
+
+export interface VibePreset {
+  id: string;
+  name: string;
+  jp?: string;
+  description: string;
+  filters: Partial<DiscoveryFilters>;
+  /** Experiences tagged with any of these interests are preferred. */
+  interests?: string[];
+  /** Hard cap on cost.min (USD). */
+  maxCost?: number;
+  /** Duration window in minutes the experience must overlap. */
+  minutes?: [number, number];
+  custom?: boolean;
+}
+
+export interface CommunityRule {
+  /** 0 = Sunday … 6 = Saturday */
+  weekday: number;
+  /** Which occurrences in the month; omit for every week. */
+  nth?: (1 | 2 | 3 | 4 | 5)[];
+  /** 24h "HH:MM" local time, only if published. */
+  start?: string;
+  end?: string;
+}
+
+export type CommunityCadence = 'weekly' | 'monthly' | 'twice-monthly' | 'irregular' | 'online';
+
+export interface Community {
+  id: string;
+  name: string;
+  kind: string;
+  description: string;
+  /** Plain-language schedule exactly as published, e.g. "Second Saturday, 5–9 PM". */
+  schedule: string;
+  cadence: CommunityCadence;
+  /** Machine-readable recurrence for "is it on this day?" — only when the schedule is published precisely. */
+  rules?: CommunityRule[];
+  placeId?: string;
+  venue?: string;
+  address?: string;
+  city: string;
+  website: string;
+  costNote?: string;
+  interests: string[];
+  company: Company[];
+  status: VerificationStatus;
+  verifiedOn: string;
+  sourceNote: string;
 }

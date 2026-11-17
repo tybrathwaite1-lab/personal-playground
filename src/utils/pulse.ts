@@ -28,14 +28,15 @@ const TAG_RULES: [RegExp, string[], string][] = [
   [/market|flea|bazaar|vintage|makers market/i, ['Streetwear culture'], 'Markets'],
   [/tea\b|tea ceremony|matcha/i, ['Tea culture'], 'Tea'],
   [/sound bath|meditat|yoga|breathwork|mindful/i, ['Sound baths', 'Relaxation'], 'Reset'],
-  [/festival|fair\b|celebration|cultural/i, ['Meaningful shared experiences'], 'Festivals'],
+  [/festival|\bfair\b|celebration/i, ['Meaningful shared experiences'], 'Festivals'],
   [/japan|japanese|asian/i, ['Japanese art and design'], 'Japanese culture'],
-  [/garden|nature|preserve|plant|botanical|bird/i, ['Walking', 'Plant keeping'], 'Outdoors'],
+  [/garden|nature walk|preserve|\bplants\b|botanical|birding|kayak|paddle/i, ['Walking', 'Plant keeping'], 'Outdoors'],
   [/sneaker|streetwear|fashion/i, ['Sneakers', 'Streetwear culture'], 'Streetwear'],
 ];
 
 /** Things the brief asks us not to surface: kids-only, galas, private/member events, drink-centric nights. */
-const EXCLUDE = /\b(gala|luncheon|fundraiser dinner|teen night|for teens|toddler|kids? camp|summer camp|homeschool|preschool|story ?time|members[- ]only|private event|wine tasting|bar crawl|pub crawl|bottomless)\b/i;
+const EXCLUDE =
+  /\b(gala|luncheon|fundraiser dinner|teen night|for teens|toddler|kids? camp|summer camp|homeschool|preschool|story ?time|members[- ]only|private event|wine tasting|bar crawl|pub crawl|bottomless|call (to|for) (artists|entries|submissions)|applications? (open|due)|auditions?|volunteer|things to do .* this weekend|deadline)\b/i;
 
 export function tagEvent(text: string): { tags: string[]; categories: string[] } {
   const tags = new Set<string>();

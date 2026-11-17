@@ -56,3 +56,17 @@ test('dedupe merges the same event from two sources', () => {
   assert.equal(out.length, 1);
   assert.deepEqual(out[0].sourceIds.sort(), ['mfa', 'spaa']);
 });
+
+import { COMMUNITIES } from '../src/data/communities.ts';
+import { occurrences, nextOccurrence, ruleTime } from '../src/utils/community.ts';
+
+test('community schedules compute real dates', () => {
+  const walk = COMMUNITIES.find((c) => c.id === 'com-second-saturday')!;
+  assert.deepEqual(occurrences(walk, '2026-11-01', '2026-12-31'), ['2026-11-14', '2026-12-12']);
+  assert.equal(nextOccurrence(walk, '2026-11-17'), '2026-12-12');
+  assert.equal(ruleTime(walk, '2026-12-12'), '5 PM–9 PM');
+  const gp = COMMUNITIES.find((c) => c.id === 'com-gulfport-artwalk')!;
+  assert.deepEqual(occurrences(gp, '2026-12-01', '2026-12-31'), ['2026-12-04', '2026-12-19']);
+  const dojo = COMMUNITIES.find((c) => c.id === 'com-tampa-gaming-dojo')!;
+  assert.deepEqual(occurrences(dojo, '2026-12-01', '2026-12-31'), [], 'no invented dates without a published rule');
+});

@@ -15,7 +15,10 @@ const KIND_LABEL: Record<string, string> = {
   website: 'Website',
   interest: 'Interest',
   discovery: 'Discovery',
-  plan: 'Day plan',
+  plan: 'Plan',
+  event: 'Event',
+  community: 'Community',
+  drop: 'Weekly Drop',
 };
 
 const BLURBS: Record<string, string> = {

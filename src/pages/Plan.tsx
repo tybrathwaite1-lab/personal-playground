@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowUpRight, Bookmark, Coffee, Dices, MapPin, Navigation, Shuffle } from 'lucide-react';
+import { AdventurePanel } from '../components/AdventurePanel';
 import { ChipGroup, Empty, SectionHeader } from '../components/ui';
 import { WeatherStrip } from '../components/WeatherStrip';
 import { href } from '../hooks/useRoute';
@@ -38,7 +39,7 @@ const AREA_OPTIONS: { value: Area; label: string }[] = [
   { value: 'tampa', label: 'Tampa' },
 ];
 
-export default function Plan() {
+function DayPlanPanel() {
   const { experiences, places, data, toggleSave } = useStore();
   const { weather } = useWeather();
   const [opts, setOpts] = useState<Omit<PlanOptions, 'indoorDay'>>(DEFAULT_PLAN_OPTIONS);
@@ -75,12 +76,7 @@ export default function Plan() {
 
   return (
     <div>
-      <SectionHeader
-        number="01B"
-        title="Plan a Day"
-        jp="一日の計画"
-        blurb="A loose shape for an outing — two or three things, a break in between, and home when it’s still good. Re-roll any stop you don’t like."
-      />
+
 
       <div className="mb-3">
         <WeatherStrip toggle />
@@ -197,6 +193,43 @@ export default function Plan() {
           <p className="mt-3 text-xs text-muted">Weather-aware: outdoor-only stops were skipped because of today’s forecast.</p>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function Plan({ params }: { params: URLSearchParams }) {
+  const anchor = params.get('anchor');
+  const [mode, setMode] = useState<'adventure' | 'day'>(params.get('mode') === 'day' ? 'day' : 'adventure');
+  return (
+    <div>
+      <SectionHeader
+        number="01B"
+        title="Plan an Outing"
+        jp="小さな冒険"
+        blurb="Real places and listings, close enough to each other to be easy — with room left over for wandering. Or sketch a looser day from the idea catalogue."
+      />
+      <div className="mb-5 flex border-b border-line" role="tablist" aria-label="Planner mode">
+        {(
+          [
+            ['adventure', 'Mini-adventure · real places'],
+            ['day', 'Day plan · ideas'],
+          ] as const
+        ).map(([m, label]) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => setMode(m)}
+            className={`border-b-2 px-3 py-3 font-mono text-[11px] uppercase tracking-wider ${
+              mode === m ? 'border-rust text-paper' : 'border-transparent text-muted hover:text-paper'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {mode === 'adventure' ? <AdventurePanel key={anchor ?? 'none'} anchor={anchor} /> : <DayPlanPanel />}
     </div>
   );
 }
