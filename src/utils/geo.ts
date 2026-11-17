@@ -12,6 +12,26 @@ export interface LatLon {
   lon: number;
 }
 
+/** Where a stop's coordinates come from. */
+export type Precision = 'venue' | 'city' | 'unknown';
+
+/** Rough Tampa Bay box; publisher coordinates outside it are rejected as errors. */
+const BAY = { minLat: 27.4, maxLat: 28.4, minLon: -83.0, maxLon: -82.2 };
+/** A venue farther than this from its stated city's center is treated as a bad coordinate. */
+const MAX_FROM_CITY_MILES = 12;
+
+/**
+ * Accept publisher-supplied venue coordinates only if they are plausible: inside Tampa Bay
+ * and, when the listing names a city, near that city. Rounded to ~10 m (public venue location).
+ */
+export function plausibleVenue(geo: LatLon | undefined, cityName?: string): LatLon | undefined {
+  if (!geo || !Number.isFinite(geo.lat) || !Number.isFinite(geo.lon)) return undefined;
+  if (geo.lat < BAY.minLat || geo.lat > BAY.maxLat || geo.lon < BAY.minLon || geo.lon > BAY.maxLon) return undefined;
+  const city = cityName ? CITIES.find((c) => c.name === cityName) : undefined;
+  if (city && milesBetween(geo, city) > MAX_FROM_CITY_MILES) return undefined;
+  return { lat: Math.round(geo.lat * 1e4) / 1e4, lon: Math.round(geo.lon * 1e4) / 1e4 };
+}
+
 export const HOME = { name: 'St. Petersburg', lat: 27.7676, lon: -82.6403 };
 
 export const CITIES: City[] = [

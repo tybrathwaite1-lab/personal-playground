@@ -33,7 +33,9 @@ export interface PulseEvent {
   venue?: string;
   address?: string;
   city?: string;
-  /** Approximate miles from St. Petersburg city center (city-level). */
+  /** Venue coordinates published by the calendar (ICS GEO), validated as plausible. */
+  geo?: { lat: number; lon: number };
+  /** Straight-line miles from central St. Petersburg: to the venue when `geo` is set, else to the city center. */
   miles?: number;
   url?: string;
   /** Only when the listing itself states a price. Otherwise undefined = unknown. */

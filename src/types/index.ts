@@ -107,6 +107,15 @@ export type PlaceCategory =
  */
 export type VerificationStatus = 'verified' | 'check' | 'placeholder';
 
+/** Venue coordinates with provenance. Only add when checked against a cited source. */
+export interface VenueCoords {
+  lat: number;
+  lon: number;
+  /** Where they came from, e.g. "Venue website contact page" or "OpenStreetMap node 123". */
+  source: string;
+  verifiedOn: string;
+}
+
 export interface Place {
   id: string;
   name: string;
@@ -116,6 +125,8 @@ export interface Place {
   neighborhood: string;
   city: string;
   website?: string;
+  /** Verified venue coordinates, when researched. Otherwise distances use the city center. */
+  coords?: VenueCoords;
   /** Free-text cost note, e.g. "Free", "$18 adult admission". */
   costNote?: string;
   /** Rough budget bucket used by filters. */
@@ -291,6 +302,8 @@ export interface Community {
   venue?: string;
   address?: string;
   city: string;
+  /** Verified venue coordinates, when researched. Otherwise distances use the city center. */
+  coords?: VenueCoords;
   website: string;
   costNote?: string;
   interests: string[];

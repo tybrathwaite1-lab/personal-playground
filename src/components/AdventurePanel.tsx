@@ -329,7 +329,7 @@ export function AdventurePanel({ anchor }: { anchor?: string | null }) {
         )}
         {result && (
           <p className="mt-3 text-xs text-muted">
-            Stops are real places and listings; hours for permanent places aren’t verified here, so check before heading out.
+            Stops are real places and listings; hours for permanent places aren’t verified here, so check before heading out. Distances are straight lines, not routes, and travel times are rough estimates.
             {pulse.stale && ' Event listings are more than a day old.'}
           </p>
         )}
