@@ -205,8 +205,10 @@ function merge(group: PulseEvent[]): PulseEvent {
     miles: firstWith('miles'),
     url: firstWith('url'),
     indoor: firstWith('indoor'),
+    // Every price field (note, free flag and any structured amounts) comes from the same listing.
     priceNote: priced?.priceNote,
     free: priced?.free,
+    ...(priced ? Object.fromEntries(Object.entries(priced).filter(([k]) => k.startsWith('price'))) : {}),
     sourceIds: [...new Set(group.flatMap((e) => e.sourceIds))].sort(),
     tags: [...new Set(group.flatMap((e) => e.tags))],
     categories: [...new Set(group.flatMap((e) => e.categories))],
