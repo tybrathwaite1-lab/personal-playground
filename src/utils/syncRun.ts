@@ -2,19 +2,22 @@
  * One sync round, separated from React so it can be tested with a fake GitHub.
  *
  * Safety rules (PP-008):
- *  - Before every attempt that could write, re-check that the repository is private.
- *    Anything but an explicit "private" stops the round before reading or writing.
- *  - If the device disconnects (or the config changes) mid-round, nothing more is
- *    written or applied.
+ *  - The repository's privacy is checked at the start of every attempt AND again
+ *    immediately before every write. Anything but an explicit "private" stops the round.
+ *  - If the device disconnects or the sync config (owner, repo, path or token) changes
+ *    mid-round, nothing more is written or applied.
  *  - A write conflict (another device wrote first) re-reads and merges again.
  *  - A local edit made during the round restarts it, so the edit isn't lost.
  *
- * Residual risk, documented: the repository could be made public in the moment between
- * the check and the write (one attempt, typically well under a second). Data written
- * before a repo is made public is in its history and becomes public with it.
+ * Known limits, documented rather than engineered around:
+ *  - Checking privacy and writing are two separate GitHub requests; they are not atomic.
+ *    A repository made public in the moment between them would still receive that write.
+ *  - A write already sent cannot be taken back if the user disconnects while it is in flight.
+ *  - Data written before a repository is made public stays in its history and becomes
+ *    public with it.
  */
 import { SyncError, type SyncConfig } from './github';
-import { EMPTY_META, fromEntries, mergeReplicas, type Entries, type RemoteFile, type SyncMeta } from './sync';
+import { EMPTY_META, fromEntries, mergeReplicas, withLegacySettings, type Entries, type RemoteFile, type SyncMeta } from './sync';
 import type { PersonalData } from '../types';
 
 export interface SyncDeps {
@@ -31,7 +34,17 @@ export interface SyncDeps {
 
 export type SyncOutcome = 'synced' | 'aborted';
 
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/** Key-order-insensitive JSON form, so "nothing changed" isn't mistaken for a change. */
+const canonical = (v: unknown): string =>
+  v && typeof v === 'object'
+    ? Array.isArray(v)
+      ? `[${v.map(canonical).join(',')}]`
+      : `{${Object.keys(v as object)
+          .sort()
+          .map((k) => `${JSON.stringify(k)}:${canonical((v as Record<string, unknown>)[k])}`)
+          .join(',')}}`
+    : JSON.stringify(v) ?? 'null';
+const same = (a: unknown, b: unknown) => canonical(a) === canonical(b);
 const MAX_ATTEMPTS = 4;
 
 export async function syncOnce(cfg: SyncConfig, deps: SyncDeps): Promise<SyncOutcome> {
@@ -45,9 +58,13 @@ export async function syncOnce(cfg: SyncConfig, deps: SyncDeps): Promise<SyncOut
     const local = deps.getLocal();
     const merged = mergeReplicas(local, file ? { entries: file.entries, meta: file.meta } : { entries: {}, meta: EMPTY_META }, now());
 
-    if (!file || !same(merged.entries, file.entries) || !same(merged.meta, file.meta)) {
+    // The file sent to GitHub also carries a legacy `settings` mirror for older app versions.
+    const remoteView = withLegacySettings(merged);
+    if (!file || !same(remoteView.entries, file.entries) || !same(remoteView.meta, file.meta)) {
       if (!deps.stillCurrent()) return 'aborted';
-      const out: RemoteFile = { app: 'personal-playground', format: 1, updatedAt: new Date(now()).toISOString(), entries: merged.entries, meta: merged.meta };
+      await deps.verify(cfg); // re-check immediately before writing
+      if (!deps.stillCurrent()) return 'aborted';
+      const out: RemoteFile = { app: 'personal-playground', format: 1, updatedAt: new Date(now()).toISOString(), entries: remoteView.entries, meta: remoteView.meta };
       try {
         await deps.write(cfg, out, sha);
       } catch (e) {

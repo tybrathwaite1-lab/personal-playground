@@ -3,6 +3,7 @@ import {
   loadConfig,
   readRemote,
   saveConfig,
+  sameConfig,
   verifyRepo,
   writeRemote,
   type SyncConfig,
@@ -53,6 +54,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     running.current = true;
     setStatus('syncing');
     const gen = generation.current;
+    /** False once disconnected or reconfigured: a stale round must not touch status or errors. */
+    const isCurrent = () => generation.current === gen && sameConfig(loadConfig(), cfg);
     try {
       const outcome = await syncOnce(cfg, {
         verify: verifyRepo,
@@ -60,12 +63,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         write: writeRemote,
         getLocal: () => storeRef.current.getSyncState(),
         apply: (data, meta, version) => storeRef.current.applySynced(data, meta, version),
-        stillCurrent: () => generation.current === gen && loadConfig()?.token === cfg.token && loadConfig()?.repo === cfg.repo,
+        stillCurrent: isCurrent,
       });
-      if (outcome === 'aborted') {
-        setStatus(loadConfig() ? 'idle' : 'off');
-        return;
-      }
+      if (outcome === 'aborted' || !isCurrent()) return; // status already reflects the new config
       const now = Date.now();
       setLast(now);
       try {
@@ -76,6 +76,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       setError(null);
       setStatus('idle');
     } catch (e) {
+      if (!isCurrent()) return; // a stale round's error must not show against the new config
       setError(e instanceof Error ? e.message : 'Sync failed.');
       setStatus('error');
     } finally {
@@ -118,6 +119,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         setStatus(config ? 'idle' : 'off');
         throw e;
       }
+      generation.current += 1; // any round still running for the previous config stops
       saveConfig(c);
       setConfig(c); // the effect above runs the first sync
     },

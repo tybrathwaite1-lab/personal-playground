@@ -242,3 +242,203 @@ test('a device still on the old version keeps working with upgraded devices', ()
   assert.equal(m2.entries['settings:radiusMiles'], 40);
   assert.equal(m2.entries['settings:weatherAware'], true);
 });
+
+// ─── Review revisions (independent review of #18) ─────────────────────
+
+test('repo made public during the read (no write conflict): the pre-write check stops the write', async () => {
+  const gh = new FakeGitHub();
+  const a = new Device();
+  a.edit((d) => ({ ...d, fieldNotes: [note('n1', 'Synthetic')] }), 1000);
+  gh.onRead = () => {
+    gh.visibility = 'public';
+  };
+  await assert.rejects(a.sync(gh, 1100), (e: SyncError) => e.kind === 'public');
+  assert.equal(gh.writes, 0);
+  assert.equal(gh.file, null);
+});
+
+// verifyRepo itself, against mocked fetch responses (no network).
+const realFetch = globalThis.fetch;
+async function verifyWith(response: () => Promise<Response> | Response): Promise<SyncError | null> {
+  const { verifyRepo } = await import('../src/utils/github.ts');
+  globalThis.fetch = (async () => response()) as typeof fetch;
+  try {
+    await verifyRepo(CFG);
+    return null;
+  } catch (e) {
+    if (e instanceof SyncError) return e;
+    throw e; // any non-SyncError escaping verifyRepo is itself a failure
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
+test('verifyRepo: explicit private repo with push access passes', async () => {
+  assert.equal(await verifyWith(() => json({ private: true, permissions: { push: true } })), null);
+});
+
+test('verifyRepo fails closed on public, missing, malformed or non-boolean privacy', async () => {
+  const cases: [string, () => Response][] = [
+    ['public', () => json({ private: false })],
+    ['missing field', () => json({ name: 'x' })],
+    ['string "true"', () => json({ private: 'true' })],
+    ['null', () => json({ private: null })],
+    ['JSON null body', () => json(null)],
+    ['malformed JSON', () => new Response('{"private": tru', { status: 200 })],
+    ['empty body', () => new Response('', { status: 200 })],
+  ];
+  for (const [name, res] of cases) {
+    const e = await verifyWith(res);
+    assert.equal(e?.kind, 'public', `${name} must stop sync`);
+  }
+});
+
+test('verifyRepo: unsuccessful responses stop sync with the right kind', async () => {
+  assert.equal((await verifyWith(() => json({}, 401)))?.kind, 'auth');
+  assert.equal((await verifyWith(() => json({}, 403)))?.kind, 'auth');
+  assert.equal((await verifyWith(() => json({}, 404)))?.kind, 'notfound');
+  assert.equal((await verifyWith(() => json({}, 500)))?.kind, 'network');
+  assert.equal((await verifyWith(() => Promise.reject(new TypeError('offline'))))?.kind, 'network');
+  assert.equal((await verifyWith(() => json({ private: true, permissions: { push: false } })))?.kind, 'auth');
+});
+
+test('sameConfig compares owner, repo, path and token', async () => {
+  const { sameConfig } = await import('../src/utils/github.ts');
+  assert.equal(sameConfig(CFG, { ...CFG }), true);
+  for (const k of ['owner', 'repo', 'path', 'token'] as const) assert.equal(sameConfig(CFG, { ...CFG, [k]: 'other' }), false, k);
+  assert.equal(sameConfig(CFG, null), false);
+});
+
+test('a round started for one config stops when only the path changes', async () => {
+  const gh = new FakeGitHub();
+  const a = new Device();
+  a.edit((d) => ({ ...d, favorites: ['pl-x'] }), 1000);
+  const { sameConfig } = await import('../src/utils/github.ts');
+  let current: SyncConfig = CFG;
+  gh.onRead = () => {
+    current = { ...CFG, path: 'elsewhere.json' };
+  };
+  const out = await syncOnce(CFG, { ...a.deps(gh, 1100), stillCurrent: () => sameConfig(current, CFG) });
+  assert.equal(out, 'aborted');
+  assert.equal(gh.writes, 0);
+});
+
+test('an older legacy settings value never resurrects a newer per-field deletion', () => {
+  const r = {
+    entries: { settings: { ...EMPTY_DATA.settings, retiredOption: 'old' } },
+    meta: { stamps: { settings: 5000 }, tombs: { 'settings:retiredOption': 9000 } },
+  };
+  const up = S.upgradeReplica(r);
+  assert.equal('settings:retiredOption' in up.entries, false);
+  assert.equal(up.meta.tombs['settings:retiredOption'], 9000);
+  // ...but a legacy value written AFTER the deletion is a newer change and wins.
+  const newer = S.upgradeReplica({ ...r, meta: { stamps: { settings: 10000 }, tombs: { 'settings:retiredOption': 9000 } } });
+  assert.equal(newer.entries['settings:retiredOption'], 'old');
+  // Merged through mergeReplicas with a device that has the tombstone:
+  const m = S.mergeReplicas({ entries: {}, meta: { stamps: {}, tombs: { 'settings:retiredOption': 9000 } } }, r, 9500);
+  assert.equal('settings:retiredOption' in m.entries, false);
+});
+
+test('reading back our own legacy mirror changes nothing (per-field stamps survive)', () => {
+  const r = { entries: { 'settings:radiusMiles': 20, 'settings:weatherAware': false }, meta: { stamps: { 'settings:radiusMiles': 1000, 'settings:weatherAware': 3000 }, tombs: {} } };
+  const mirrored = S.withLegacySettings(r);
+  assert.equal(mirrored.meta.stamps.settings, 3000);
+  const back = S.upgradeReplica(mirrored);
+  assert.equal(back.meta.stamps['settings:radiusMiles'], 1000);
+  assert.equal(back.meta.stamps['settings:weatherAware'], 3000);
+});
+
+// ─── Mixed versions: the previous app version's REAL sync code (tests/fixtures/legacy) ───
+import * as V1 from './fixtures/legacy/sync-v1.ts';
+
+/** A device still running the previous version: its own serialization, merge, rebuild and loop. */
+class OldDevice {
+  data: PersonalData = structuredClone(EMPTY_DATA);
+  meta: V1.SyncMeta = V1.EMPTY_META;
+  entries = V1.syncEntries(this.data);
+  edit(fn: (d: PersonalData) => PersonalData, t: number) {
+    this.data = fn(structuredClone(this.data));
+    const next = V1.syncEntries(this.data);
+    this.meta = V1.stampChanges(this.entries, next, this.meta, t);
+    this.entries = next;
+  }
+  /** Mirrors the loop in the previous useSync.tsx (main 7a69ad8): read → merge → write if changed → apply. */
+  async sync(gh: FakeGitHub, t: number) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const { file, sha } = await gh.read();
+      const merged = V1.mergeReplicas({ entries: this.entries, meta: this.meta }, file ? { entries: file.entries, meta: file.meta } : { entries: {}, meta: V1.EMPTY_META }, t);
+      if (!file || JSON.stringify(merged.entries) !== JSON.stringify(file.entries) || JSON.stringify(merged.meta) !== JSON.stringify(file.meta)) {
+        try {
+          await gh.write(CFG, { app: 'personal-playground', format: 1, updatedAt: String(t), entries: merged.entries, meta: merged.meta }, sha);
+        } catch (e) {
+          if (e instanceof SyncError && e.kind === 'conflict') continue;
+          throw e;
+        }
+      }
+      this.data = V1.fromEntries(merged.entries);
+      this.meta = merged.meta;
+      this.entries = V1.syncEntries(this.data);
+      return;
+    }
+    throw new Error('old client collided');
+  }
+}
+
+test('mixed versions: old → new → old round trip keeps data and settings flowing both ways', async () => {
+  const gh = new FakeGitHub();
+  const oldD = new OldDevice();
+  const newD = new Device();
+  // Old device creates data and settings first (an existing user).
+  oldD.edit((d) => ({ ...d, fieldNotes: [note('o1', 'From old')], settings: { ...d.settings, readerNotes: 'Old notes' } }), 1000);
+  await oldD.sync(gh, 1100);
+  // New device joins: reads the old single-entry format.
+  await newD.sync(gh, 1200);
+  assert.equal(newD.data.settings.readerNotes, 'Old notes');
+  assert.deepEqual(newD.data.fieldNotes.map((n) => n.id), ['o1']);
+  // New device changes a setting and adds a note.
+  newD.edit((d) => ({ ...d, fieldNotes: [note('n1', 'From new'), ...d.fieldNotes], settings: { ...d.settings, radiusMiles: 25 } }), 2000);
+  await newD.sync(gh, 2100);
+  // Old device must SEE the new device's setting (via the legacy mirror).
+  await oldD.sync(gh, 2200);
+  assert.equal(oldD.data.settings.radiusMiles, 25);
+  assert.equal(oldD.data.settings.readerNotes, 'Old notes');
+  assert.deepEqual(oldD.data.fieldNotes.map((n) => n.id).sort(), ['n1', 'o1']);
+  // Old device later edits a different setting; the new device's earlier change must not be reverted.
+  oldD.edit((d) => ({ ...d, settings: { ...d.settings, weatherAware: false } }), 3000);
+  await oldD.sync(gh, 3100);
+  await newD.sync(gh, 3200);
+  assert.equal(newD.data.settings.radiusMiles, 25);
+  assert.equal(newD.data.settings.weatherAware, false);
+  assert.equal(newD.data.settings.readerNotes, 'Old notes');
+  // And back to the old device once more.
+  await oldD.sync(gh, 3300);
+  assert.equal(oldD.data.settings.radiusMiles, 25);
+  assert.equal(oldD.data.settings.weatherAware, false);
+});
+
+test('mixed versions: deletions cross versions, and the two clients settle (no write ping-pong)', async () => {
+  const gh = new FakeGitHub();
+  const oldD = new OldDevice();
+  const newD = new Device();
+  newD.edit((d) => ({ ...d, fieldNotes: [note('a', 'A'), note('b', 'B')] }), 1000);
+  await newD.sync(gh, 1100);
+  await oldD.sync(gh, 1200);
+  oldD.edit((d) => ({ ...d, fieldNotes: d.fieldNotes.filter((n) => n.id !== 'a') }), 2000);
+  await oldD.sync(gh, 2100);
+  await newD.sync(gh, 2200);
+  assert.deepEqual(newD.data.fieldNotes.map((n) => n.id), ['b']);
+  newD.edit((d) => ({ ...d, fieldNotes: [] }), 3000);
+  await newD.sync(gh, 3100);
+  await oldD.sync(gh, 3200);
+  assert.deepEqual(oldD.data.fieldNotes, []);
+  // Quiet period: repeated syncs on both sides must stop writing.
+  for (let i = 0; i < 3; i++) {
+    await newD.sync(gh, 4000 + i);
+    await oldD.sync(gh, 4100 + i);
+  }
+  const settled = gh.writes;
+  await newD.sync(gh, 5000);
+  await oldD.sync(gh, 5100);
+  assert.equal(gh.writes, settled, 'no further writes once both clients agree');
+});
