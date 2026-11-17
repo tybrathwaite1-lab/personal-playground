@@ -86,7 +86,7 @@
       "title": "Madlib — Shades of Blue",
       "dek": "DOOM’s Madvillainy partner, let loose in the Blue Note vaults.",
       "body": [
-        "A year before Madvillainy, Blue Note gave Madlib access to its catalog, and he came back with Shades of Blue (2003): remixes, re-recordings and loops of classic jazz sides. It’s the clearest window into the record collection behind the beats you know from Madvillainy — and it’ll send you to Blue Note albums you can find in any St. Pete crate."
+        "A year before Madvillainy, Blue Note gave Madlib access to its catalog, and he came back with Shades of Blue (2003): remixes, re-recordings and loops of classic jazz sides. It’s the clearest window into the record collection behind the beats you know from Madvillainy — and it opens a route into the original recordings by artists such as Ronnie Foster and Bobby Hutcherson."
       ],
       "why": "A step sideways from MF DOOM into the jazz records that fed the beats.",
       "freshness": "archive",
@@ -114,6 +114,12 @@
           "url": "https://en.wikipedia.org/wiki/Shades_of_Blue_(Madlib_album)",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Blue Note: Shades of Blue track list",
+          "url": "https://store.bluenote.com/products/madlib-shades-of-blue-2lp-blue-note-classic-vinyl-series",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
         }
       ],
       "related": [
@@ -138,7 +144,7 @@
       "title": "Six Seconds That Built Genres",
       "dek": "The Amen break: a 1969 drum solo that became jungle, drum and bass and a thousand hip-hop beats.",
       "body": [
-        "In 1969, the soul band The Winstons released “Color Him Father,” with an instrumental B-side called “Amen, Brother.” Its few-second drum break — played by G. C. Coleman — became one of the most sampled recordings ever made, chopped into hip-hop, then sped up into jungle and drum and bass. The band was paid nothing for it for decades. Listen to the original, then hear it everywhere."
+        "In 1969, the soul band The Winstons released “Color Him Father,” with an instrumental B-side called “Amen, Brother.” Its few-second drum break — played by G. C. Coleman — became one of the most sampled recordings ever made, chopped into hip-hop, then sped up into jungle and drum and bass. Its widespread reuse also raises questions about recognition and compensation for sampled musicians. Listen to the original, then hear it everywhere."
       ],
       "why": "Sampling history at its most concrete — and a little unjust, which makes it stick.",
       "freshness": "archive",
@@ -197,6 +203,12 @@
         {
           "label": "Wikipedia: J Dilla",
           "url": "https://en.wikipedia.org/wiki/J_Dilla",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Smithsonian: J Dilla’s MPC3000",
+          "url": "https://nmaahc.si.edu/object/nmaahc_2014.139.1",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
         }

@@ -67,6 +67,9 @@ jobs:
           # Project sites are served from /<repo-name>/. Change to "/" for a custom domain or <user>.github.io repo.
           BASE_PATH: /${{ github.event.repository.name }}/
 
+      - name: Stamp build (lets the smoke check confirm which commit is live)
+        run: echo "{\"commit\":\"${{ github.sha }}\",\"builtAt\":\"$(date -u +%FT%TZ)\"}" > dist/version.json
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
@@ -76,9 +79,25 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Read-only check of the live site: app shell, bundles, service worker, deployed
+  # commit and a fresh, consistent pulse.json. Public URLs only, no credentials.
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - name: Production smoke check
+        run: npx tsx scripts/smoke/prod.ts "${{ needs.deploy.outputs.page_url }}" --expect-commit "${{ github.sha }}"

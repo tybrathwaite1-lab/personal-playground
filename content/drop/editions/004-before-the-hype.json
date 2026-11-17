@@ -124,7 +124,7 @@
       "title": "Kids (1995)",
       "dek": "Larry Clark’s raw, controversial portrait of New York skate kids — with real skaters in the cast.",
       "body": [
-        "Kids, directed by photographer Larry Clark and written by a 19-year-old Harmony Korine, follows a day in the lives of New York teenagers. It was controversial on release and remains hard going. Its importance to skate culture is the cast: real Washington Square skaters, including Justin Pierce and Harold Hunter, playing versions of their world. Watch knowing what it is — a document of a scene as much as a film."
+        "Kids, directed by photographer Larry Clark and written by Harmony Korine, follows a day in the lives of New York teenagers. It was controversial on release and remains hard going. Its importance to skate culture is the cast: real Washington Square skaters, including Justin Pierce and Harold Hunter, playing versions of their world. Content note: sexual violence and HIV themes. Watch knowing what it is — a document of a scene as much as a film."
       ],
       "why": "Mid-90s New York skate culture on screen — a primary source for the era your streetwear interest lives in.",
       "freshness": "archive",
@@ -209,6 +209,12 @@
           "label": "Wikipedia: ASICS",
           "url": "https://en.wikipedia.org/wiki/ASICS",
           "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "ASICS: GEL-LYTE III design history",
+          "url": "https://www.asics.com/gb/en-gb/gel-lyte-iii-og/p/1191A266-100.html",
+          "kind": "official",
           "verifiedAt": "2026-11-17"
         }
       ]

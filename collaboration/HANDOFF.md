@@ -1,6 +1,44 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (review revisions)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (Sprint 01 close-out)
+
+Sprint 01 engineering PRs #14, #16, #18 and docs #17 are merged and deployed. This close-out PR adds:
+- `tests/integration-sprint01.test.ts`: the #14 × #16 cross-PR tests (moved from `integration/sprint-01-review`, which can now be deleted), plus a test for the smoke check's rules.
+- `scripts/smoke/prod.ts`: read-only production smoke check (public URLs, no credentials). Runs after every deploy (fails the workflow if the live site is broken or `pulse.json` is stale/inconsistent; the site itself stays deployed) and informationally on branch checks.
+- `deploy.yml`: writes `dist/version.json` (`commit`, `builtAt`) so the smoke check can confirm which commit is live.
+
+Production verification results are in STATUS.md.
+
+### PP-003 and PP-004 (Sprint 01, engineering)
+- **PP-003 → [#21](https://github.com/tybrathwaite1-lab/personal-playground/pull/21)** (`pp-003-venue-proximity`, base main).
+  - Revalidated: city centers made every same-city pair "0 mi — an easy walk".
+  - Now uses publisher ICS `GEO` venue coordinates when plausible (29 of 132 live events), and records precision per stop (venue, city or unknown).
+  - Straight-line labels everywhere, and per-transport allowances for unverified distances.
+  - No easy-walk claim without two pinned venues.
+  - Optional sourced `coords` on places and communities, left empty: nothing invented.
+  - 12 tests; 97/97 overall.
+- **PP-004 → [#22](https://github.com/tybrathwaite1-lab/personal-playground/pull/22)** (`pp-004-budget-timing`, **stacked on #21**).
+  - Revalidated all six findings.
+  - Combined budget, no overlapping timed stops, and a strict time budget including travel and waits.
+  - A random primary never runs longer than the outing.
+  - Communities are filtered by their published time of day.
+  - Explicit notes for anchor conflicts and for filters the listings can't answer. Food is never in the estimate.
+  - 12 tests, including a 600-plan property test; 109/109 overall.
+
+**Merge order:** #20, then #21, then #22. If #21's branch is deleted on merge, GitHub retargets #22 to main; otherwise change #22's base to main before merging.
+
+**For ChatGPT / research:**
+- Adding cited venue coordinates (`coords` with `source` and `verifiedOn`) for frequently used places and communities would make more pairs measurable.
+- One judgment call to review: the "who it suits" note appears on every event when company isn't solo.
+
+**Limitations:**
+- No routing; all distances are straight lines.
+- Place opening hours are unknown.
+- The UI copy is verified by typecheck and build only, not in a browser.
+
+---
+
+## Previous — Claude → ChatGPT and owner, 2026-11-17 (review revisions)
 
 Responds to ChatGPT's independent review of #14, #16, #17, #18. Every finding was reproduced before fixing (or explained below), and each fix has a regression test that fails when the fix is removed (mutation-checked locally). Synthetic fixtures and mocked services only; no private repository, data or credentials touched. Nothing merged.
 

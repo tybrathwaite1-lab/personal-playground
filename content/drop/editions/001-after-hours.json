@@ -49,6 +49,12 @@
           "url": "https://en.wikipedia.org/wiki/Tangerine_Dream",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Criterion: Thief",
+          "url": "https://www.criterion.com/films/28024-thief",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
         }
       ],
       "related": [
@@ -230,7 +236,7 @@
       "title": "Fan Ho’s Hong Kong",
       "dek": "Light, smoke and long shadows: street photographs from the 1950s and ’60s.",
       "body": [
-        "Fan Ho photographed Hong Kong’s streets in the 1950s and 1960s, mostly with a twin-lens camera, waiting for light to cut through alleys and smoke until a single figure stepped into it. The results look staged and aren’t — they’re patience. Look at a few dozen of his frames before your next walk with a camera, and you’ll start seeing the city as shapes of light instead of things."
+        "Fan Ho photographed Hong Kong’s streets in the 1950s and 1960s, mostly with a twin-lens camera, waiting for light to cut through alleys and smoke until a single figure stepped into it. The compositions invite a closer look at the relationship between observation and arrangement. Look at a few dozen of his frames before your next walk with a camera, and you’ll start seeing the city as shapes of light instead of things."
       ],
       "why": "Street photography and urban atmosphere — and a free lesson in waiting for the light.",
       "freshness": "archive",
@@ -261,7 +267,7 @@
       "title": "Second Saturday, After Dark",
       "dek": "St. Pete’s galleries open late on the same night every month.",
       "body": [
-        "On the second Saturday of every month, galleries and studios across seven St. Pete arts districts stay open from 5 to 9 p.m., and a trolley loops the Warehouse Arts District into the evening. Go late, pick one district, and treat it like a night walk with art in it. The next date is always in the Local Pulse."
+        "On the second Saturday of every month, galleries and studios across seven St. Pete arts districts stay open from 5 to 9 p.m., and a trolley loops the Warehouse Arts District into the evening. Go late, pick one district, and treat it like a night walk with art in it. Check the organizer’s monthly guide for participating venues and transport details."
       ],
       "why": "The closest thing to a neo-noir night walk you can do this month, with conversations included.",
       "freshness": "timeless",
@@ -274,8 +280,8 @@
       "exploreMinutes": 180,
       "sources": [
         {
-          "label": "St. Petersburg Arts Alliance — Second Saturday ArtWalk",
-          "url": "https://stpeteartsalliance.org/jc92",
+          "label": "St. Petersburg Arts Alliance — ArtWalk",
+          "url": "https://stpeteartsalliance.org/find-arts/artwalk/",
           "kind": "official",
           "verifiedAt": "2026-11-17"
         }
@@ -283,6 +289,12 @@
       "local": {
         "communityId": "com-second-saturday"
       }
+    }
+  ],
+  "corrections": [
+    {
+      "date": "2026-11-17",
+      "note": "Updated the ArtWalk organizer link and removed unsupported guarantees about listings and photographic staging; added Criterion reference."
     }
   ]
 }
