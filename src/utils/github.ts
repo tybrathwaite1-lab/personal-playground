@@ -37,6 +37,11 @@ export function loadConfig(): SyncConfig | null {
   }
 }
 
+/** True when two configs point at the same file with the same token. */
+export function sameConfig(a: SyncConfig | null, b: SyncConfig | null): boolean {
+  return Boolean(a && b && a.owner === b.owner && a.repo === b.repo && a.path === b.path && a.token === b.token);
+}
+
 export function saveConfig(c: SyncConfig | null) {
   try {
     if (c) localStorage.setItem(CONFIG_KEY, JSON.stringify(c));
@@ -79,13 +84,29 @@ function explain(status: number, what: string): SyncError {
   return new SyncError(`GitHub returned an error (${status}).`, 'network');
 }
 
-/** Confirms the repo exists, is private, and the token can write to it. */
+/**
+ * Confirms the repo exists, is private, and the token can write to it.
+ * Called when connecting, at the start of every sync attempt, and again immediately
+ * before every write. Checking and writing are separate requests, so this is not atomic.
+ */
 export async function verifyRepo(c: SyncConfig): Promise<void> {
   const res = await call(`${API}/repos/${c.owner}/${c.repo}`, { headers: headers(c.token) });
   if (!res.ok) throw explain(res.status, 'read this repository');
-  const repo = (await res.json()) as { private?: boolean; permissions?: { push?: boolean } };
+  let repo: { private?: unknown; permissions?: { push?: boolean } } | null;
+  try {
+    repo = (await res.json()) as typeof repo;
+  } catch {
+    repo = null; // unreadable response: treated as "privacy not confirmed" below
+  }
+  if (!repo || typeof repo !== 'object') {
+    throw new SyncError('Sync stopped: GitHub didn’t confirm the repository is private. Nothing was written. Try Sync now in a moment.', 'public');
+  }
+  // Fail closed: anything other than an explicit "private: true" stops sync.
   if (repo.private === false) {
-    throw new SyncError('That repository is public. Your personal data needs a private repo — make it private or create a new one.', 'public');
+    throw new SyncError('Sync stopped: that repository is public. Your personal data needs a private repo — make it private again, then tap Sync now.', 'public');
+  }
+  if (repo.private !== true) {
+    throw new SyncError('Sync stopped: GitHub didn’t confirm the repository is private. Nothing was written. Try Sync now in a moment.', 'public');
   }
   if (repo.permissions && repo.permissions.push === false) {
     throw new SyncError('The token can read but not write. Give it Contents: Read and write.', 'auth');

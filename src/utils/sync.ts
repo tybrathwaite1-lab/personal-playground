@@ -44,7 +44,8 @@ export function toEntries(d: PersonalData): Entries {
   for (const id of d.hiddenWebsiteIds) e[`hidden:${id}`] = true;
   for (const [id, note] of Object.entries(d.placeNotes)) if (note) e[`placeNotes:${id}`] = note;
   for (const [key, fb] of Object.entries(d.feedback)) e[`feedback:${key}`] = fb;
-  e.settings = d.settings;
+  // One entry per setting, so changing different settings on two devices doesn't lose either change.
+  for (const [k, v] of Object.entries(d.settings)) e[`settings:${k}`] = v;
   return e;
 }
 
@@ -52,6 +53,8 @@ export function fromEntries(e: Entries): PersonalData {
   const d: PersonalData = structuredClone(EMPTY_DATA);
   const interests: (PersonalData['interests'] & object)[number][] = [];
   const orders = new Map<string, number>();
+  let legacySettings: Record<string, unknown> = {};
+  const settings: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(e)) {
     const i = key.indexOf(':');
     const kind = i < 0 ? key : key.slice(0, i);
@@ -65,8 +68,10 @@ export function fromEntries(e: Entries): PersonalData {
     else if (kind === 'hidden') d.hiddenWebsiteIds.push(id);
     else if (kind === 'placeNotes') d.placeNotes[id] = String(value);
     else if (kind === 'feedback') d.feedback[id] = value as PersonalData['feedback'][string];
-    else if (key === 'settings') d.settings = value as PersonalData['settings'];
+    else if (kind === 'settings' && id) settings[id] = value;
+    else if (key === 'settings' && value && typeof value === 'object') legacySettings = value as Record<string, unknown>;
   }
+  d.settings = { ...legacySettings, ...settings } as PersonalData['settings'];
   if (e['interests:__custom']) d.interests = interests.sort((a, b) => (orders.get(a.id) ?? 0) - (orders.get(b.id) ?? 0));
   d.saved.sort((a, b) => b.savedAt.localeCompare(a.savedAt));
   d.fieldNotes.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -100,6 +105,59 @@ export function stampChanges(prev: Entries, next: Entries, meta: SyncMeta, now =
   return changed ? { stamps, tombs } : meta;
 }
 
+// ─── Settings format upgrade ────────────────────────────────────────
+type Replica = { entries: Entries; meta: SyncMeta };
+
+/**
+ * Earlier versions stored all settings as a single `settings` entry. Expand it into
+ * per-field `settings:<name>` entries. A legacy field value replaces a per-field one only
+ * when it is newer than that field's last change (edit OR deletion) and actually differs,
+ * so an older legacy value never resurrects a newer deletion, and reading back our own
+ * mirror (see withLegacySettings) changes nothing. Idempotent and pure.
+ */
+export function upgradeReplica(r: Replica): Replica {
+  const legacy = r.entries.settings;
+  const legacyStamp = r.meta.stamps.settings;
+  if (legacy === undefined && legacyStamp === undefined && r.meta.tombs.settings === undefined) return r;
+  const entries: Entries = { ...r.entries };
+  const stamps = { ...r.meta.stamps };
+  const tombs = { ...r.meta.tombs };
+  const t = legacyStamp ?? 0;
+  if (legacy && typeof legacy === 'object') {
+    for (const [field, value] of Object.entries(legacy as Record<string, unknown>)) {
+      const key = `settings:${field}`;
+      const fieldTime = key in entries ? (stamps[key] ?? 0) : (tombs[key] ?? -1);
+      if (t > fieldTime && !(key in entries && same(entries[key], value))) {
+        entries[key] = value;
+        if (t) stamps[key] = t;
+        delete tombs[key];
+      }
+    }
+  }
+  if (t) for (const key of Object.keys(entries)) if (key.startsWith('settings:') && stamps[key] === undefined) stamps[key] = t;
+  delete entries.settings;
+  delete stamps.settings;
+  delete tombs.settings;
+  return { entries, meta: { stamps, tombs } };
+}
+
+/**
+ * For devices still running the previous version, which only read the single `settings`
+ * entry: write a mirror of the per-field settings, stamped with the newest field change.
+ * Used only for the file sent to GitHub; local state never holds the mirror.
+ */
+export function withLegacySettings(r: Replica): Replica {
+  const keys = Object.keys(r.entries).filter((k) => k.startsWith('settings:'));
+  if (!keys.length) return r;
+  const stamp = Math.max(0, ...keys.map((k) => r.meta.stamps[k] ?? 0));
+  const settings = fromEntries(Object.fromEntries(keys.map((k) => [k, r.entries[k]]))).settings;
+  const stamps = { ...r.meta.stamps };
+  if (stamp) stamps.settings = stamp;
+  const tombs = { ...r.meta.tombs };
+  delete tombs.settings;
+  return { entries: { ...r.entries, settings }, meta: { stamps, tombs } };
+}
+
 // ─── Merge ──────────────────────────────────────────────────────────
 /**
  * Merge two replicas entry-by-entry: the most recent change wins, whether that
@@ -110,6 +168,8 @@ export function mergeReplicas(
   remote: { entries: Entries; meta: SyncMeta },
   now = Date.now(),
 ): { entries: Entries; meta: SyncMeta } {
+  local = upgradeReplica(local);
+  remote = upgradeReplica(remote);
   const keys = new Set([
     ...Object.keys(local.entries),
     ...Object.keys(remote.entries),
