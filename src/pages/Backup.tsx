@@ -1,0 +1,154 @@
+import { useRef, useState } from 'react';
+import { Download, Eye, EyeOff, Smartphone, Trash2, Upload } from 'lucide-react';
+import { SectionHeader } from '../components/ui';
+import { useStore } from '../hooks/useStore';
+import type { PersonalData } from '../types';
+import { downloadBackup, parseBackup } from '../utils/storage';
+
+export default function Backup() {
+  const store = useStore();
+  const { data } = store;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pending, setPending] = useState<PersonalData | null>(null);
+  const [error, setError] = useState('');
+
+  const size = new Blob([JSON.stringify(data)]).size;
+  const summary = (d: PersonalData) =>
+    [
+      `${d.saved.length} saved`,
+      `${d.fieldNotes.length} field notes`,
+      `${d.favorites.length} favorites`,
+      `${d.customExperiences.length + d.customPlaces.length + d.websites.length} custom entries`,
+    ].join(' · ');
+
+  const onFile = async (file: File | undefined) => {
+    setError('');
+    if (!file) return;
+    const result = parseBackup(await file.text());
+    if (result.ok) setPending(result.data);
+    else setError(result.error);
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  return (
+    <div className="max-w-3xl">
+      <SectionHeader
+        number="08"
+        title="Backup & Settings"
+        jp="保管"
+        blurb="Your playground lives in this browser only. Export a backup now and then — especially before clearing Safari data or switching phones."
+      />
+
+      <section className="card mb-6 p-5">
+        <p className="label mb-1">On this device</p>
+        <p className="text-paper/90">{summary(data)}</p>
+        <p className="mt-1 font-mono text-xs text-muted">{(size / 1024).toFixed(1)} KB stored locally</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button type="button" className="btn-primary" onClick={() => downloadBackup(data)}>
+            <Download size={16} aria-hidden /> Export backup (JSON)
+          </button>
+          <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
+            <Upload size={16} aria-hidden /> Import backup
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="sr-only"
+            aria-label="Choose a backup file"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+        </div>
+        {error && (
+          <p className="mt-3 text-sm text-rust" role="alert">
+            {error}
+          </p>
+        )}
+        {pending && (
+          <div className="mt-4 border border-rust/60 p-4" role="status">
+            <p className="label mb-1 text-rust">Backup ready to import</p>
+            <p className="text-sm">{summary(pending)}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  store.mergeIn(pending);
+                  setPending(null);
+                  store.notify('Backup merged');
+                }}
+              >
+                Merge with current
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  if (confirm('Replace everything on this device with the backup?')) {
+                    store.replaceAll(pending);
+                    setPending(null);
+                    store.notify('Backup restored');
+                  }
+                }}
+              >
+                Replace everything
+              </button>
+              <button type="button" className="btn-ghost text-sm" onClick={() => setPending(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="card mb-6 p-5">
+        <p className="label mb-2">Privacy</p>
+        <ul className="list-disc space-y-1 pl-5 text-sm text-paper/85">
+          <li>No accounts, no analytics, no server. Nothing you save leaves this browser unless you export it.</li>
+          <li>Backups are plain JSON files — keep them somewhere private, not in the public repository.</li>
+          <li>The optional habit & autopilot list is hidden by default and never part of the app’s public data.</li>
+        </ul>
+        <button
+          type="button"
+          className="btn mt-4"
+          aria-pressed={data.settings.showAutopilot}
+          onClick={() => store.setShowAutopilot(!data.settings.showAutopilot)}
+        >
+          {data.settings.showAutopilot ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
+          {data.settings.showAutopilot ? 'Hide' : 'Show'} habit & autopilot reference
+        </button>
+      </section>
+
+      <section className="card mb-6 p-5">
+        <p className="label mb-2 flex items-center gap-2">
+          <Smartphone size={14} aria-hidden /> Install on iPhone
+        </p>
+        <ol className="list-decimal space-y-1 pl-5 text-sm text-paper/85">
+          <li>Open this site in Safari.</li>
+          <li>Tap the Share button, then “Add to Home Screen”.</li>
+          <li>Open it from the home screen icon — it runs full-screen and works offline after the first visit.</li>
+        </ol>
+        <p className="mt-2 text-xs text-muted">
+          The home-screen app keeps its own storage, separate from Safari tabs. Use export/import to move data between them.
+        </p>
+      </section>
+
+      <section className="border border-dashed border-line p-5">
+        <p className="label mb-2">Start over</p>
+        <p className="text-sm text-muted">Clears saved items, notes, favorites and custom entries on this device. Export first if in doubt.</p>
+        <button
+          type="button"
+          className="btn mt-3"
+          onClick={() => {
+            if (confirm('Erase all personal data on this device? This cannot be undone.')) {
+              store.resetAll();
+              store.notify('Personal data cleared');
+            }
+          }}
+        >
+          <Trash2 size={14} aria-hidden /> Erase personal data
+        </button>
+      </section>
+    </div>
+  );
+}
