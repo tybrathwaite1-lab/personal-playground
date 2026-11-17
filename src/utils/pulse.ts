@@ -72,8 +72,10 @@ export function normalizeIcs(e: IcsEvent, sourceId: string, nowIso: string): Pul
   const desc = e.description ? stripHtml(e.description) : '';
   const text = `${e.summary} ${desc} ${e.categories.join(' ')}`;
   if (isExcluded(`${e.summary} ${e.categories.join(' ')}`)) return null;
-  const start = e.start.iso;
-  const end = e.end?.iso;
+  // Canonical New York wall-clock form, so the same instant from a UTC feed and a TZID
+  // feed compares, sorts and de-duplicates identically.
+  const start = toNyIso(e.start.iso);
+  const end = e.end ? toNyIso(e.end.iso) : undefined;
   const spanDays = end ? (Date.parse(end) - Date.parse(start)) / 86_400_000 : 0;
   const city = cityFor(e.location ?? '') ?? cityFor(desc);
   const cancelled = e.status === 'CANCELLED' || /^\s*(cancel+ed|postponed)\b/i.test(e.summary);
@@ -81,7 +83,7 @@ export function normalizeIcs(e: IcsEvent, sourceId: string, nowIso: string): Pul
   const { tags, categories } = tagEvent(text);
   const loc = `${e.location ?? ''} ${e.summary}`;
   return {
-    id: `${sourceId}:${e.uid ?? `${slug(e.summary)}-${start.slice(0, 10)}`}`,
+    id: `${sourceId}:${e.uid ?? fallbackId(e.summary, start, e.start.allDay, venueKey({ venue: venue || undefined, address: addr.join(', ') || undefined }))}`,
     title: e.summary.replace(/^\s*(cancel+ed|postponed)\s*[:\-–]\s*/i, ''),
     description: desc ? truncate(desc, 320) : undefined,
     start,
@@ -103,6 +105,35 @@ export function normalizeIcs(e: IcsEvent, sourceId: string, nowIso: string): Pul
   };
 }
 
+/** Re-express any ISO instant as New York wall-clock time with its offset, e.g. 2026-11-20T19:00:00-05:00. */
+export function toNyIso(iso: string): string {
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return iso;
+  const off = tzOffsetMinutes(new Date(ms), TZ);
+  const local = new Date(ms + off * 60000).toISOString().slice(0, 19);
+  const abs = Math.abs(off);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${local}${off <= 0 ? '-' : '+'}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+
+/**
+ * Id for a feed item without a UID. Timed items include the start time so two sessions
+ * on the same day (1 PM and 3 PM) don't share an id, and the venue so the same title at
+ * two venues doesn't either. All-day items keep the date. In the repeated hour when
+ * daylight saving ends (1:00–1:59 AM happens twice), the UTC offset is added too.
+ */
+function fallbackId(summary: string, nyStart: string, allDay: boolean, venue?: string): string {
+  const date = nyStart.slice(0, 10);
+  const at = venue ? `-${venue.slice(0, 30)}` : '';
+  if (allDay) return `${slug(summary)}-${date}${at}`;
+  const hhmm = `${nyStart.slice(11, 13)}${nyStart.slice(14, 16)}`;
+  const ms = Date.parse(nyStart);
+  const wall = (t: number) => toNyIso(new Date(t).toISOString()).slice(0, 16);
+  const repeated = wall(ms - 3_600_000) === wall(ms) || wall(ms + 3_600_000) === wall(ms);
+  const off = repeated ? `-${nyStart.slice(19).replace(/[:+-]/g, '')}` : '';
+  return `${slug(summary)}-${date}t${hhmm}${off}${at}`;
+}
+
 export function slug(s: string): string {
   return s
     .toLowerCase()
@@ -117,29 +148,136 @@ function truncate(s: string, n: number): string {
 }
 
 // ─── De-duplication & expiry ────────────────────────────────────────
-export function dedupeKey(e: PulseEvent): string {
-  return `${slug(e.title)}|${e.start.slice(0, 10)}|${e.city ?? ''}`;
+/** Title key: case, punctuation and "&" vs "and" don't matter. */
+function titleKey(title: string): string {
+  return slug(title.replace(/&/g, ' and '));
 }
 
-/** Merge duplicates from different sources, keeping the richer record and all source ids. */
-export function dedupe(events: PulseEvent[]): PulseEvent[] {
-  const map = new Map<string, PulseEvent>();
-  for (const e of events) {
-    const k = dedupeKey(e);
-    const prev = map.get(k);
-    if (!prev) map.set(k, e);
-    else {
-      const richer = (e.description?.length ?? 0) > (prev.description?.length ?? 0) ? e : prev;
-      map.set(k, {
-        ...richer,
-        sourceIds: [...new Set([...prev.sourceIds, ...e.sourceIds])],
-        tags: [...new Set([...prev.tags, ...e.tags])],
-        cancelled: prev.cancelled || e.cancelled,
-        priceNote: richer.priceNote ?? prev.priceNote ?? e.priceNote,
-      });
-    }
+/** Venue key from the venue name, else the street address. undefined = the listing doesn't say. */
+export function venueKey(e: Pick<PulseEvent, 'venue' | 'address'>): string | undefined {
+  const v = slug((e.venue ?? '').replace(/&/g, ' and ').replace(/^the\s+/i, ''));
+  if (v) return v;
+  const a = slug(e.address ?? '');
+  return a || undefined;
+}
+
+/**
+ * Two listings describe the same event only if they have the same title, start at the
+ * same instant (to the minute), and are at the same venue — or one of them doesn't name
+ * a venue and the cities don't conflict. Different sessions (times) and different venues
+ * stay separate.
+ */
+export function sameEvent(a: PulseEvent, b: PulseEvent): boolean {
+  if (titleKey(a.title) !== titleKey(b.title)) return false;
+  if (Math.floor(Date.parse(a.start) / 60000) !== Math.floor(Date.parse(b.start) / 60000)) return false;
+  // An all-day listing and one timed at midnight are different things.
+  if (a.allDay !== b.allDay) return false;
+  // Known, conflicting cities or explicitly different street addresses are never the same event,
+  // even when the venue names match (chains, "City Hall", "Main Library").
+  if (a.city && b.city && a.city !== b.city) return false;
+  const streetA = streetKey(a.address);
+  const streetB = streetKey(b.address);
+  if (streetA && streetB && streetA !== streetB) return false;
+  const va = venueKey(a);
+  const vb = venueKey(b);
+  if (va && vb) {
+    if (va === vb) return true;
+    // Sources name the same place differently ("MFA" vs "Museum of Fine Arts"): same street address wins.
+    return Boolean(streetA) && streetA === streetB;
   }
-  return [...map.values()];
+  return true; // one side doesn't name a venue, and nothing above conflicts
+}
+
+/** First address segment that starts with a street number, normalized ("255 Beach Dr NE" → "255-beach-dr-ne"). */
+function streetKey(address?: string): string | undefined {
+  const street = (address ?? '').split(',').map((x) => x.trim()).find((x) => /^\d+\s/.test(x));
+  if (!street) return undefined;
+  return slug(street.replace(/\b(drive)\b/i, 'dr').replace(/\b(avenue)\b/i, 'ave').replace(/\b(street)\b/i, 'st').replace(/\b(boulevard)\b/i, 'blvd'));
+}
+
+/** Bucket key for candidate duplicates: title + start minute (venue is checked pairwise). */
+export function dedupeKey(e: PulseEvent): string {
+  return `${titleKey(e.title)}|${Math.floor(Date.parse(e.start) / 60000)}`;
+}
+
+function merge(group: PulseEvent[]): PulseEvent {
+  if (group.length === 1) return group[0];
+  // Deterministic regardless of feed order: richest description, then smallest id.
+  const sorted = [...group].sort(
+    (x, y) => (y.description?.length ?? 0) - (x.description?.length ?? 0) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0),
+  );
+  const richer = sorted[0];
+  const firstWith = <K extends keyof PulseEvent>(k: K) => sorted.find((e) => e[k] !== undefined)?.[k];
+  // Price fields travel together so "free" never pairs with another listing's note.
+  const isPriceField = (k: string) => k.startsWith('price') || k === 'free';
+  const priced = sorted.find((e) => Object.entries(e).some(([k, v]) => isPriceField(k) && v !== undefined));
+  // Start from the richest listing WITHOUT its price fields, so none leak in from it.
+  const base = Object.fromEntries(Object.entries(richer).filter(([k]) => !isPriceField(k))) as PulseEvent;
+  return {
+    ...base,
+    // Stable across refreshes: the smallest id in the group, not whichever feed came first.
+    id: group.map((e) => e.id).sort()[0],
+    end: firstWith('end'),
+    venue: firstWith('venue'),
+    address: firstWith('address'),
+    city: firstWith('city'),
+    miles: firstWith('miles'),
+    url: firstWith('url'),
+    indoor: firstWith('indoor'),
+    // Every price field (note, free flag and any structured amounts) comes from ONE listing;
+    // fields that listing doesn't have stay empty rather than coming from another listing.
+    ...(priced ? Object.fromEntries(Object.entries(priced).filter(([k, v]) => isPriceField(k) && v !== undefined)) : {}),
+    sourceIds: [...new Set(group.flatMap((e) => e.sourceIds))].sort(),
+    tags: [...new Set(group.flatMap((e) => e.tags))],
+    categories: [...new Set(group.flatMap((e) => e.categories))],
+    // If any source says this exact event is cancelled, show it as cancelled.
+    cancelled: group.some((e) => e.cancelled),
+    verifiedAt: group.map((e) => e.verifiedAt).sort().pop() ?? richer.verifiedAt,
+  };
+}
+
+/**
+ * Merge genuine duplicates (same event listed by several sources, or twice by one source)
+ * while keeping distinct sessions and venues apart. Output is independent of input order.
+ */
+export function dedupe(events: PulseEvent[]): PulseEvent[] {
+  // Listings that name a venue are placed first, then those that don't; ties by id.
+  // This makes the result independent of feed order.
+  const ordered = [...events].sort(
+    (a, b) => Number(!venueKey(a)) - Number(!venueKey(b)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+  );
+  const buckets = new Map<string, PulseEvent[][]>();
+  for (const e of ordered) {
+    const k = dedupeKey(e);
+    const groups = buckets.get(k) ?? [];
+    const fits = groups.filter((g) => g.every((x) => sameEvent(x, e)));
+    // A listing without a venue that could belong to two different venues is ambiguous: keep it apart.
+    if (fits.length === 1) fits[0].push(e);
+    else groups.push([e]);
+    buckets.set(k, groups);
+  }
+  return uniqueIds([...buckets.values()].flat().map(merge)).sort(byStart);
+}
+
+/**
+ * Distinct events must keep distinct ids (saves are keyed by id). If two events that were
+ * kept apart still share one (e.g. identical UID-less listings in two cities), later ones
+ * get a deterministic suffix: ordered by start, city, venue, url, then content.
+ */
+function uniqueIds(events: PulseEvent[]): PulseEvent[] {
+  const key = (e: PulseEvent) => [Date.parse(e.start), e.city ?? '', e.venue ?? '', e.address ?? '', e.url ?? '', JSON.stringify(e)].join('|');
+  const sorted = [...events].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+  const seen = new Map<string, number>();
+  return sorted.map((e) => {
+    const n = (seen.get(e.id) ?? 0) + 1;
+    seen.set(e.id, n);
+    return n === 1 ? e : { ...e, id: `${e.id}~${n}` };
+  });
+}
+
+/** Chronological order by actual instant (string order is wrong across UTC offsets). */
+export function byStart(a: PulseEvent, b: PulseEvent): number {
+  return Date.parse(a.start) - Date.parse(b.start) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
 
 /** End time used for expiry: stated end, else end of day for all-day, else start + 3h. */
