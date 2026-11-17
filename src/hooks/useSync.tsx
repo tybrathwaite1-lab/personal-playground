@@ -1,14 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  SyncError,
   loadConfig,
   readRemote,
   saveConfig,
+  sameConfig,
   verifyRepo,
   writeRemote,
   type SyncConfig,
 } from '../utils/github';
-import { EMPTY_META, fromEntries, mergeReplicas, type RemoteFile } from '../utils/sync';
+import { syncOnce } from '../utils/syncRun';
 import { useStore } from './useStore';
 
 type Status = 'off' | 'idle' | 'syncing' | 'error';
@@ -27,8 +27,6 @@ const Ctx = createContext<SyncState | null>(null);
 const LAST_KEY = 'personal-playground:sync-last';
 const AUTO_DELAY = 4000;
 
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-
 export function SyncProvider({ children }: { children: ReactNode }) {
   const store = useStore();
   const storeRef = useRef(store);
@@ -43,9 +41,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   });
   const running = useRef(false);
   const again = useRef(false);
+  /** Bumped on disconnect, so a round already in flight stops before writing. */
+  const generation = useRef(0);
 
   const run = useCallback(async (cfg: SyncConfig | null = loadConfig()) => {
-    if (!cfg) return;
+    if (!cfg || !loadConfig()) return; // disconnected since this run was scheduled
     if (!navigator.onLine) return;
     if (running.current) {
       again.current = true;
@@ -53,51 +53,37 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     }
     running.current = true;
     setStatus('syncing');
+    const gen = generation.current;
+    /** False once disconnected or reconfigured: a stale round must not touch status or errors. */
+    const isCurrent = () => generation.current === gen && sameConfig(loadConfig(), cfg);
     try {
-      for (let attempt = 0; attempt < 4; attempt++) {
-        const { file, sha } = await readRemote(cfg);
-        const local = storeRef.current.getSyncState();
-        const merged = mergeReplicas(local, file ? { entries: file.entries, meta: file.meta } : { entries: {}, meta: EMPTY_META });
-
-        const remoteNeedsUpdate = !file || !same(merged.entries, file.entries) || !same(merged.meta, file.meta);
-        if (remoteNeedsUpdate) {
-          const out: RemoteFile = {
-            app: 'personal-playground',
-            format: 1,
-            updatedAt: new Date().toISOString(),
-            entries: merged.entries,
-            meta: merged.meta,
-          };
-          try {
-            await writeRemote(cfg, out, sha);
-          } catch (e) {
-            if (e instanceof SyncError && e.kind === 'conflict') continue; // someone else wrote — merge again
-            throw e;
-          }
-        }
-        if (!storeRef.current.applySynced(fromEntries(merged.entries), merged.meta, local.version)) {
-          continue; // the user edited during the sync — go round again so nothing is lost
-        }
-        const now = Date.now();
-        setLast(now);
-        try {
-          localStorage.setItem(LAST_KEY, String(now));
-        } catch {
-          /* ignore */
-        }
-        setError(null);
-        setStatus('idle');
-        return;
+      const outcome = await syncOnce(cfg, {
+        verify: verifyRepo,
+        read: readRemote,
+        write: writeRemote,
+        getLocal: () => storeRef.current.getSyncState(),
+        apply: (data, meta, version) => storeRef.current.applySynced(data, meta, version),
+        stillCurrent: isCurrent,
+      });
+      if (outcome === 'aborted' || !isCurrent()) return; // status already reflects the new config
+      const now = Date.now();
+      setLast(now);
+      try {
+        localStorage.setItem(LAST_KEY, String(now));
+      } catch {
+        /* ignore */
       }
-      throw new SyncError('Sync kept colliding with other changes — try again in a moment.', 'conflict');
+      setError(null);
+      setStatus('idle');
     } catch (e) {
+      if (!isCurrent()) return; // a stale round's error must not show against the new config
       setError(e instanceof Error ? e.message : 'Sync failed.');
       setStatus('error');
     } finally {
       running.current = false;
       if (again.current) {
         again.current = false;
-        void run(cfg);
+        void run(loadConfig());
       }
     }
   }, []);
@@ -133,6 +119,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         setStatus(config ? 'idle' : 'off');
         throw e;
       }
+      generation.current += 1; // any round still running for the previous config stops
       saveConfig(c);
       setConfig(c); // the effect above runs the first sync
     },
@@ -140,6 +127,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   );
 
   const disconnect = useCallback(() => {
+    generation.current += 1;
     saveConfig(null);
     setConfig(null);
     setStatus('off');
