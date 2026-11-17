@@ -33,6 +33,9 @@ jobs:
         run: npm run lint
         continue-on-error: true # style issues shouldn't block a deploy; check the log
 
+      - name: Tests
+        run: npm test
+
       - name: Type-check and build
         run: npm run build
         env:
