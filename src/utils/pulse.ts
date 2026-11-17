@@ -89,6 +89,10 @@ const QUALIFIERS =
 const FREE_QUALIFIED_AFTER = new RegExp(`^[^.;!?]{0,30}?\\b(?:for|to)\\s+(?:all\\s+)?(?:[\\w'’.-]+\\s+){0,3}?(?:${QUALIFIERS})\\b`, 'i');
 /** Membership pitches ("Not yet a member? Enjoy free admission…") describe member perks, not this event. */
 const MEMBER_CONTEXT = /\bmember(?:s|ship)?\b/i;
+/** "free admission, special access, discounts…" is a list of membership perks. */
+const FREE_PERK_AFTER = /^\s*admission\s*,\s*(?:special|exclusive|early|priority|member|discount)/i;
+/** Restricted audiences: one such mention makes a headline "Free Admission" partial. */
+const RESTRICTED = /\b(?:qualifying|eligible|(?:local |community )?heroes)\b/i;
 const EVERYONE = /\b(?:for (?:everyone|all)|open to (?:all|everyone|the public))\b/i;
 const FREE_QUALIFIED_BEFORE = new RegExp(`\\b(?:${QUALIFIERS})\\s+(?:get in |enter |are |is |go |get )?$`, 'i');
 
@@ -130,6 +134,7 @@ export function priceFrom(text: string): PriceInfo {
   const uncued: { min: number; max: number }[] = [];
   let freeGeneral = false;
   let freeQualified = false;
+  let freeRestricted = false;
   let otherInSameSentence = false;
 
   let previous = '';
@@ -153,12 +158,21 @@ export function priceFrom(text: string): PriceInfo {
       const after = sentence.slice(m.index + m[0].length, m.index + m[0].length + 40);
       const before = sentence.slice(Math.max(0, m.index - 40), m.index);
       if (FREE_OTHER_AFTER.test(after) || FREE_INCLUDED_AFTER.test(after)) continue;
+      // "Complimentary" only counts for admission itself ("complimentary admission"), not food or drinks.
+      if (/^complimentary$/i.test(m[0]) && !/^\s*(?:museum |general )?(?:admission|entry|tickets?)\b/i.test(after)) continue;
+      if (RESTRICTED.test(`${before} ${after}`)) freeRestricted = true;
       // "Not yet a member? Enjoy free admission…" — the member mention can sit in the sentence before.
       const memberPerk = (MEMBER_CONTEXT.test(sentence) || /member(?:ship)?\?\s*$/i.test(previous)) && !EVERYONE.test(sentence);
-      if (memberPerk || FREE_QUALIFIED_AFTER.test(after) || FREE_QUALIFIED_BEFORE.test(before)) freeQualified = true;
+      if (memberPerk || FREE_PERK_AFTER.test(after) || FREE_QUALIFIED_AFTER.test(after) || FREE_QUALIFIED_BEFORE.test(before)) freeQualified = true;
       else freeGeneral = true;
     }
     previous = sentence;
+  }
+
+  // "Free Admission" in a headline, but the body limits it to qualifying visitors.
+  if (freeRestricted) {
+    freeGeneral = false;
+    freeQualified = true;
   }
 
   // A single uncued amount is the listing's price; several (or one beside a non-admission word) are unclear.

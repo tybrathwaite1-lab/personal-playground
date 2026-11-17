@@ -75,6 +75,13 @@ test('real-world phrasings from the branch price report (paraphrased)', () => {
   assert.deepEqual(priceFrom('Get the $20 Eat & Play Deal: three tacos and a draft.'), {});
   assert.deepEqual(priceFrom('Enjoy $8 Unlimited Play on our arcade cabinets all night.'), {});
   assert.deepEqual(priceFrom('This event is free for everyone, members and non-members alike.'), free);
+  assert.deepEqual(
+    priceFrom('Local Heroes Month | Free Admission + One Guest.\nWe thank local heroes with free museum admission for qualifying community heroes plus one guest.'),
+    { priceNote: 'Free for some visitors (see listing)' },
+  );
+  assert.deepEqual(priceFrom('Ticket Price: $300 per person. Open bar with complimentary chef-curated stations.'), { priceNote: '$300 (per listing)', priceMin: 300, priceMax: 300 });
+  assert.deepEqual(priceFrom('Members $25, non-members $35. Enjoy free admission, special access, discounts at the shop and more.'), { priceNote: '$25–$35 · free for some (per listing)', priceMin: 25, priceMax: 35 });
+  assert.deepEqual(priceFrom('Complimentary admission for all guests.'), free);
 });
 
 test('mixed free and paid admission is reported as unclear, not as free', () => {
