@@ -19,6 +19,8 @@ jobs:
           node-version: 20
       - run: npm install --no-audit --no-fund
       - run: npx tsx scripts/images/scout.ts
+      - name: Snapshot live Pulse data for local testing
+        run: npx tsx scripts/pulse/ingest.ts --out scout/pulse.json && npx tsx scripts/drop/candidates.ts && cp public/data/candidates.json scout/ || true
       - name: Publish results to image-scout-results
         run: |
           cd scout
