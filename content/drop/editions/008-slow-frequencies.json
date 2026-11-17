@@ -92,6 +92,12 @@
           "url": "https://en.wikipedia.org/wiki/Hiroshi_Yoshimura",
           "kind": "reference",
           "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Authorized reissue: Music for Nine Post Cards",
+          "url": "https://lightintheattic.net/products/music-for-nine-post-cards",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
         }
       ]
     },
@@ -102,7 +108,7 @@
       "title": "Brian Eno — Music for Airports",
       "dek": "The 1978 record that named ambient music.",
       "body": [
-        "Brian Eno made Ambient 1: Music for Airports (1978) imagining music that could calm a waiting room without demanding attention — “as ignorable as it is interesting,” as he put it in the liner notes. Long, slow loops of different lengths drift in and out of sync, so the music never quite repeats. It’s where the word “ambient” as a genre begins."
+        "Brian Eno made Ambient 1: Music for Airports (1978) imagining music that could calm a waiting room without demanding attention — “as ignorable as it is interesting,” as he put it in the liner notes. Long, slow loops of different lengths drift in and out of sync, so the music never quite repeats. It helped establish ambient music as a distinct category."
       ],
       "why": "The foundation under every calm playlist you’ve ever put on.",
       "freshness": "archive",
@@ -202,7 +208,7 @@
       "title": "Weedon Island at Opening Time",
       "dek": "Boardwalks over the mangroves, before anyone else is up.",
       "body": [
-        "Weedon Island Preserve opens at 7 a.m., and the first hour is the quietest: boardwalks over the mangroves, an observation tower, wading birds and almost no one else. Admission is free. Bring tea in a thermos, leave your headphones in your pocket, and walk the boardwalk slowly once before you do anything else."
+        "Weedon Island Preserve is a Tampa Bay nature escape with mangroves, trails and birdwatching. The county lists a 7 a.m. opening, with separate hours for the history center. As of November 17, 2026, most of the Bay Boardwalk is closed for repairs expected into early 2027, with some Upland Trail restrictions. Check county notices before visiting and choose an open route."
       ],
       "why": "The most restful free morning within 20 minutes of home.",
       "freshness": "timeless",
@@ -215,8 +221,20 @@
       "exploreMinutes": 90,
       "sources": [
         {
-          "label": "Weedon Island Preserve — hours & directions",
-          "url": "https://weedonislandpreserve.org/aboutus.htm",
+          "label": "Pinellas County — preserve",
+          "url": "https://pinellas.gov/parks/weedon-island-preserve",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Pinellas County — hours",
+          "url": "https://pinellas.gov/park-hours/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Pinellas County — closure notices",
+          "url": "https://pinellas.gov/county-parks-know-before-you-go",
           "kind": "official",
           "verifiedAt": "2026-11-17"
         }
