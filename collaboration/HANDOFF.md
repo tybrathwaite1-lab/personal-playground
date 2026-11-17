@@ -32,11 +32,11 @@ If the private data repo is ever made public, every device would keep silently w
 
 This is not an active exposure. The fix is small: re-verify before every write and fail closed. Details and the proposed tests are in the issue comment. **Owner action now:** confirm the `playground-data` repo shows Private.
 
-### Decisions needed (owner)
-1. Approve raising PP-008 to P1 and fixing it before PP-003/004, or keep the current order.
-2. PP-002: should a *lone* dollar amount with no admission wording count as the price? It currently does. For example, "$22 purchase tickets ahead".
-3. PP-001: event ids for merged multi-source events now use the smallest id (1 event today), and saves on it could re-key once. Accept as is, or ask for an alias map.
-4. PP-008 fix: splitting `settings` into per-field sync entries is a sync-format change that stays backward compatible. Approve before implementation.
+### Owner decisions (answered 2026-11-17, logged in DECISIONS.md via #18)
+1. PP-008 raised to P1 and fixed **before** PP-003/004. Fix is in PR #18.
+2. PP-002: a lone dollar amount with no cue **counts as the price** (current behavior kept).
+3. PP-001: the merged-event id change is **accepted** as is (no alias map).
+4. PP-008: per-field settings sync entries **approved** as part of the sync fix (included in #18).
 
 ### Remaining risks
 - The same event listed at different start minutes stays duplicated (deliberate).
@@ -45,7 +45,7 @@ This is not an active exposure. The fix is small: re-verify before every write a
 - A non-event listing ("Museum Closed for Thanksgiving") appears in live data. I suggest a small exclusion-rule follow-up.
 
 ### Recommended next step
-Review and approve #14 and #16 (either order; they merge cleanly). Engineering then picks up PP-008, if elevated, or PP-003. The PP-005 integration gates in #15 depend on #14 and #16 plus PP-007 for recurring feeds.
+Review and approve #14, #16 and #18 (independent; #14 and #16 merge cleanly together). Engineering then picks up PP-003 → PP-004. The PP-005 integration gates in #15 depend on #14 and #16 plus PP-007 for recurring feeds.
 
 ---
 
