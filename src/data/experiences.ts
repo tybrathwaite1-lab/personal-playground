@@ -358,8 +358,8 @@ export const SEED_EXPERIENCES: Experience[] = [
     id: 'exp-fgc-reunion',
     name: 'FGC Reunion',
     kicker: '格ゲー',
-    description: 'Go back to a local fighting game weekly. Casuals count. Bracket is optional; handshakes and runbacks are not.',
-    activities: ['Find a local weekly on start.gg', 'Bring a controller or stick', 'Play casuals before deciding on bracket', 'Get food with whoever is still around after'],
+    description: 'Go back to a local fighting game monthly or weekly. Casuals count. Bracket is optional; handshakes and runbacks are not.',
+    activities: ['Check the next Tampa Gaming Dojo date (or find another local on start.gg)', 'Bring a controller or stick', 'Play casuals before deciding on bracket', 'Get food with whoever is still around after'],
     cost: { min: 0, max: 30 },
     duration: { min: 180, max: 360 },
     energy: 'high',
@@ -367,7 +367,7 @@ export const SEED_EXPERIENCES: Experience[] = [
     company: ['solo', 'friends'],
     environments: ['indoor'],
     interests: ['Fighting game community events', 'In-person gaming tournaments', 'Competitive gaming'],
-    placeIds: ['pl-fgc-finder'],
+    placeIds: ['pl-lowry-parcade'],
     links: [{ label: 'start.gg', url: 'https://www.start.gg/' }],
   },
   {
@@ -383,7 +383,7 @@ export const SEED_EXPERIENCES: Experience[] = [
     company: ['solo', 'partner', 'friends'],
     environments: ['indoor'],
     interests: ['Retro arcade exploration', 'Gaming'],
-    placeIds: ['pl-chucks-arcade'],
+    placeIds: ['pl-lowry-parcade', 'pl-chucks-arcade'],
   },
   {
     id: 'exp-archery',
