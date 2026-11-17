@@ -6,7 +6,7 @@
 import type { Community, Company, Energy, Familiarity, PersonalData, Place, PlaceCategory, Transport } from '../types';
 import type { PulseEvent } from '../types/pulse';
 import { occurrences, ruleTime } from './community';
-import { HOME, cityFor, milesBetween, type LatLon } from './geo';
+import { HOME, cityFor, milesBetween, type LatLon, type Precision } from './geo';
 import { applyFamiliarity } from './novelty';
 import { effectiveEnd, eventPriceRange, isExpired, nyDate } from './pulse';
 
@@ -103,8 +103,13 @@ export interface Stop {
   minutes: number;
   /** Published time for events/communities; otherwise null (hours not verified). */
   time: string | null;
+  /** Venue coordinates when verified, else the city center (see precision). */
   coords: LatLon | null;
+  /** 'venue' = verified venue coordinates; 'city' = city center only; 'unknown' = no location. */
+  precision: Precision;
   cityName?: string;
+  /** Neighborhood name for permanent places (a weak "probably close" signal, never a distance). */
+  neighborhood?: string;
   cost: [number, number] | null;
   url?: string;
   directions: { name: string; address?: string; city: string };
@@ -120,12 +125,35 @@ export interface Adventure {
   food?: { label: string; near: Stop };
   cost: { min: number; max: number; unknown: boolean };
   travel: string;
+  /** How the travel line was worked out: never a route, at best a straight line between venues. */
+  proximity: Proximity;
   milesFromHome?: number;
+  /** 'venue' when measured from the stop's verified venue, 'city' when from its city center. */
+  homeBasis?: Precision;
 }
+
+/**
+ * How close two stops are, as far as we honestly know. All distances are straight lines
+ * (no routing), so travel times derived from them are rough estimates.
+ */
+export type Proximity =
+  | { kind: 'venue'; miles: number } // both venues pinned
+  | { kind: 'neighborhood'; name: string; city: string } // same named neighborhood, distance not verified
+  | { kind: 'same-city'; city: string } // same city, distance not verified
+  | { kind: 'cities'; miles: number; from: string; to: string } // different cities, center-to-center
+  | { kind: 'unknown' }
+  | { kind: 'single' };
 
 function cityCoords(name?: string): LatLon | null {
   const c = cityFor(name ?? '');
   return c ? { lat: c.lat, lon: c.lon } : null;
+}
+
+/** Verified venue coordinates when present, else the city center, else nothing. */
+function locate(venue: LatLon | undefined, city?: string): { coords: LatLon | null; precision: Precision } {
+  if (venue) return { coords: { lat: venue.lat, lon: venue.lon }, precision: 'venue' };
+  const c = cityCoords(city);
+  return c ? { coords: c, precision: 'city' } : { coords: null, precision: 'unknown' };
 }
 
 function slotOf(iso: string): Slot {
@@ -147,8 +175,9 @@ export function placeStop(p: Place): Stop {
     subtitle: `${p.neighborhood} · ${p.city}`,
     minutes: prof.minutes,
     time: null,
-    coords: cityCoords(p.city),
+    ...locate(p.coords, p.city),
     cityName: cityFor(p.city)?.name,
+    neighborhood: p.neighborhood || undefined,
     cost: PLACE_COST[p.budget],
     url: p.website,
     directions: { name: p.name, address: p.address, city: p.city },
@@ -167,7 +196,7 @@ export function eventStop(e: PulseEvent): Stop {
     subtitle: [e.venue, e.city].filter(Boolean).join(' · '),
     minutes: Math.round(mins),
     time: e.ongoing || e.allDay ? 'During opening hours' : time,
-    coords: cityCoords(e.city),
+    ...locate(e.geo, e.city),
     cityName: e.city,
     cost: priceRange(e),
     url: e.url,
@@ -177,7 +206,9 @@ export function eventStop(e: PulseEvent): Stop {
   };
 }
 
-export function communityStop(c: Community, date: string): Stop {
+export function communityStop(c: Community, date: string, places: Place[] = []): Stop {
+  // A community held at a known place can use that place's verified coordinates.
+  const venue = c.coords ?? places.find((p) => p.id === c.placeId)?.coords;
   return {
     key: `community:${c.id}`,
     kind: 'community',
@@ -185,7 +216,7 @@ export function communityStop(c: Community, date: string): Stop {
     subtitle: `${c.kind} · ${c.city}`,
     minutes: 120,
     time: ruleTime(c, date),
-    coords: cityCoords(c.city),
+    ...locate(venue, c.city),
     cityName: cityFor(c.city)?.name,
     cost: c.costNote && /free|no admission/i.test(c.costNote) ? [0, 0] : null,
     url: c.website,
@@ -258,15 +289,59 @@ export function candidates(inp: Inputs, o: AdventureOptions, now = Date.now()): 
   for (const c of inp.communities) {
     if (!occurrences(c, o.date, o.date).length) continue;
     if (!c.company.includes(o.company)) continue;
-    const s = communityStop(c, o.date);
+    const s = communityStop(c, o.date, inp.places);
     if (withinRadius(s) && (cap === Infinity || s.cost)) out.push(s);
   }
   return out;
 }
 
-function hop(a: Stop, b: Stop): number | null {
-  if (!a.coords || !b.coords) return null;
-  return milesBetween(a.coords, b.coords);
+/** What we can honestly say about the distance between two stops. */
+export function proximity(a: Stop, b: Stop): Proximity {
+  if (a.precision === 'venue' && b.precision === 'venue' && a.coords && b.coords) return { kind: 'venue', miles: milesBetween(a.coords, b.coords) };
+  if (!a.coords || !b.coords || !a.cityName || !b.cityName) return { kind: 'unknown' };
+  if (a.cityName === b.cityName) {
+    if (a.neighborhood && a.neighborhood === b.neighborhood) return { kind: 'neighborhood', name: a.neighborhood, city: a.cityName };
+    return { kind: 'same-city', city: a.cityName };
+  }
+  return { kind: 'cities', miles: milesBetween(cityCoords(a.cityName)!, cityCoords(b.cityName)!), from: a.cityName, to: b.cityName };
+}
+
+const SPEED_MPH: Record<Transport, number> = { walk: 3, bike: 10, transit: 12, car: 25 };
+/** Time set aside between stops when the distance isn't verified (labelled as an allowance). */
+const UNVERIFIED_ALLOWANCE: Record<Transport, number> = { walk: 40, bike: 25, transit: 45, car: 25 };
+
+/** Rough minutes between stops: straight-line miles at a typical speed plus 10 min to park/transfer. */
+export function travelMinutes(p: Proximity, transport: Transport): number {
+  if (p.kind === 'single') return 0;
+  if (p.kind === 'venue' || p.kind === 'cities') return Math.round((p.miles / SPEED_MPH[transport]) * 60) + 10;
+  return UNVERIFIED_ALLOWANCE[transport];
+}
+
+/** Within an easy hop for this way of getting around? Unverified distances aren't ruled out, only labelled. */
+function withinHop(p: Proximity, transport: Transport): boolean {
+  return p.kind === 'venue' || p.kind === 'cities' ? p.miles <= HOP_MILES[transport] : true;
+}
+
+/** Plain-language travel line. Never claims an easy walk unless both venues are pinned and close. */
+export function describeTravel(p: Proximity, transport: Transport): string {
+  const mode = transport === 'walk' ? 'walk' : transport === 'bike' ? 'ride' : transport === 'transit' ? 'by transit' : 'drive';
+  switch (p.kind) {
+    case 'single':
+      return 'One stop — plenty of room to wander';
+    case 'venue': {
+      const mins = travelMinutes(p, transport);
+      const miles = p.miles < 0.1 ? 'Next door' : `~${p.miles < 1 ? p.miles.toFixed(1) : Math.round(p.miles)} mi apart`;
+      return `${miles} (straight line) · roughly ${mins} min ${mode === 'by transit' ? 'by transit' : mode}, est.`;
+    }
+    case 'neighborhood':
+      return `Both in ${p.name}, ${p.city} — exact distance not verified, check the map`;
+    case 'same-city':
+      return `Both in ${p.city} — distance between them not verified, check the map`;
+    case 'cities':
+      return `~${Math.max(1, Math.round(p.miles))} mi between ${p.from} and ${p.to} (city centers, straight line)`;
+    default:
+      return 'Distance between stops unknown — check the map';
+  }
 }
 
 function group(s: Stop): string {
@@ -293,19 +368,20 @@ export function buildAdventure(inp: Inputs, o: AdventureOptions, rand: () => num
   }
 
   const budgetMinutes = o.hours * 60;
-  const travelMins = (miles: number | null) => (miles === null ? 20 : Math.round((miles / ({ walk: 3, bike: 10, transit: 12, car: 25 } as const)[o.transport]) * 60) + 10);
 
   let secondary: Stop | undefined;
   if (budgetMinutes - primary.minutes >= 60) {
     const fits = pool.filter((s) => {
       if (s.key === primary!.key || group(s) === group(primary!)) return false;
-      const h = hop(primary!, s);
-      if (h !== null && h > HOP_MILES[o.transport]) return false;
-      return primary!.minutes + s.minutes + travelMins(h) <= budgetMinutes + 30;
+      const p = proximity(primary!, s);
+      if (!withinHop(p, o.transport)) return false;
+      return primary!.minutes + s.minutes + travelMinutes(p, o.transport) <= budgetMinutes + 30;
     });
-    // Prefer the same city — the most reliable "near each other" signal we have.
-    const sameCity = fits.filter((s) => s.cityName && s.cityName === primary!.cityName);
-    const choice = sameCity.length ? sameCity : fits;
+    // Prefer what we know is close: pinned venues within the hop, then the same neighborhood,
+    // then the same city (distance unverified), then nearby cities.
+    const rank = (s: Stop) => ({ venue: 0, neighborhood: 1, 'same-city': 2, cities: 3, unknown: 4, single: 5 })[proximity(primary!, s).kind];
+    const best = Math.min(...fits.map(rank));
+    const choice = fits.filter((s) => rank(s) === best);
     secondary = choice.length ? choice[Math.floor(rand() * choice.length)] : undefined;
   }
 
@@ -318,16 +394,10 @@ export function buildAdventure(inp: Inputs, o: AdventureOptions, rand: () => num
   const stops = [primary, secondary].filter(Boolean) as Stop[];
   const unknown = stops.some((s) => !s.cost);
   const cost = stops.reduce((a, s) => ({ min: a.min + (s.cost?.[0] ?? 0), max: a.max + (s.cost?.[1] ?? 0) }), { min: 0, max: 0 });
-  const h = secondary ? hop(primary, secondary) : null;
-  const travel = !secondary
-    ? 'One stop — plenty of room to wander'
-    : h === null
-      ? 'Distance between stops unknown — check the map'
-      : h < 1
-        ? `Both in ${primary.cityName ?? 'the same area'} — an easy ${o.transport === 'walk' ? 'walk' : 'hop'}`
-        : `About ${Math.round(h)} mi between stops by ${o.transport}`;
+  const prox: Proximity = secondary ? proximity(primary, secondary) : { kind: 'single' };
+  const travel = describeTravel(prox, o.transport);
   const milesFromHome = primary.coords ? Math.round(milesBetween(HOME, primary.coords)) : undefined;
-  return { primary, secondary, food, cost: { ...cost, unknown }, travel, milesFromHome };
+  return { primary, secondary, food, cost: { ...cost, unknown }, travel, proximity: prox, milesFromHome, homeBasis: primary.precision };
 }
 
 /** A stop for an anchor that fell outside the filters (the user asked for it explicitly). */
@@ -344,7 +414,7 @@ function anchorStop(inp: Inputs, o: AdventureOptions): Stop | undefined {
   }
   if (kind === 'community') {
     const c = inp.communities.find((x) => x.id === id);
-    return c ? communityStop(c, o.date) : undefined;
+    return c ? communityStop(c, o.date, inp.places) : undefined;
   }
   return undefined;
 }

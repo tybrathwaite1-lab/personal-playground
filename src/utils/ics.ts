@@ -14,6 +14,17 @@ export interface IcsEvent {
   start: { iso: string; allDay: boolean } | null;
   end: { iso: string; allDay: boolean } | null;
   hasRule: boolean;
+  /** RFC 5545 GEO ("lat;lon") as published by the calendar, if present and well-formed. */
+  geo?: { lat: number; lon: number };
+}
+
+/** "27.77;-82.64" → { lat, lon }; anything else → undefined. */
+export function parseGeo(v?: string): { lat: number; lon: number } | undefined {
+  const m = v?.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[;,]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (!m) return undefined;
+  const lat = Number(m[1]);
+  const lon = Number(m[2]);
+  return Math.abs(lat) <= 90 && Math.abs(lon) <= 180 && !(lat === 0 && lon === 0) ? { lat, lon } : undefined;
 }
 
 function unfold(text: string): string[] {
@@ -90,6 +101,7 @@ export function parseIcs(text: string, fallbackTz = 'America/New_York'): IcsEven
           start: s ? parseDate(s.value, s.params, fallbackTz) : null,
           end: e ? parseDate(e.value, e.params, fallbackTz) : null,
           hasRule: Boolean(cur.RRULE),
+          geo: parseGeo(one('GEO')?.value),
         });
       }
       cur = null;

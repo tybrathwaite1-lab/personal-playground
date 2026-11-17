@@ -449,7 +449,11 @@ export function EventCard({ e }: { e: PulseEvent }) {
       {e.cancelled && <p className="tag mt-1 border-rust text-rust">Cancelled per source</p>}
       <p className="mt-1 text-sm text-muted">
         {[e.venue, e.city].filter(Boolean).join(' · ') || 'Location not listed'}
-        {e.miles !== undefined && ` · ~${e.miles < 1 ? '<1' : Math.round(e.miles)} mi`}
+        {e.miles !== undefined && (
+          <span title={e.geo ? 'Straight line from central St. Pete to the venue' : 'Straight line from central St. Pete to the city center — venue not pinned'}>
+            {` · ~${e.miles < 1 ? '<1' : Math.round(e.miles)} mi${e.geo ? '' : ' (city)'}`}
+          </span>
+        )}
       </p>
       {e.description && <p className="mt-2 line-clamp-3 text-sm text-paper/85">{e.description}</p>}
       <div className="mt-2 flex flex-wrap gap-1.5">

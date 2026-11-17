@@ -3,7 +3,7 @@
  * normalizing feed items, tagging, de-duplicating, expiry and day buckets.
  */
 import type { PulseEvent } from '../types/pulse';
-import { HOME, cityFor, milesBetween } from './geo';
+import { HOME, cityFor, milesBetween, plausibleVenue } from './geo';
 import { stripHtml, tzOffsetMinutes, type IcsEvent } from './ics';
 
 export const TZ = 'America/New_York';
@@ -254,6 +254,7 @@ export function normalizeIcs(e: IcsEvent, sourceId: string, nowIso: string): Pul
   const end = e.end ? toNyIso(e.end.iso) : undefined;
   const spanDays = end ? (Date.parse(end) - Date.parse(start)) / 86_400_000 : 0;
   const city = cityFor(e.location ?? '') ?? cityFor(desc);
+  const geo = plausibleVenue(e.geo, city?.name);
   const cancelled = e.status === 'CANCELLED' || /^\s*(cancel+ed|postponed)\b/i.test(e.summary);
   const [venue, ...addr] = (e.location ?? '').split(',').map((s) => s.trim());
   const { tags, categories } = tagEvent(text);
@@ -269,7 +270,8 @@ export function normalizeIcs(e: IcsEvent, sourceId: string, nowIso: string): Pul
     venue: venue || undefined,
     address: addr.filter((a) => !/united states/i.test(a)).join(', ') || undefined,
     city: city?.name,
-    miles: city ? Math.round(milesBetween(HOME, city) * 10) / 10 : undefined,
+    geo,
+    miles: geo || city ? Math.round(milesBetween(HOME, geo ?? city!) * 10) / 10 : undefined,
     url: e.url,
     ...priceFrom(`${e.summary}.\n${desc}`),
     tags,
@@ -397,6 +399,7 @@ function merge(group: PulseEvent[]): PulseEvent {
     venue: firstWith('venue'),
     address: firstWith('address'),
     city: firstWith('city'),
+    geo: firstWith('geo'),
     miles: firstWith('miles'),
     url: firstWith('url'),
     indoor: firstWith('indoor'),
