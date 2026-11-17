@@ -50,10 +50,10 @@ export function EditorialImage({
 export function Credit({ meta }: { meta: EditorialImageMeta }) {
   return (
     <figcaption className="mt-1.5 flex flex-wrap gap-x-2 font-mono text-[10px] uppercase tracking-wider text-muted">
-      <span>{meta.kind === 'venue' ? 'Photo of the actual place' : 'Illustrative photo'}</span>
+      <span>{meta.kind === 'venue' && meta.place ? `Photo: ${meta.place}` : 'Illustrative photo'}</span>
       <span aria-hidden>·</span>
       <a href={meta.sourceUrl} target="_blank" rel="noreferrer" className="hover:text-paper">
-        {meta.credit} / {meta.license}
+        {meta.credit} / {meta.license} / Wikimedia Commons
       </a>
     </figcaption>
   );

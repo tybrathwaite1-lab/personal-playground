@@ -117,12 +117,13 @@ Candidate leads from RSS feeds (`src/data/candidateFeeds.ts`) show only in the E
 
 ## Images
 
-Photos are from Unsplash under the Unsplash License, recorded in `src/data/images.ts` and credited in [IMAGE_CREDITS.md](IMAGE_CREDITS.md).
+39 photos from **Wikimedia Commons** (CC0, public domain, CC BY, CC BY-SA), recorded in `src/data/images.ts` and credited in [IMAGE_CREDITS.md](IMAGE_CREDITS.md) and in every caption.
 
-- CI downloads each one once and makes 600/1200px WebP files, which are cached between runs.
-- Every photo is labeled **"Illustrative photo"** with a credit line. None claims to show a specific venue. A `kind: 'venue'` exists for real venue photos when licensed ones are added.
-- Images load lazily. If one fails, a typographic placeholder shows instead.
+- **11 are real local places** (St. Pete Pier, the Dalí, Sunken Gardens, Weedon Island, Fort De Soto, Tampa Bay History Center, Plant Hall, the Riverwalk, Ybor, Dunedin). They're captioned *"Photo: <place>"* and are only ever used for that place, never as a generic stand-in.
+- **28 are illustrative** mood photos (record crates, Kabukichō neon, arcade sticks, a Dreamcast, a tatami room…), captioned *"Illustrative photo"*.
+- CI downloads each one once and makes 600/1200px WebP files, which are cached between runs. Images load lazily with fixed aspect ratios (no layout shift). If one is missing, a typographic placeholder shows.
 - Local has a **Photos** toggle (off by default to keep the list fast).
+- Finding more: the image scout (`scripts/images/scout.ts`) searches Commons and produces numbered contact sheets; see IMAGE_CREDITS.md.
 
 ## Run it locally
 
