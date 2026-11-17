@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Daily refresh of the Local Pulse (and the Friday Weekly Drop goes live on its own by date).
+    # GitHub cron is UTC: 10:17 UTC ≈ 5:17am New York (EST) / 6:17am (EDT).
+    - cron: '17 10 * * *'
 
 permissions:
   contents: read
@@ -35,6 +39,12 @@ jobs:
 
       - name: Tests
         run: npm test
+
+      - name: Refresh Local Pulse (public event calendars)
+        run: npx tsx scripts/pulse/ingest.ts --out public/data/pulse.json
+        env:
+          # Carry over yesterday's events for any feed that fails today.
+          PULSE_PREVIOUS: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/data/pulse.json
 
       - name: Type-check and build
         run: npm run build

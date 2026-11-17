@@ -1,0 +1,31 @@
+name: Check (branches)
+
+# Runs tests, a live Local Pulse ingest and a production build on non-main
+# branches, without deploying. Lets changes be verified before merging.
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+      - run: npm test
+      - name: Local Pulse ingest (live feeds)
+        run: npx tsx scripts/pulse/ingest.ts --out public/data/pulse.json
+      - name: Build
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
