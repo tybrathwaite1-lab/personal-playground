@@ -79,13 +79,20 @@ function explain(status: number, what: string): SyncError {
   return new SyncError(`GitHub returned an error (${status}).`, 'network');
 }
 
-/** Confirms the repo exists, is private, and the token can write to it. */
+/**
+ * Confirms the repo exists, is private, and the token can write to it.
+ * Called when connecting AND before every sync attempt that might write.
+ */
 export async function verifyRepo(c: SyncConfig): Promise<void> {
   const res = await call(`${API}/repos/${c.owner}/${c.repo}`, { headers: headers(c.token) });
   if (!res.ok) throw explain(res.status, 'read this repository');
   const repo = (await res.json()) as { private?: boolean; permissions?: { push?: boolean } };
+  // Fail closed: anything other than an explicit "private: true" stops sync.
   if (repo.private === false) {
-    throw new SyncError('That repository is public. Your personal data needs a private repo — make it private or create a new one.', 'public');
+    throw new SyncError('Sync stopped: that repository is public. Your personal data needs a private repo — make it private again, then tap Sync now.', 'public');
+  }
+  if (repo.private !== true) {
+    throw new SyncError('Sync stopped: GitHub didn’t confirm the repository is private. Nothing was written. Try Sync now in a moment.', 'public');
   }
   if (repo.permissions && repo.permissions.push === false) {
     throw new SyncError('The token can read but not write. Give it Contents: Read and write.', 'auth');
