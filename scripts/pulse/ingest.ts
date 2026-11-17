@@ -88,7 +88,10 @@ async function main() {
     }
   }
 
-  events = dedupe(events).sort((a, b) => a.start.localeCompare(b.start));
+  const before = events.length;
+  events = dedupe(events); // also sorts by actual start instant
+  const merged = events.filter((e) => e.sourceIds.length > 1).length;
+  console.log(`Dedupe: ${before} listings → ${events.length} events (${before - events.length} duplicates merged; ${merged} confirmed by 2+ sources)`);
   const file: PulseFile = { generatedAt: nowIso, timezone: 'America/New_York', sources, events };
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, JSON.stringify(file));
