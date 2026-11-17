@@ -41,6 +41,12 @@ export function EditorialImage({
           className="absolute inset-0 h-full w-full object-cover [filter:saturate(0.82)_contrast(1.04)]"
           style={{ objectPosition: meta.focus ?? 'center' }}
         />
+        {!caption && (
+          <span className="pointer-events-none absolute bottom-0 right-0 max-w-full truncate bg-ink/75 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-paper/80">
+            {meta.kind === 'venue' && meta.place ? `${meta.place} · ` : ''}
+            {meta.credit} · {meta.license}
+          </span>
+        )}
       </div>
       {caption && <Credit meta={meta} />}
     </figure>

@@ -21,6 +21,8 @@ jobs:
       - run: npx tsx scripts/images/scout.ts
       - name: Snapshot live Pulse data for local testing
         run: npx tsx scripts/pulse/ingest.ts --out scout/pulse.json && npx tsx scripts/drop/candidates.ts && cp public/data/candidates.json scout/ || true
+      - name: Snapshot editorial images for local previews
+        run: npx tsx scripts/images/fetch.ts && mkdir -p scout/editorial && cp public/images/editorial/*-600.webp scout/editorial/ || true
       - name: Publish results to image-scout-results
         run: |
           cd scout

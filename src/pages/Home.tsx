@@ -237,7 +237,7 @@ export default function Home() {
 
       {/* ── Recently saved ───────────────────────────────────────── */}
       <section aria-labelledby="recent-title">
-        <div className="mb-4 flex items-end justify-between border-b border-line pb-2">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-b border-line pb-2">
           <h2 id="recent-title" className="display text-3xl">
             Recently saved
           </h2>

@@ -13,8 +13,8 @@ export function DropTeaser() {
   const others = latest.items.filter((i) => i.id !== featured.id).slice(0, 4);
   return (
     <section aria-labelledby="drop-title">
-      <div className="mb-4 flex items-end justify-between border-b border-line pb-2">
-        <div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-b border-line pb-2">
+        <div className="min-w-0">
           <p className="label">
             The Weekly Drop · No.{String(latest.issue).padStart(2, '0')} · {formatYmd(latest.publishDate)}
           </p>
@@ -22,13 +22,13 @@ export function DropTeaser() {
             {latest.title}
           </h2>
         </div>
-        <a href={href('drop')} className="label hover:text-paper">
+        <a href={href('drop')} className="label shrink-0 hover:text-paper">
           Read the issue →
         </a>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[2fr_3fr]">
         <a href={href('drop')} className="group block">
-          <EditorialImage subject={featured.image ?? featured.id} fallbackTags={featured.tags} ratio="4/5" caption={false} />
+          <EditorialImage subject={featured.image ?? featured.id} fallbackTags={featured.tags} ratio="3/2" caption={false} />
         </a>
         <div>
           <p className="text-[17px] leading-relaxed text-paper/90">{latest.intro}</p>
