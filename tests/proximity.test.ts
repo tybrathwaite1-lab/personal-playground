@@ -81,8 +81,10 @@ test('walking: pinned venues farther than the walking hop are not paired', () =>
 
 test('verified-close pairs are preferred over unverified same-city ones', () => {
   const anchor = place({ id: 'anchor', coords: { lat: 27.7700, lon: -82.6380, source: 'synthetic', verifiedOn: '2026-11-17' } });
-  const pinned = event({ id: 'src:pinned', title: 'Pinned', categories: ['Markets'], geo: { lat: 27.7720, lon: -82.6390 } });
-  const unpinned = event({ id: 'src:unpinned', title: 'Unpinned', categories: ['Music'] });
+  // 3 PM starts leave time for the (flexible) gallery first; a flexible stop never starts before the afternoon.
+  const at3 = { start: '2026-11-21T15:00:00-05:00', end: '2026-11-21T16:00:00-05:00' };
+  const pinned = event({ id: 'src:pinned', title: 'Pinned', categories: ['Markets'], geo: { lat: 27.7720, lon: -82.6390 }, ...at3 });
+  const unpinned = event({ id: 'src:unpinned', title: 'Unpinned', categories: ['Music'], ...at3 });
   for (let i = 0; i < 40; i++) {
     const a = buildAdventure({ places: [anchor], events: [pinned, unpinned], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:anchor' }, Math.random, NOW)!;
     assert.equal(a.secondary?.key, 'event:src:pinned');

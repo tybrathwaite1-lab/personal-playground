@@ -43,7 +43,7 @@ test('combined budget: two $20 stops never make an "under $25" outing', () => {
 test('the top of a price range above the budget is disclosed', () => {
   const a = ev({ ...priced(10, 40) });
   const adv = buildAdventure(inp([a]), { ...base, budget: 'u25', anchor: `event:${a.id}` }, Math.random, NOW)!;
-  assert.ok(adv.notes.some((x) => /up to \$40/.test(x)), adv.notes.join(' | '));
+  assert.ok(adv.warnings.some((x) => /up to \$40/.test(x)), adv.warnings.join(' | '));
 });
 
 test('overlapping timed stops are never paired', () => {
@@ -61,7 +61,7 @@ test('a later timed stop is paired only if travel fits before it; the wait is co
   assert.equal(sequence(eventStop(a), eventStop(b), 'walk'), null);
   const adv = buildAdventure(inp([a, b]), { ...base, anchor: `event:${a.id}` }, Math.random, NOW)!;
   assert.equal(adv.secondary?.key, `event:${b.id}`);
-  assert.deepEqual(adv.time, { stops: 180, travel: 25, wait: 5, total: 210, budget: 240 });
+  assert.deepEqual(adv.time, { stops: 180, travel: 25, wait: 5, total: 210, budget: 240, start: 13 * 60, end: 16 * 60 + 30 });
 });
 
 test('a timed stop that starts before the first one is never listed second', () => {
@@ -82,7 +82,7 @@ test('a primary longer than the time available is never picked at random; an anc
   runs(() => assert.equal(buildAdventure(inp([long]), { ...base, hours: 2 }, Math.random, NOW), null));
   const adv = buildAdventure(inp([long]), { ...base, hours: 2, anchor: `event:${long.id}` }, Math.random, NOW)!;
   assert.equal(adv.primary.key, `event:${long.id}`);
-  assert.ok(adv.notes.some((x) => /longer than the ~2 hours/.test(x)));
+  assert.ok(adv.warnings.some((x) => /longer than the ~2 hours/.test(x)));
 });
 
 const meetup: Community = {
@@ -105,7 +105,7 @@ test('anchors outside the filters are used but the conflicts are spelled out', (
   const other = ev({ start: '2026-11-25T13:00:00-05:00', end: '2026-11-25T14:00:00-05:00', ...priced(60) });
   const adv = buildAdventure(inp([other]), { ...base, budget: 'u25', anchor: `event:${other.id}` }, Math.random, NOW)!;
   assert.equal(adv.primary.key, `event:${other.id}`);
-  const note = adv.notes.join(' ');
+  const note = adv.warnings.join(' ');
   assert.match(note, /isn’t on the date you chose \(2026-11-25\)/);
   assert.match(note, /over your budget/);
 });
@@ -113,17 +113,17 @@ test('anchors outside the filters are used but the conflicts are spelled out', (
 test('an anchor that no longer exists is disclosed, not silently replaced', () => {
   const a = ev({});
   const adv = buildAdventure(inp([a]), { ...base, anchor: 'event:src:gone' }, Math.random, NOW)!;
-  assert.ok(adv.notes.some((x) => /isn’t listed any more/.test(x)));
+  assert.ok(adv.warnings.some((x) => /isn’t listed any more/.test(x)));
 });
 
 test('filters listings can’t answer are disclosed; food is never in the estimate', () => {
   const a = ev({});
   const adv = buildAdventure(inp([a]), { ...base, energy: 'high', company: 'partner', anchor: `event:${a.id}` }, Math.random, NOW)!;
-  assert.ok(adv.notes.some((x) => /energy level/.test(x) && /who it suits/.test(x)), adv.notes.join(' | '));
+  assert.ok(adv.info.some((x) => /how active it is/.test(x) && /who it suits best/.test(x)), adv.info.join(' | '));
   assert.equal(adv.cost.excludesFood, true);
   const unpriced = buildAdventure(inp([ev({})]), { ...base, hours: 6 }, Math.random, NOW)!;
   assert.equal(unpriced.cost.unknown, true);
-  assert.ok(unpriced.notes.some((x) => /doesn’t list a cost/.test(x)));
+  assert.ok(unpriced.info.some((x) => /doesn’t list a price/.test(x)));
 });
 
 test('property: random plans from the real seed data always fit budget, time and order', () => {
