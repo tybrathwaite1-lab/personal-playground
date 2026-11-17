@@ -8,3 +8,5 @@ npm-debug.log*
 # Personal backups exported from the app — keep them out of the repo
 personal-playground-backup*.json
 public/data/pulse.json
+public/data/drop.json
+public/data/candidates.json

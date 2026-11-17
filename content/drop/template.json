@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "issue": 9,
+  "slug": "your-edition-slug",
+  "title": "Edition Title",
+  "theme": "One line describing the theme",
+  "status": "draft",
+  "publishDate": "2027-01-08",
+  "intro": "Two to four sentences setting the mood of this issue.",
+  "featured": "lead-item-id",
+  "items": [
+    {
+      "id": "lead-item-id",
+      "column": "listen",
+      "format": "feature",
+      "title": "Feature title",
+      "dek": "One-line standfirst.",
+      "body": [
+        "Paragraph one.",
+        "Paragraph two.",
+        "…300–700 words total for a feature."
+      ],
+      "why": "Why this might land for the reader specifically.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1998",
+      "creators": [
+        "Artist name"
+      ],
+      "tags": [
+        "Tag"
+      ],
+      "exploreMinutes": 45,
+      "sources": [
+        {
+          "label": "Official site or reference",
+          "url": "https://example.org/",
+          "kind": "official",
+          "verifiedAt": "2027-01-05"
+        }
+      ],
+      "related": [
+        {
+          "to": "another-item-or-node-id",
+          "relation": "influenced",
+          "note": "One sentence on the connection.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "brief-one",
+      "column": "rabbit-hole",
+      "format": "brief",
+      "title": "Brief title",
+      "dek": "One line.",
+      "body": [
+        "40–100 words."
+      ],
+      "why": "…",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Tag"
+      ],
+      "sources": [
+        {
+          "label": "Site",
+          "url": "https://example.org/",
+          "kind": "official",
+          "verifiedAt": "2027-01-05"
+        }
+      ]
+    },
+    {
+      "id": "brief-two",
+      "column": "local-find",
+      "format": "brief",
+      "title": "A local find",
+      "dek": "One line.",
+      "body": [
+        "40–100 words."
+      ],
+      "why": "…",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "St. Petersburg"
+      ],
+      "sources": [
+        {
+          "label": "Venue",
+          "url": "https://example.org/",
+          "kind": "official",
+          "verifiedAt": "2027-01-05"
+        }
+      ],
+      "local": {
+        "placeId": "pl-weedon"
+      }
+    }
+  ]
+}

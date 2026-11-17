@@ -3,6 +3,8 @@ import { ArrowUpRight, Dices, Pencil, Plus, Trash2 } from 'lucide-react';
 import { ChipGroup, Empty, FavoriteButton, Field, Modal, SaveButton, SearchBox, SectionHeader, Select } from '../components/ui';
 import { WEBSITE_CATEGORIES } from '../data/websites';
 import { useStore } from '../hooks/useStore';
+import { useDrop } from '../hooks/useDrop';
+import { href } from '../hooks/useRoute';
 import type { Website, WebsiteCategory } from '../types';
 import { hostname, includesText, isSafeUrl, normalizeUrl } from '../utils/helpers';
 
@@ -62,6 +64,14 @@ function WebsiteForm({ initial, onDone }: { initial: Draft; onDone: () => void }
 
 export default function Digital() {
   const { websites, removeWebsite, restoreWebsites, data } = useStore();
+  const drop = useDrop();
+  /** Weekly Drop items that cite this site — the library's link into the threads. */
+  const citedIn = (url: string) => {
+    const host = hostname(url);
+    const out: { issue: number; id: string; title: string }[] = [];
+    for (const e of drop.editions) for (const it of e.items) if (it.sources.some((s) => hostname(s.url) === host)) out.push({ issue: e.issue, id: it.id, title: it.title });
+    return out.slice(0, 2);
+  };
   const [cat, setCat] = useState<'all' | WebsiteCategory>('all');
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<Draft | null>(null);
@@ -149,6 +159,11 @@ export default function Digital() {
                   {w.custom && <span className="tag text-rust">Yours</span>}
                 </div>
                 <p className="mt-1 text-sm text-paper/85">{w.description}</p>
+                {citedIn(w.url).map((c) => (
+                  <a key={c.id} href={href('drop', { issue: String(c.issue), item: c.id })} className="mt-1 block font-mono text-[11px] text-rust hover:underline">
+                    In the Weekly Drop No.{c.issue}: {c.title} →
+                  </a>
+                ))}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <span className="tag border-hunter bg-hunter/50 text-paper">{w.category}</span>
                   {w.tags?.map((t) => (

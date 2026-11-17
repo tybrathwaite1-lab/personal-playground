@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "issue": 5,
+  "slug": "worlds-drawn-by-hand",
+  "title": "Worlds Drawn by Hand",
+  "theme": "Illustration, comics, traditional animation and fantasy art",
+  "status": "scheduled",
+  "publishDate": "2026-12-11",
+  "intro": "Every frame of the anime you love was once a drawing on paper, and every fantasy cover you stared at as a kid was paint on board. This issue is about the hand: the illustrators, comic artists and animators who built entire worlds one line at a time.",
+  "featured": "frazetta",
+  "items": [
+    {
+      "id": "frazetta",
+      "column": "blackbook",
+      "format": "feature",
+      "title": "Frank Frazetta’s Muscle and Motion",
+      "dek": "The painter who taught fantasy art how to move.",
+      "body": [
+        "Frank Frazetta (1928–2010) started in comics in the 1940s and ’50s, but his reputation rests on the paintings he made for paperback covers from the mid-1960s, starting with Lancer Books’ Conan series. Those covers changed what fantasy looked like: bodies twisting mid-strike, figures half-lost in shadow and smoke, a sense that the whole scene would collapse the moment after the one you’re looking at.",
+        "Look at how little he finishes. Frazetta paintings are often detailed only where the eye lands — a face, a blade, a flexed arm — while the rest dissolves into loose, dark brushwork. It’s a lesson in where to spend effort, and it’s why his compositions read instantly even at paperback size. The Death Dealer (1973), a helmeted rider whose face is only shadow and two glowing eyes, is the purest example: almost nothing is shown, and it’s unforgettable.",
+        "His influence runs through album covers, tattoos, metal artwork, video game box art and a long line of fantasy illustrators. When you look at dark fantasy manga — Berserk especially — you’ll recognize a shared vocabulary of massive armored figures and brutal motion, even where no direct line can be drawn. That’s an editorial connection, but it’s a useful way to look.",
+        "For a drawing exercise, take one Frazetta painting and make three thumbnail studies the size of a playing card: just the big shapes of light and dark, no detail. You’ll see the composition he built underneath everything — and you’ll start doing it in your own sketches."
+      ],
+      "why": "Frazetta is on your list; this is a way to study him, not just admire him — and a bridge to Berserk’s world.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1960s–1970s",
+      "creators": [
+        "Frank Frazetta"
+      ],
+      "tags": [
+        "Illustration",
+        "Fantasy art",
+        "Painting",
+        "Drawing"
+      ],
+      "exploreMinutes": 45,
+      "sources": [
+        {
+          "label": "Wikipedia: Frank Frazetta",
+          "url": "https://en.wikipedia.org/wiki/Frank_Frazetta",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "berserk",
+          "relation": "shared vocabulary",
+          "note": "Our comparison: the dark-fantasy imagery of heavy armor and violent motion.",
+          "basis": "editorial"
+        },
+        {
+          "to": "moebius",
+          "relation": "counterpoint",
+          "note": "Our pairing: Moebius drew fantasy with clean line and open space; Frazetta with shadow and mass.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "akira-1988",
+      "column": "screen",
+      "format": "brief",
+      "title": "Akira (1988), Frame by Frame",
+      "dek": "Katsuhiro Otomo’s lavishly hand-drawn Neo-Tokyo still looks impossible.",
+      "body": [
+        "Akira was adapted by Katsuhiro Otomo from his own manga, and it is famously extravagant: detailed backgrounds, fluid motion animated with unusual care, and light trails that every bike chase since has borrowed. Watch the first motorcycle sequence twice — once for the story, once with the sound off, just to see how much was drawn."
+      ],
+      "why": "Traditional animation at its most ambitious, and the cyberpunk city that shaped Ghost in the Shell’s generation.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1988",
+      "creators": [
+        "Katsuhiro Otomo"
+      ],
+      "tags": [
+        "Anime",
+        "Cyberpunk",
+        "Traditional animation"
+      ],
+      "exploreMinutes": 125,
+      "sources": [
+        {
+          "label": "Wikipedia: Akira (1988 film)",
+          "url": "https://en.wikipedia.org/wiki/Akira_(1988_film)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "katsuhiro-otomo",
+          "relation": "directed by",
+          "note": "Otomo adapted and directed his own manga.",
+          "basis": "fact"
+        },
+        {
+          "to": "ghost-in-the-shell-1995",
+          "relation": "kindred spirit",
+          "note": "Our pairing: two landmarks of hand-drawn anime cyberpunk.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "moebius",
+      "column": "blackbook",
+      "format": "brief",
+      "title": "Moebius and the Open Desert",
+      "dek": "Jean Giraud’s clean lines and empty space, an antidote to clutter.",
+      "body": [
+        "Jean Giraud signed his science-fantasy work as Moebius: wordless desert journeys like Arzach, made for the French magazine Métal Hurlant in the 1970s, drawn with clean, even lines and huge areas of open space. His influence on comics, film design and anime is enormous; he and Hayao Miyazaki admired each other’s work and shared an exhibition in Paris in 2004."
+      ],
+      "why": "Illustration that shows how much a single clean line can carry.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1970s",
+      "creators": [
+        "Moebius (Jean Giraud)"
+      ],
+      "tags": [
+        "Comics",
+        "Illustration",
+        "Science fiction",
+        "French comics"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Wikipedia: Jean Giraud",
+          "url": "https://en.wikipedia.org/wiki/Jean_Giraud",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "hayao-miyazaki",
+          "relation": "mutual admiration",
+          "note": "Moebius and Miyazaki shared an exhibition in Paris in 2004.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "ninja-scroll",
+      "column": "screen",
+      "format": "brief",
+      "title": "Ninja Scroll (1993)",
+      "dek": "Yoshiaki Kawajiri’s hand-drawn action film from Madhouse.",
+      "body": [
+        "If Yu Yu Hakusho’s fights are what you remember, Ninja Scroll is a grown-up cousin: a feudal-Japan action film from director Yoshiaki Kawajiri and the studio Madhouse, all sharp silhouettes, bold color and ferocious hand-drawn motion. It was one of the films that introduced Western viewers to adult anime in the 1990s. It is violent — know before you press play."
+      ],
+      "why": "Classic 90s action animation adjacent to your favorites, without repeating them.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1993",
+      "creators": [
+        "Yoshiaki Kawajiri",
+        "Madhouse"
+      ],
+      "tags": [
+        "Anime",
+        "Traditional animation",
+        "1990s",
+        "Action"
+      ],
+      "exploreMinutes": 95,
+      "sources": [
+        {
+          "label": "Wikipedia: Ninja Scroll",
+          "url": "https://en.wikipedia.org/wiki/Ninja_Scroll",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "madhouse",
+          "relation": "animated by",
+          "note": "Produced by the studio Madhouse.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "image-comics-1992",
+      "column": "blackbook",
+      "format": "brief",
+      "title": "The Year the Artists Walked Out",
+      "dek": "In 1992, star Marvel artists left to found Image Comics.",
+      "body": [
+        "In 1992, a group of Marvel’s best-selling artists — Todd McFarlane, Jim Lee, Rob Liefeld and others — left to start Image Comics, where creators would own what they made. Spawn and WildC.A.T.s came out of that moment, and so, eventually, did a whole generation of creator-owned books. Read the founding story, then one early issue, and you’ll see the 90s comic style in its natural habitat."
+      ],
+      "why": "DC, Marvel and Image are all on your list; this is where they collided.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1992",
+      "creators": [
+        "Todd McFarlane",
+        "Jim Lee",
+        "Rob Liefeld"
+      ],
+      "tags": [
+        "Comics",
+        "Image Comics",
+        "1990s",
+        "Comic history"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Wikipedia: Image Comics",
+          "url": "https://en.wikipedia.org/wiki/Image_Comics",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "sakugabooru-keyframes",
+      "column": "rabbit-hole",
+      "format": "brief",
+      "title": "Sakugabooru: Credits for the Hands",
+      "dek": "A fan-run archive that names the animators behind great scenes.",
+      "body": [
+        "Sakugabooru collects standout animation clips and tags them with the individual key animators who drew them. Search a show you love and the great fight or quiet moment you remember will often have a name attached — then you can follow that artist across decades of other work. It turns anime from studios into people."
+      ],
+      "why": "The research tool for traditional animation — and a thread you can pull all week.",
+      "freshness": "timeless",
+      "depth": "lesser-known",
+      "tags": [
+        "Anime",
+        "Animation",
+        "Independent websites"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Sakugabooru",
+          "url": "https://www.sakugabooru.com/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    }
+  ]
+}

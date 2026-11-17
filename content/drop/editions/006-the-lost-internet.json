@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "issue": 6,
+  "slug": "the-lost-internet",
+  "title": "The Lost Internet",
+  "theme": "Independent websites, early web culture and digital archaeology",
+  "status": "scheduled",
+  "publishDate": "2026-12-18",
+  "intro": "There was a version of the web where everyone built their own house: blinking text, guestbooks, MIDI files, and no feed deciding what you saw. Much of it is gone. Some of it was saved by volunteers, and some of it never left. This issue is a walk through the ruins — and the people still building by hand.",
+  "featured": "geocities-afterlife",
+  "items": [
+    {
+      "id": "geocities-afterlife",
+      "column": "rabbit-hole",
+      "format": "feature",
+      "title": "GeoCities and Its Afterlife",
+      "dek": "The neighborhood web, the 2009 shutdown, and the volunteers who saved it.",
+      "body": [
+        "GeoCities launched in 1994 and gave anyone a free home page, organized into themed “neighborhoods” — Area51 for science fiction, SiliconValley for computers, Hollywood for film. Yahoo bought it in 1999 and shut down the US service in 2009. For millions of people it had been their first website: hand-coded, unoptimized, full of animated GIFs and under-construction signs, and entirely their own.",
+        "The shutdown is the part worth remembering. Before the servers went dark, the volunteer group Archive Team raced to download as much of GeoCities as it could, and the Internet Archive preserved its own copies. What survived became raw material for artists and historians. The artists Olia Lialina and Dragan Espenschied ran a project called One Terabyte of Kilobyte Age, posting screenshots of rescued GeoCities pages one at a time, rendered as they would have looked on an old computer. Scroll it for ten minutes and you’ll feel the era — sincere, clumsy, intensely personal.",
+        "And the idea didn’t die. Neocities, founded in 2013, offers free static websites in GeoCities’ spirit, and its browse page is full of people building hand-made sites today: shrines to games, art portfolios, diaries, link collections that read like zines. It’s the closest thing to walking the old neighborhoods.",
+        "Make it a project, not a scroll. Spend one evening on the archives, then one building a single page of your own on Neocities — your favorite albums, your blackbook scans, a shrine to the Dreamcast. The point isn’t an audience. It’s having a corner of the web that’s yours."
+      ],
+      "why": "Exploring obscure websites is one of your rediscovery interests — this is its origin story and a place to start again.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1994–2009",
+      "tags": [
+        "Old web",
+        "Internet history",
+        "Independent websites",
+        "Archives"
+      ],
+      "exploreMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: GeoCities",
+          "url": "https://en.wikipedia.org/wiki/GeoCities",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Neocities",
+          "url": "https://en.wikipedia.org/wiki/Neocities",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "One Terabyte of Kilobyte Age",
+          "url": "https://oneterabyteofkilobyteage.tumblr.com/",
+          "kind": "archive",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "archive-team",
+          "relation": "rescued by",
+          "note": "Archive Team downloaded much of GeoCities before the 2009 shutdown.",
+          "basis": "fact"
+        },
+        {
+          "to": "neocities",
+          "relation": "succeeded by",
+          "note": "Neocities (2013) offers free static sites in GeoCities’ spirit.",
+          "basis": "fact"
+        },
+        {
+          "to": "internet-archive",
+          "relation": "preserved by",
+          "note": "The Internet Archive also holds GeoCities copies.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "space-jam-1996",
+      "column": "rabbit-hole",
+      "format": "brief",
+      "title": "The Space Jam Website, Still Standing",
+      "dek": "A 1996 movie site that was simply… never taken down.",
+      "body": [
+        "Warner Bros. left the original 1996 Space Jam website online for decades — a starfield background, planet buttons, tiny GIFs — and it became a beloved fossil of the early commercial web. The studio has kept the old version reachable even after the sequel. Open it on your phone and enjoy how little it cares about your screen size."
+      ],
+      "why": "Basketball, the 90s and the early web in one ridiculous, delightful page.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1996",
+      "tags": [
+        "Old web",
+        "1990s",
+        "Basketball"
+      ],
+      "exploreMinutes": 10,
+      "sources": [
+        {
+          "label": "Space Jam (1996 site)",
+          "url": "https://www.spacejam.com/1996/",
+          "kind": "archive",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "wayback-machine",
+      "column": "archive",
+      "format": "brief",
+      "title": "The Wayback Machine",
+      "dek": "Twenty-plus years of snapshots of the web, free to browse.",
+      "body": [
+        "The Internet Archive, founded by Brewster Kahle in 1996, opened the Wayback Machine to the public in 2001. Type in the address of a site you loved — an old game studio, a band, a forum — and pick a date. It’s the best time machine you’ll ever use, and it runs on donations."
+      ],
+      "why": "Digital archaeology made practical: bring back a site from your own past.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Internet history",
+        "Archives",
+        "Old web"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Wayback Machine",
+          "url": "https://web.archive.org/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Wayback Machine",
+          "url": "https://en.wikipedia.org/wiki/Wayback_Machine",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "internet-archive",
+          "relation": "run by",
+          "note": "The Wayback Machine is a project of the Internet Archive.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "windows-93",
+      "column": "rabbit-hole",
+      "format": "brief",
+      "title": "Windows 93",
+      "dek": "A fake operating system as web art — glitchy, absurd and full of jokes.",
+      "body": [
+        "Windows 93 is a browser-based parody of a 90s desktop, made by two French artists: click around and find terminals, odd little games, glitch art and in-jokes about computers we used to own. It works best when you poke around with no plan."
+      ],
+      "why": "An independent website that plays with nostalgia instead of selling it.",
+      "freshness": "timeless",
+      "depth": "lesser-known",
+      "tags": [
+        "Independent websites",
+        "Net art",
+        "Nostalgia"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Windows 93",
+          "url": "https://www.windows93.net/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "gopher-floodgap",
+      "column": "lab",
+      "format": "brief",
+      "title": "Before the Web: Gopher",
+      "dek": "A text-only internet that still runs — and you can visit through a proxy.",
+      "body": [
+        "Gopher was a menu-based way to publish and browse documents on the early internet, popular for a few years before the web took over. A small community still runs Gopher servers. Floodgap’s public proxy lets you browse them in an ordinary browser: no images, no ads, just menus of text written by people who like it that way."
+      ],
+      "why": "Retro technology you can try in five minutes, and a calm alternative to the modern web.",
+      "freshness": "archive",
+      "depth": "obscure",
+      "year": "1991",
+      "tags": [
+        "Internet history",
+        "Retro technology",
+        "Text"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Gopher (protocol)",
+          "url": "https://en.wikipedia.org/wiki/Gopher_(protocol)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Floodgap Public Gopher Proxy",
+          "url": "https://gopher.floodgap.com/gopher/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "flash-preservation",
+      "column": "select-player",
+      "format": "brief",
+      "title": "Saving Flash Games",
+      "dek": "Adobe ended Flash in 2020; volunteers archived the games first.",
+      "body": [
+        "Adobe ended support for Flash Player at the end of 2020, which threatened a huge body of browser games and animations — a whole early-2000s culture. Preservation projects like Flashpoint Archive collected and packaged them so they can still be played. Find a game you played on a school computer and see if it survived."
+      ],
+      "why": "Gaming history and digital archaeology meet: your early internet games, rescued.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1996–2020",
+      "tags": [
+        "Flash games",
+        "Game preservation",
+        "Internet history"
+      ],
+      "exploreMinutes": 40,
+      "sources": [
+        {
+          "label": "Wikipedia: Adobe Flash Player",
+          "url": "https://en.wikipedia.org/wiki/Adobe_Flash_Player",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Flashpoint Archive",
+          "url": "https://flashpointarchive.org/",
+          "kind": "archive",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    }
+  ]
+}

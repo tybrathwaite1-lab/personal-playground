@@ -8,6 +8,7 @@ import {
   Library,
   MapPin,
   Menu,
+  Newspaper,
   Radio,
   NotebookPen,
   RotateCcw,
@@ -26,6 +27,7 @@ export const NAV: { route: RouteName; label: string; short: string; num: string;
   { route: 'interests', label: 'My Interests', short: 'Interests', num: '02', jp: '興味', icon: Sparkles },
   { route: 'pulse', label: 'The Local Pulse', short: 'Pulse', num: '03A', jp: '今', icon: Radio },
   { route: 'local', label: 'Local Playground', short: 'Local', num: '03', jp: '地元', icon: MapPin },
+  { route: 'drop', label: 'The Weekly Drop', short: 'Drop', num: '09', jp: '発見', icon: Newspaper },
   { route: 'digital', label: 'Digital Playground', short: 'Digital', num: '04', jp: '電子', icon: Globe },
   { route: 'rediscover', label: 'Rediscover', short: 'Rediscover', num: '05', jp: '再発見', icon: RotateCcw },
   { route: 'collection', label: 'My Collection', short: 'Collection', num: '06', jp: '収集', icon: Library },
@@ -33,6 +35,8 @@ export const NAV: { route: RouteName; label: string; short: string; num: string;
 ];
 
 const BOTTOM: RouteName[] = ['home', 'pulse', 'discover', 'collection'];
+/** Desktop top bar; everything else lives in the Index menu. */
+const DESKTOP: RouteName[] = ['pulse', 'discover', 'plan', 'drop', 'local', 'digital', 'collection'];
 
 function useOnline() {
   const [online, setOnline] = useState(() => navigator.onLine);
@@ -76,11 +80,11 @@ export function Layout({ current, children }: { current: RouteName; children: Re
             <span className="display text-xl tracking-normal">
               Personal Playground<span className="text-rust">.</span>
             </span>
-            <span className="label hidden sm:inline lg:hidden xl:inline">Vol. 01</span>
+            <span className="label hidden sm:inline lg:hidden xl:inline">Vol. 02</span>
           </a>
           <nav aria-label="Main" className="hidden lg:block">
             <ul className="flex items-center gap-0.5">
-              {NAV.slice(1).map((n) => (
+              {NAV.filter((n) => DESKTOP.includes(n.route)).map((n) => (
                 <li key={n.route}>
                   <a
                     href={href(n.route)}
@@ -113,7 +117,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
             </a>
             <button
               type="button"
-              className="btn-ghost lg:hidden"
+              className="btn-ghost"
               aria-expanded={menuOpen}
               aria-controls="more-menu"
               aria-label="Open menu"
@@ -182,7 +186,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
 
       {/* ── Full menu ───────────────────────────────────────── */}
       {menuOpen && (
-        <div className="fixed inset-0 z-50 bg-ink lg:hidden" id="more-menu" role="dialog" aria-modal="true" aria-label="All sections">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink" id="more-menu" role="dialog" aria-modal="true" aria-label="All sections">
           <div className="pt-safe flex h-14 items-center justify-between border-b border-line px-4">
             <span className="label">Contents · 目次</span>
             <button type="button" className="btn-ghost" onClick={() => setMenuOpen(false)} aria-label="Close menu" autoFocus>

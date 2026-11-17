@@ -1,0 +1,413 @@
+[
+  {
+    "id": "michael-mann",
+    "title": "Michael Mann",
+    "type": "person",
+    "summary": "American director of night-city crime films — Thief, Heat, Collateral — obsessed with professionals and procedure.",
+    "url": "https://en.wikipedia.org/wiki/Michael_Mann",
+    "related": [
+      {
+        "to": "thief-1981",
+        "relation": "directed",
+        "note": "His first theatrical feature.",
+        "basis": "fact"
+      },
+      {
+        "to": "collateral-2004",
+        "relation": "directed",
+        "note": "Los Angeles at night, shot largely on digital video.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "tangerine-dream",
+    "title": "Tangerine Dream",
+    "type": "artist",
+    "year": "1967–",
+    "summary": "German electronic group whose sequencer-driven scores for Thief, Sorcerer and others shaped synth soundtracks.",
+    "url": "https://en.wikipedia.org/wiki/Tangerine_Dream"
+  },
+  {
+    "id": "collateral-2004",
+    "title": "Collateral",
+    "type": "film",
+    "year": "2004",
+    "summary": "Michael Mann’s 2004 thriller: a cab driver, a hitman and one long night across Los Angeles.",
+    "url": "https://en.wikipedia.org/wiki/Collateral_(film)",
+    "related": [
+      {
+        "to": "michael-mann",
+        "relation": "directed by",
+        "note": "Directed by Michael Mann.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "drive-2011",
+    "title": "Drive",
+    "type": "film",
+    "year": "2011",
+    "summary": "Nicolas Winding Refn’s 2011 film about a stunt driver who works nights as a getaway driver; neon, silence and a synth-pop soundtrack.",
+    "url": "https://en.wikipedia.org/wiki/Drive_(2011_film)",
+    "related": [
+      {
+        "to": "nicolas-winding-refn",
+        "relation": "directed by",
+        "note": "Directed by Nicolas Winding Refn.",
+        "basis": "fact"
+      },
+      {
+        "to": "cliff-martinez",
+        "relation": "scored by",
+        "note": "Original score by Cliff Martinez.",
+        "basis": "fact"
+      },
+      {
+        "to": "kavinsky-nightcall",
+        "relation": "features",
+        "note": "“Nightcall” plays over the opening credits.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "nicolas-winding-refn",
+    "title": "Nicolas Winding Refn",
+    "type": "person",
+    "summary": "Danish director of Drive, Only God Forgives and the Pusher trilogy; known for neon-saturated, near-silent films.",
+    "url": "https://en.wikipedia.org/wiki/Nicolas_Winding_Refn"
+  },
+  {
+    "id": "cliff-martinez",
+    "title": "Cliff Martinez",
+    "type": "person",
+    "summary": "Former drummer for Red Hot Chili Peppers turned film composer; his glassy synth score is half of Drive’s atmosphere.",
+    "url": "https://en.wikipedia.org/wiki/Cliff_Martinez"
+  },
+  {
+    "id": "outrun-arcade",
+    "title": "OutRun",
+    "type": "game",
+    "year": "1986",
+    "summary": "Sega’s 1986 arcade driving game — a convertible, a coastline and a choice of radio station.",
+    "url": "https://en.wikipedia.org/wiki/Out_Run"
+  },
+  {
+    "id": "hyperdub",
+    "title": "Hyperdub",
+    "type": "studio",
+    "year": "2004–",
+    "summary": "London label founded by Kode9; home to Burial and a lineage of experimental UK bass music.",
+    "url": "https://en.wikipedia.org/wiki/Hyperdub"
+  },
+  {
+    "id": "mamoru-oshii",
+    "title": "Mamoru Oshii",
+    "type": "person",
+    "summary": "Japanese director of Ghost in the Shell and Patlabor 2, known for slow, philosophical, city-obsessed films.",
+    "url": "https://en.wikipedia.org/wiki/Mamoru_Oshii"
+  },
+  {
+    "id": "kenji-kawai",
+    "title": "Kenji Kawai",
+    "type": "person",
+    "summary": "Composer of Ghost in the Shell’s choral score and many Oshii films.",
+    "url": "https://en.wikipedia.org/wiki/Kenji_Kawai"
+  },
+  {
+    "id": "dreamcast",
+    "title": "Sega Dreamcast",
+    "type": "hardware",
+    "year": "1998–2001",
+    "summary": "Sega’s final home console (1998 in Japan); built-in modem, inventive games, discontinued in 2001.",
+    "url": "https://en.wikipedia.org/wiki/Dreamcast",
+    "related": [
+      {
+        "to": "jet-set-radio",
+        "relation": "home of",
+        "note": "Jet Set Radio launched on Dreamcast.",
+        "basis": "fact"
+      },
+      {
+        "to": "sega-naomi",
+        "relation": "arcade sibling",
+        "note": "Sega’s NAOMI arcade board was built on Dreamcast-like hardware.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "hideki-naganuma",
+    "title": "Hideki Naganuma",
+    "type": "person",
+    "summary": "Sega composer behind Jet Set Radio’s sample-heavy funk and hip-hop sound.",
+    "url": "https://en.wikipedia.org/wiki/Hideki_Naganuma"
+  },
+  {
+    "id": "smilebit",
+    "title": "Smilebit",
+    "type": "studio",
+    "summary": "Sega’s internal studio behind Jet Set Radio and Panzer Dragoon Orta.",
+    "url": "https://en.wikipedia.org/wiki/Smilebit"
+  },
+  {
+    "id": "rival-schools",
+    "title": "Rival Schools: United by Fate",
+    "type": "game",
+    "year": "1997",
+    "summary": "Capcom’s 1997 team-based fighting game set in rival Japanese high schools.",
+    "url": "https://en.wikipedia.org/wiki/Rival_Schools:_United_by_Fate",
+    "related": [
+      {
+        "to": "capcom",
+        "relation": "developed by",
+        "note": "Developed and published by Capcom.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "sega-naomi",
+    "title": "Sega NAOMI",
+    "type": "hardware",
+    "year": "1998",
+    "summary": "Sega’s 1998 arcade platform, closely related to the Dreamcast; it ran many late-90s and 2000s arcade games.",
+    "url": "https://en.wikipedia.org/wiki/Sega_NAOMI"
+  },
+  {
+    "id": "capcom",
+    "title": "Capcom",
+    "type": "studio",
+    "summary": "Osaka developer of Street Fighter, Darkstalkers and Rival Schools — the center of arcade fighting game history.",
+    "url": "https://en.wikipedia.org/wiki/Capcom",
+    "related": [
+      {
+        "to": "cps2",
+        "relation": "built",
+        "note": "Capcom’s CP System II board powered its mid-90s fighters.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "cps2",
+    "title": "CP System II",
+    "type": "hardware",
+    "year": "1993",
+    "summary": "Capcom’s 1993 arcade board behind Super Street Fighter II, the Alpha series, Darkstalkers and more.",
+    "url": "https://en.wikipedia.org/wiki/CP_System_II"
+  },
+  {
+    "id": "samurai-champloo",
+    "title": "Samurai Champloo",
+    "type": "anime",
+    "year": "2004",
+    "summary": "Shinichirō Watanabe’s 2004 series: Edo-period Japan scored with hip-hop.",
+    "url": "https://en.wikipedia.org/wiki/Samurai_Champloo",
+    "related": [
+      {
+        "to": "shinichiro-watanabe",
+        "relation": "directed by",
+        "note": "Directed by Shinichirō Watanabe.",
+        "basis": "fact"
+      },
+      {
+        "to": "nujabes-champloo",
+        "relation": "music by",
+        "note": "Nujabes was one of its composers.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "shinichiro-watanabe",
+    "title": "Shinichirō Watanabe",
+    "type": "person",
+    "summary": "Japanese director whose anime are built around music: Cowboy Bebop, Samurai Champloo, Space Dandy.",
+    "url": "https://en.wikipedia.org/wiki/Shinichir%C5%8D_Watanabe",
+    "related": [
+      {
+        "to": "cowboy-bebop",
+        "relation": "directed",
+        "note": "Directed Cowboy Bebop (1998).",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "cowboy-bebop",
+    "title": "Cowboy Bebop",
+    "type": "anime",
+    "year": "1998",
+    "summary": "1998 series about bounty hunters in space, scored by Yoko Kanno’s jazz band the Seatbelts.",
+    "url": "https://en.wikipedia.org/wiki/Cowboy_Bebop",
+    "related": [
+      {
+        "to": "yoko-kanno",
+        "relation": "music by",
+        "note": "Music by Yoko Kanno and the Seatbelts.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "yoko-kanno",
+    "title": "Yoko Kanno",
+    "type": "person",
+    "summary": "Composer of Cowboy Bebop’s jazz, blues and big-band soundtrack, performed by the Seatbelts.",
+    "url": "https://en.wikipedia.org/wiki/Yoko_Kanno"
+  },
+  {
+    "id": "shing02",
+    "title": "Shing02",
+    "type": "artist",
+    "summary": "Japanese-American MC and producer, longtime Nujabes collaborator.",
+    "url": "https://en.wikipedia.org/wiki/Shing02",
+    "related": [
+      {
+        "to": "shing02-luvsic",
+        "relation": "made",
+        "note": "The Luv(sic) series with Nujabes.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "madlib",
+    "title": "Madlib",
+    "type": "artist",
+    "summary": "Oxnard, California producer and crate-digger; half of Madvillain with MF DOOM.",
+    "url": "https://en.wikipedia.org/wiki/Madlib",
+    "related": [
+      {
+        "to": "mf-doom",
+        "relation": "collaborated with",
+        "note": "Made Madvillainy (2004) together as Madvillain.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "mf-doom",
+    "title": "MF DOOM",
+    "type": "artist",
+    "summary": "Masked rapper and producer; Madvillainy with Madlib is one of underground hip-hop’s landmark albums.",
+    "url": "https://en.wikipedia.org/wiki/MF_DOOM"
+  },
+  {
+    "id": "blue-note",
+    "title": "Blue Note Records",
+    "type": "studio",
+    "year": "1939–",
+    "summary": "The jazz label whose 1950s–60s catalog became a deep well for hip-hop samples.",
+    "url": "https://en.wikipedia.org/wiki/Blue_Note_Records"
+  },
+  {
+    "id": "j-dilla",
+    "title": "J Dilla",
+    "type": "artist",
+    "summary": "Detroit producer whose loose, off-grid drums changed hip-hop; his MPC3000 is in the Smithsonian.",
+    "url": "https://en.wikipedia.org/wiki/J_Dilla"
+  },
+  {
+    "id": "nigo",
+    "title": "Nigo",
+    "type": "designer",
+    "summary": "Founder of A Bathing Ape; later co-founded Billionaire Boys Club and became Kenzo’s artistic director.",
+    "url": "https://en.wikipedia.org/wiki/Nigo_(designer)"
+  },
+  {
+    "id": "pharrell-williams",
+    "title": "Pharrell Williams",
+    "type": "person",
+    "summary": "Producer and designer who brought BAPE into American hip-hop and co-founded Billionaire Boys Club with Nigo.",
+    "url": "https://en.wikipedia.org/wiki/Pharrell_Williams"
+  },
+  {
+    "id": "air-force-1",
+    "title": "Nike Air Force 1",
+    "type": "brand",
+    "year": "1982",
+    "summary": "Bruce Kilgore’s 1982 basketball shoe — the template for the Bapesta and countless others.",
+    "url": "https://en.wikipedia.org/wiki/Nike_Air_Force_1"
+  },
+  {
+    "id": "berserk",
+    "title": "Berserk",
+    "type": "manga",
+    "year": "1989–",
+    "summary": "Kentaro Miura’s dark fantasy manga, begun in 1989.",
+    "url": "https://en.wikipedia.org/wiki/Berserk_(manga)"
+  },
+  {
+    "id": "katsuhiro-otomo",
+    "title": "Katsuhiro Otomo",
+    "type": "person",
+    "summary": "Manga artist and director of Akira.",
+    "url": "https://en.wikipedia.org/wiki/Katsuhiro_Otomo"
+  },
+  {
+    "id": "hayao-miyazaki",
+    "title": "Hayao Miyazaki",
+    "type": "person",
+    "summary": "Studio Ghibli co-founder and director; admirer and friend of Moebius.",
+    "url": "https://en.wikipedia.org/wiki/Hayao_Miyazaki"
+  },
+  {
+    "id": "madhouse",
+    "title": "Madhouse",
+    "type": "studio",
+    "summary": "Tokyo animation studio behind Ninja Scroll, Perfect Blue and many classics.",
+    "url": "https://en.wikipedia.org/wiki/Madhouse_(company)"
+  },
+  {
+    "id": "archive-team",
+    "title": "Archive Team",
+    "type": "project",
+    "year": "2009–",
+    "summary": "Volunteer group that rescues websites before they shut down — GeoCities included.",
+    "url": "https://en.wikipedia.org/wiki/Archive_Team"
+  },
+  {
+    "id": "neocities",
+    "title": "Neocities",
+    "type": "website",
+    "year": "2013–",
+    "summary": "Free static web hosting in the spirit of GeoCities, founded in 2013.",
+    "url": "https://neocities.org/browse"
+  },
+  {
+    "id": "internet-archive",
+    "title": "Internet Archive",
+    "type": "project",
+    "year": "1996–",
+    "summary": "Nonprofit digital library founded in 1996; runs the Wayback Machine.",
+    "url": "https://archive.org/",
+    "related": [
+      {
+        "to": "wayback-machine",
+        "relation": "runs",
+        "note": "The Wayback Machine is its web archive.",
+        "basis": "fact"
+      }
+    ]
+  },
+  {
+    "id": "style-wars",
+    "title": "Style Wars",
+    "type": "film",
+    "year": "1983",
+    "summary": "1983 documentary by Tony Silver and Henry Chalfant about New York subway graffiti and early hip-hop.",
+    "url": "https://en.wikipedia.org/wiki/Style_Wars",
+    "related": [
+      {
+        "to": "subway-art",
+        "relation": "companion to",
+        "note": "Chalfant’s photographs and film document the same scene.",
+        "basis": "fact"
+      }
+    ]
+  }
+]

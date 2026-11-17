@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "issue": 8,
+  "slug": "slow-frequencies",
+  "title": "Slow Frequencies",
+  "theme": "Eastern philosophy, ambient music and analog relaxation",
+  "status": "scheduled",
+  "publishDate": "2027-01-01",
+  "intro": "First issue of a new year, and nothing in it asks you to improve. A philosopher who laughed a lot, Japanese environmental music, an old book about water, tea brewed in small cups and a boardwalk at sunrise. Read slowly. Or don’t read at all and just put a record on.",
+  "featured": "watts-way-of-zen",
+  "items": [
+    {
+      "id": "watts-way-of-zen",
+      "column": "reset",
+      "format": "feature",
+      "title": "Alan Watts, the Way of Zen and the Art of Not Trying",
+      "dek": "The British-born philosopher who made Eastern thought feel like a conversation.",
+      "body": [
+        "Alan Watts was born in England in 1915 and spent most of his life in America explaining Zen Buddhism and Taoism to people who had never sat on a cushion. His 1957 book The Way of Zen is still one of the clearest introductions, but most people meet him through his talks — recorded lectures and radio broadcasts in which he sounds like a funny, unhurried friend who happens to have read everything.",
+        "If you already know the famous clips, go to the ideas underneath them. Watts kept returning to a Taoist notion, wu wei, often translated as “not forcing”: acting the way water moves, finding the path of least resistance instead of fighting the current. It sounds passive and isn’t. It’s the difference between a good jam session and a forced one, or between a sketch that flows and one you erase twelve times.",
+        "He was also wary of being turned into a guru, and he’s at his best when he’s laughing at the whole enterprise — at people who chase enlightenment like a promotion, at the idea that there’s a self to perfect at all. That lightness is the part worth keeping. Philosophy, in his hands, was a kind of play.",
+        "An experiment for the week: put on one of his longer talks and go for a walk with no destination. When he says something that lands, don’t write it down. See which ideas are still with you by the time you get home. Those are yours now."
+      ],
+      "why": "Alan Watts and Taoism are both on your list — this goes past the clips to the ideas, in his playful spirit.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1950s–1970s",
+      "creators": [
+        "Alan Watts"
+      ],
+      "tags": [
+        "Alan Watts",
+        "Taoism",
+        "Philosophy",
+        "Zen"
+      ],
+      "exploreMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: Alan Watts",
+          "url": "https://en.wikipedia.org/wiki/Alan_Watts",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: The Way of Zen",
+          "url": "https://en.wikipedia.org/wiki/The_Way_of_Zen",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "tao-te-ching",
+          "relation": "drew on",
+          "note": "Watts frequently taught from Taoist classics like the Tao Te Ching.",
+          "basis": "fact"
+        },
+        {
+          "to": "yoshimura-nine-postcards",
+          "relation": "good company",
+          "note": "Our pairing: music that practices the not-forcing Watts talked about.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "yoshimura-nine-postcards",
+      "column": "listen",
+      "format": "brief",
+      "title": "Hiroshi Yoshimura — Music for Nine Post Cards",
+      "dek": "Japanese environmental music, made to sit quietly in a room.",
+      "body": [
+        "Hiroshi Yoshimura made Music for Nine Post Cards (1982) as part of Japan’s kankyō ongaku — “environmental music” — movement: soft keyboard melodies meant to share a space, not dominate it. A 2017 reissue by Empire of Signs brought it to a new audience. Play it while you draw, read or make tea; it gets better the less you pay attention."
+      ],
+      "why": "Ambient music with the warmth of a lo-fi beat and none of the drums.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1982",
+      "creators": [
+        "Hiroshi Yoshimura"
+      ],
+      "tags": [
+        "Ambient",
+        "Japanese music",
+        "Kankyō ongaku"
+      ],
+      "exploreMinutes": 40,
+      "sources": [
+        {
+          "label": "Wikipedia: Hiroshi Yoshimura",
+          "url": "https://en.wikipedia.org/wiki/Hiroshi_Yoshimura",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "music-for-airports",
+      "column": "listen",
+      "format": "brief",
+      "title": "Brian Eno — Music for Airports",
+      "dek": "The 1978 record that named ambient music.",
+      "body": [
+        "Brian Eno made Ambient 1: Music for Airports (1978) imagining music that could calm a waiting room without demanding attention — “as ignorable as it is interesting,” as he put it in the liner notes. Long, slow loops of different lengths drift in and out of sync, so the music never quite repeats. It’s where the word “ambient” as a genre begins."
+      ],
+      "why": "The foundation under every calm playlist you’ve ever put on.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1978",
+      "creators": [
+        "Brian Eno"
+      ],
+      "tags": [
+        "Ambient",
+        "Electronic",
+        "Music history"
+      ],
+      "exploreMinutes": 50,
+      "sources": [
+        {
+          "label": "Wikipedia: Ambient 1: Music for Airports",
+          "url": "https://en.wikipedia.org/wiki/Ambient_1:_Music_for_Airports",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "yoshimura-nine-postcards",
+          "relation": "kindred spirit",
+          "note": "Our pairing: Western and Japanese takes on music for a room, a few years apart.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "tao-te-ching",
+      "column": "reset",
+      "format": "brief",
+      "title": "The Tao Te Ching, Read Slowly",
+      "dek": "Eighty-one short chapters, best taken one at a time.",
+      "body": [
+        "The Tao Te Ching, traditionally attributed to Laozi, is short enough to read in an afternoon and strange enough to last a lifetime. Many translations exist; Ursula K. Le Guin’s 1997 rendition is a poet’s version, plain and warm. Read one chapter with your morning tea, and let it go until tomorrow."
+      ],
+      "why": "Taoism at the source, at the pace it was written for.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "creators": [
+        "Laozi (attributed)",
+        "Ursula K. Le Guin (translator)"
+      ],
+      "tags": [
+        "Taoism",
+        "Philosophy",
+        "Books"
+      ],
+      "exploreMinutes": 15,
+      "sources": [
+        {
+          "label": "Wikipedia: Tao Te Ching",
+          "url": "https://en.wikipedia.org/wiki/Tao_Te_Ching",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "gongfu-tea",
+      "column": "reset",
+      "format": "brief",
+      "title": "Gongfu Tea: Small Pot, Many Cups",
+      "dek": "A way of brewing that slows you down on purpose.",
+      "body": [
+        "Gongfu brewing uses a small teapot or gaiwan, a lot of leaf and many short infusions — sometimes ten or more from one serving — so the flavor changes cup by cup. It’s a ritual and a tasting at once. Try it with an oolong at home, or sit at a tea house and ask them to walk you through it."
+      ],
+      "why": "Tea culture with a little ceremony — a perfect slow activity for one or two.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Tea culture",
+        "Relaxation",
+        "Ritual"
+      ],
+      "exploreMinutes": 40,
+      "sources": [
+        {
+          "label": "Wikipedia: Gongfu tea ceremony",
+          "url": "https://en.wikipedia.org/wiki/Gongfu_tea_ceremony",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "local": {
+        "placeId": "pl-kaleisia"
+      }
+    },
+    {
+      "id": "weedon-sunrise",
+      "column": "local-find",
+      "format": "brief",
+      "title": "Weedon Island at Opening Time",
+      "dek": "Boardwalks over the mangroves, before anyone else is up.",
+      "body": [
+        "Weedon Island Preserve opens at 7 a.m., and the first hour is the quietest: boardwalks over the mangroves, an observation tower, wading birds and almost no one else. Admission is free. Bring tea in a thermos, leave your headphones in your pocket, and walk the boardwalk slowly once before you do anything else."
+      ],
+      "why": "The most restful free morning within 20 minutes of home.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Walking",
+        "Nature",
+        "St. Petersburg"
+      ],
+      "exploreMinutes": 90,
+      "sources": [
+        {
+          "label": "Weedon Island Preserve — hours & directions",
+          "url": "https://weedonislandpreserve.org/aboutus.htm",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "local": {
+        "placeId": "pl-weedon"
+      }
+    }
+  ]
+}

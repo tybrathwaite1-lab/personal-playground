@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "issue": 1,
+  "slug": "after-hours",
+  "title": "After Hours",
+  "theme": "Neo-noir cinema, underground music and urban atmosphere",
+  "status": "published",
+  "publishDate": "2026-11-17",
+  "intro": "Issue one starts at night. Wet streets, synthesizers, professionals who say very little — the mood Drive borrowed and made famous, traced back to where it came from. Most of what’s here is decades old, which is the point: the best night-city art has been waiting patiently for a second listen.",
+  "featured": "thief-1981",
+  "items": [
+    {
+      "id": "thief-1981",
+      "column": "screen",
+      "format": "feature",
+      "title": "Thief (1981): Before Drive, There Was Frank",
+      "dek": "Michael Mann’s first theatrical feature wrote the rulebook for the cool, quiet professional at night.",
+      "body": [
+        "Before the neon of Drive and the digital grain of Collateral, Michael Mann made Thief: James Caan as Frank, a Chicago safecracker who runs his life with the same precision he brings to a vault door. It was Mann’s first feature for cinemas, released in 1981, and almost everything he became known for is already here — the obsession with procedure, the respect for people who are very good at something, and a city that looks better soaked in rain than it does in daylight.",
+        "Watch the heist sequences for the tools. Mann shot the drilling and burning of safes with the patience of a documentary, and the film is at its most hypnotic when nobody is talking. Then listen. The score is by Tangerine Dream, the German electronic group, and it doesn’t behave like a 1981 crime soundtrack — it pulses, loops and hangs in the air, closer to the music of night driving than to anything orchestral. If the synth scores of the 2010s ever felt like they came from somewhere, this is one of the places.",
+        "The story is simple: one last score, a man who wants out, an organization that won’t let him go. What lifts it is the way Frank talks when he finally does talk — a long, plain-spoken scene in a diner where he lays out the life he wants, as if reading from a list he’s carried around for years. It’s the emotional core that the cooler, quieter heroes of later films keep circling.",
+        "Watch it as the first half of a double feature. Pair it with Collateral (2004), where Mann swapped wet Chicago for Los Angeles shot on early digital cameras, and you can see a director spend twenty years chasing the same feeling: the city at 3 a.m., and the people who work through it."
+      ],
+      "why": "Drive is your favorite film; Thief is one of its clearest ancestors — same quiet professional, same night city, same faith in a synth score.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1981",
+      "creators": [
+        "Michael Mann",
+        "Tangerine Dream"
+      ],
+      "tags": [
+        "Film",
+        "Neo-noir",
+        "1980s",
+        "Soundtracks",
+        "Night city"
+      ],
+      "exploreMinutes": 125,
+      "sources": [
+        {
+          "label": "Wikipedia: Thief (film)",
+          "url": "https://en.wikipedia.org/wiki/Thief_(film)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Tangerine Dream",
+          "url": "https://en.wikipedia.org/wiki/Tangerine_Dream",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "michael-mann",
+          "relation": "directed by",
+          "note": "Thief was Michael Mann’s first theatrical feature.",
+          "basis": "fact"
+        },
+        {
+          "to": "tangerine-dream",
+          "relation": "scored by",
+          "note": "Tangerine Dream composed the film’s electronic score.",
+          "basis": "fact"
+        },
+        {
+          "to": "collateral-2004",
+          "relation": "same director",
+          "note": "Mann returned to the lone professional at night in Collateral (2004).",
+          "basis": "fact"
+        },
+        {
+          "to": "drive-2011",
+          "relation": "kindred spirit",
+          "note": "Our pairing: the same quiet-professional-in-a-night-city mood, thirty years apart.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "kavinsky-nightcall",
+      "column": "listen",
+      "format": "brief",
+      "title": "Kavinsky — “Nightcall”",
+      "dek": "The song that opened Drive, from a French producer who built a whole mythology around a car.",
+      "body": [
+        "Before Drive put it over its opening credits, “Nightcall” (2010) was a cult record by Kavinsky, a French producer whose whole persona was a ghostly driver and a red Ferrari Testarossa. The vocoder voice, the slow, heavy beat and the city-lights melancholy made it the soundtrack shorthand for a decade of night-driving music. Go past the single to his 2013 album OutRun, named for the Sega arcade game."
+      ],
+      "why": "You already know the film — this is the door into the French electronic scene that fed its sound.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "2010",
+      "creators": [
+        "Kavinsky"
+      ],
+      "tags": [
+        "Synthwave",
+        "Electronic",
+        "Drive",
+        "Night city"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Kavinsky",
+          "url": "https://en.wikipedia.org/wiki/Kavinsky",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Nightcall (song)",
+          "url": "https://en.wikipedia.org/wiki/Nightcall_(song)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "drive-2011",
+          "relation": "featured in",
+          "note": "“Nightcall” plays over Drive’s opening credits.",
+          "basis": "fact"
+        },
+        {
+          "to": "outrun-arcade",
+          "relation": "named after",
+          "note": "Kavinsky’s 2013 album borrows its title from Sega’s 1986 arcade racer OutRun.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "burial-untrue",
+      "column": "listen",
+      "format": "brief",
+      "title": "Burial — Untrue",
+      "dek": "Night-bus music: crackle, rain and half-heard voices from South London.",
+      "body": [
+        "Untrue (2007) sounds like walking home alone after the club has closed — vinyl crackle, skittering two-step drums, R&B vocals pitched and chopped until they become ghosts. Burial — the London producer William Bevan, who kept his identity private until 2008 — released it on the Hyperdub label, and it was shortlisted for the Mercury Prize. Listen on headphones, late, in one sitting."
+      ],
+      "why": "If you love the late-night side of lo-fi and sampling, this is one of its most influential, atmospheric records.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "2007",
+      "creators": [
+        "Burial"
+      ],
+      "tags": [
+        "Electronic",
+        "UK garage",
+        "Sampling",
+        "Night city"
+      ],
+      "exploreMinutes": 50,
+      "sources": [
+        {
+          "label": "Wikipedia: Burial (musician)",
+          "url": "https://en.wikipedia.org/wiki/Burial_(musician)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Untrue (album)",
+          "url": "https://en.wikipedia.org/wiki/Untrue_(album)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "hyperdub",
+          "relation": "released by",
+          "note": "Untrue came out on Kode9’s London label Hyperdub.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "ghost-in-the-shell-1995",
+      "column": "screen",
+      "format": "brief",
+      "title": "Ghost in the Shell (1995)",
+      "dek": "Mamoru Oshii’s cyberpunk city, and the wordless montage everyone remembers.",
+      "body": [
+        "The plot is cyborgs and hackers, but the scene people carry with them is wordless: a few minutes of the city drifting past in the rain, canals, signs and crowds, scored by Kenji Kawai’s chanting choir. Oshii modeled the city on Hong Kong, and the film went on to shape a generation of cyberpunk images, The Matrix included. Hand-drawn, slow when it wants to be, and still strange."
+      ],
+      "why": "Cyberpunk atmosphere, traditional animation and philosophy in one 82-minute package.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1995",
+      "creators": [
+        "Mamoru Oshii",
+        "Kenji Kawai"
+      ],
+      "tags": [
+        "Anime",
+        "Cyberpunk",
+        "Night city",
+        "Soundtracks"
+      ],
+      "exploreMinutes": 85,
+      "sources": [
+        {
+          "label": "Wikipedia: Ghost in the Shell (1995 film)",
+          "url": "https://en.wikipedia.org/wiki/Ghost_in_the_Shell_(1995_film)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "mamoru-oshii",
+          "relation": "directed by",
+          "note": "Directed by Mamoru Oshii for Production I.G.",
+          "basis": "fact"
+        },
+        {
+          "to": "kenji-kawai",
+          "relation": "scored by",
+          "note": "Kenji Kawai wrote the choral score.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "fan-ho",
+      "column": "blackbook",
+      "format": "brief",
+      "title": "Fan Ho’s Hong Kong",
+      "dek": "Light, smoke and long shadows: street photographs from the 1950s and ’60s.",
+      "body": [
+        "Fan Ho photographed Hong Kong’s streets in the 1950s and 1960s, mostly with a twin-lens camera, waiting for light to cut through alleys and smoke until a single figure stepped into it. The results look staged and aren’t — they’re patience. Look at a few dozen of his frames before your next walk with a camera, and you’ll start seeing the city as shapes of light instead of things."
+      ],
+      "why": "Street photography and urban atmosphere — and a free lesson in waiting for the light.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1950s–1960s",
+      "creators": [
+        "Fan Ho"
+      ],
+      "tags": [
+        "Street photography",
+        "Hong Kong",
+        "Black and white"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Wikipedia: Fan Ho",
+          "url": "https://en.wikipedia.org/wiki/Fan_Ho",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "artwalk-after-dark",
+      "column": "local-find",
+      "format": "brief",
+      "title": "Second Saturday, After Dark",
+      "dek": "St. Pete’s galleries open late on the same night every month.",
+      "body": [
+        "On the second Saturday of every month, galleries and studios across seven St. Pete arts districts stay open from 5 to 9 p.m., and a trolley loops the Warehouse Arts District into the evening. Go late, pick one district, and treat it like a night walk with art in it. The next date is always in the Local Pulse."
+      ],
+      "why": "The closest thing to a neo-noir night walk you can do this month, with conversations included.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Art",
+        "St. Petersburg",
+        "Night walk"
+      ],
+      "exploreMinutes": 180,
+      "sources": [
+        {
+          "label": "St. Petersburg Arts Alliance — Second Saturday ArtWalk",
+          "url": "https://stpeteartsalliance.org/jc92",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "local": {
+        "communityId": "com-second-saturday"
+      }
+    }
+  ]
+}

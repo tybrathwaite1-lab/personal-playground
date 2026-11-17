@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dices, Plus, RotateCcw, Shuffle, Trash2 } from 'lucide-react';
 import { ExperienceCard, ExperienceTile } from '../components/ExperienceCard';
 import { ExperienceForm } from '../components/ExperienceForm';
+import { CuratedEditions } from '../components/Curated';
 import { ChipGroup, Empty, Modal, SearchBox, SectionHeader } from '../components/ui';
 import { useStore } from '../hooks/useStore';
 import { useWeather } from '../hooks/useWeather';
@@ -33,7 +34,7 @@ function loadFilters(): DiscoveryFilters {
 }
 
 export default function Discover({ params }: { params: URLSearchParams }) {
-  const { experiences, addExperience, deleteExperience, notify, data } = useStore();
+  const { experiences, addExperience, deleteExperience, notify, data, savePreset } = useStore();
   const { weather } = useWeather();
   const weatherFiltering = data.settings.weatherAware && isIndoorDay(weather);
   // On wet/stormy days (and only if weather-aware is on), outdoor-only ideas sit this one out.
@@ -42,7 +43,16 @@ export default function Discover({ params }: { params: URLSearchParams }) {
     [experiences, weatherFiltering],
   );
   const weatherHidden = experiences.length - pool.length;
-  const [filters, setFilters] = useState<DiscoveryFilters>(loadFilters);
+  const [filters, setFilters] = useState<DiscoveryFilters>(() => {
+    // Filters passed in the URL (e.g. from Pick a Vibe → Fine-tune) win over the remembered ones.
+    const fromUrl: Partial<DiscoveryFilters> = {};
+    for (const g of FILTER_GROUPS) {
+      const v = params.get(g.key);
+      if (v && g.options.some((o) => o.value === v)) (fromUrl as Record<string, string>)[g.key] = v;
+    }
+    return Object.keys(fromUrl).length ? { ...DEFAULT_FILTERS, ...fromUrl } : loadFilters();
+  });
+  const [vibeName, setVibeName] = useState('');
   const [current, setCurrent] = useState<Experience | null>(null);
   const [pickCount, setPickCount] = useState(0);
   const [noMatch, setNoMatch] = useState(false);
@@ -164,6 +174,34 @@ export default function Discover({ params }: { params: URLSearchParams }) {
           <button type="button" className="btn" onClick={clear} disabled={active.length === 0}>
             <RotateCcw size={14} aria-hidden /> Clear filters
           </button>
+          {active.length > 0 && (
+            <form
+              className="flex gap-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!vibeName.trim()) return;
+                const chosen = Object.fromEntries(active.map((k) => [k, filters[k]])) as Partial<DiscoveryFilters>;
+                savePreset({
+                  name: vibeName.trim(),
+                  description: active.map((k) => optionLabel(k, filters[k])).join(' · '),
+                  filters: chosen,
+                });
+                setVibeName('');
+                notify('Saved to Pick a Vibe');
+              }}
+            >
+              <input
+                className="input h-11 w-40 py-1 text-sm"
+                value={vibeName}
+                onChange={(e) => setVibeName(e.target.value)}
+                placeholder="Name this vibe"
+                aria-label="Name for a custom vibe"
+              />
+              <button type="submit" className="btn shrink-0" disabled={!vibeName.trim()}>
+                Save vibe
+              </button>
+            </form>
+          )}
           <p className="label sm:ml-auto" aria-live="polite">
             {matches.length} {matches.length === 1 ? 'experience fits' : 'experiences fit'}
           </p>
@@ -284,6 +322,16 @@ export default function Discover({ params }: { params: URLSearchParams }) {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-14" aria-labelledby="editions-title">
+        <div className="mb-4 border-b border-line pb-2">
+          <p className="label">Curated outings · 特別号</p>
+          <h2 id="editions-title" className="display text-4xl">
+            Whole days, pre-assembled
+          </h2>
+        </div>
+        <CuratedEditions />
       </section>
 
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title="New experience">

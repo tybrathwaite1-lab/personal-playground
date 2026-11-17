@@ -1,13 +1,19 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, Dices, Shuffle } from 'lucide-react';
-import { CuratedEditions } from '../components/Curated';
-import { ExperienceTile } from '../components/ExperienceCard';
-import { NAV } from '../components/Layout';
+import { ArrowRight, Dices } from 'lucide-react';
+import { EditorialImage } from '../components/EditorialImage';
+import { VibePicker } from '../components/VibePicker';
 import { WeatherStrip } from '../components/WeatherStrip';
+import { DropTeaser } from '../components/DropTeaser';
+import { COMMUNITIES } from '../data/communities';
 import { href, navigate } from '../hooks/useRoute';
+import { usePulse } from '../hooks/usePulse';
 import { useStore } from '../hooks/useStore';
+import { useWeather } from '../hooks/useWeather';
+import { formatYmd, nextOccurrence, ruleTime } from '../utils/community';
 import { formatCost, formatDuration } from '../utils/discovery';
 import { dailySeed, formatDate, seededShuffle } from '../utils/helpers';
+import { formatWhen, inRange, isExpired, nyDate, viewRange } from '../utils/pulse';
+import { isIndoorDay, isOutdoorOnly } from '../utils/weather';
 
 const KIND_LABEL: Record<string, string> = {
   experience: 'Experience',
@@ -21,89 +27,191 @@ const KIND_LABEL: Record<string, string> = {
   drop: 'Weekly Drop',
 };
 
-const BLURBS: Record<string, string> = {
-  discover: 'Six optional dials, one good idea.',
-  plan: 'Two or three stops, one good day.',
-  interests: 'Everything you’re into, in one index.',
-  local: 'St. Pete & Tampa Bay, verified.',
-  digital: 'The good corners of the internet.',
-  rediscover: 'Old loves, revisited.',
-  collection: 'Everything you’ve kept.',
-  notes: 'A notebook, never homework.',
-};
+const PATHS = [
+  { n: '01', title: 'Go somewhere', jp: '出かける', blurb: 'What’s on nearby, places to wander, people to meet.', to: href('pulse') },
+  { n: '02', title: 'Do something', jp: 'やってみる', blurb: 'Hobbies, projects and outings — pick a vibe or plan one.', to: href('discover') },
+  { n: '03', title: 'Discover something', jp: '見つける', blurb: 'Music, film, games, art and corners of the internet.', to: href('drop') },
+];
 
 export default function Home() {
-  const { experiences, data } = useStore();
-  const [shuffleSeed, setShuffleSeed] = useState(0);
-
-  const today = new Date();
+  const { experiences, data, places } = useStore();
+  const pulse = usePulse();
+  const { weather } = useWeather();
+  const [now] = useState(() => Date.now());
+  const today = new Date(now);
   const seed = dailySeed();
-  const featured = useMemo(() => seededShuffle(experiences, seed)[0], [experiences, seed]);
-  const rotation = useMemo(
-    () => seededShuffle(experiences.filter((e) => e.id !== featured?.id), seed + shuffleSeed * 7919).slice(0, 6),
-    [experiences, featured, seed, shuffleSeed],
-  );
+  const indoor = data.settings.weatherAware && isIndoorDay(weather);
+
+  const featured = useMemo(() => {
+    const pool = indoor ? experiences.filter((e) => !isOutdoorOnly(e)) : experiences;
+    return seededShuffle(pool, seed)[0];
+  }, [experiences, seed, indoor]);
+
+  // Today's local possibilities: real listings first, then recurring communities, then places.
+  const local = useMemo(() => {
+    const events = pulse.data?.events.filter((e) => !isExpired(e, now) && !e.cancelled && (e.miles ?? 0) <= data.settings.radiusMiles) ?? [];
+    const todayList = events.filter((e) => inRange(e, viewRange('today', now)) && !e.ongoing && (!indoor || e.indoor !== false));
+    const weekend = events.filter((e) => inRange(e, viewRange('weekend', now)) && !e.ongoing);
+    const list = (todayList.length >= 2 ? todayList : [...todayList, ...weekend.filter((e) => !todayList.includes(e))]).slice(0, 3);
+    const nyToday = nyDate(now);
+    const community = COMMUNITIES.map((c) => ({ c, next: nextOccurrence(c, nyToday, 21) }))
+      .filter((x) => x.next)
+      .sort((a, b) => a.next!.localeCompare(b.next!))[0];
+    const place = seededShuffle(
+      places.filter((p) => p.status !== 'placeholder' && !data.feedback[`place:${p.id}`]?.been && !data.feedback[`place:${p.id}`]?.notInterested),
+      seed,
+    )[0];
+    return { list, community, place, label: todayList.length >= 2 ? 'Today' : 'Today & this weekend' };
+  }, [pulse.data, now, data, places, seed, indoor]);
+
   const recent = data.saved.slice(0, 4);
 
-  const surprise = () => navigate('discover', { surprise: String(Date.now()) });
-
   return (
-    <div className="space-y-16">
-      {/* ── Cover ───────────────────────────────────────────────── */}
+    <div className="space-y-14 md:space-y-16">
+      {/* ── Masthead ─────────────────────────────────────────────── */}
       <section className="relative animate-rise" aria-labelledby="cover-title">
-        <div className="mb-4 flex items-center justify-between border-b border-line pb-2">
-          <span className="label">Vol. 01 · Issue {seed % 1000}</span>
+        <div className="mb-3 flex items-center justify-between border-b border-line pb-2">
+          <span className="label">Vol. 02 · Issue {seed % 1000}</span>
           <span className="label">{today.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
         </div>
-        <div className="relative min-w-0">
-          <span
-            aria-hidden
-            className="absolute -top-2 right-0 hidden font-jp text-[11px] tracking-[0.6em] text-muted [writing-mode:vertical-rl] sm:block"
-            lang="ja"
-          >
-            遊び場・好奇心・自由
+        <span
+          aria-hidden
+          className="absolute right-0 top-10 hidden font-jp text-[11px] tracking-[0.6em] text-muted [writing-mode:vertical-rl] md:block"
+          lang="ja"
+        >
+          遊び場・好奇心・自由
+        </span>
+        <h1 id="cover-title" className="display pr-6 text-[clamp(2.6rem,12.5vw,9rem)] md:text-[clamp(5rem,13vw,9rem)]">
+          Personal
+          <br />
+          <span className="whitespace-nowrap">
+            Playground<span className="text-rust">.</span>
           </span>
-          <h1 id="cover-title" className="display pr-6 text-[clamp(3rem,15vw,9rem)]">
-            Personal
-            <br />
-            <span className="whitespace-nowrap">
-              Playground<span className="text-rust">.</span>
-            </span>
-          </h1>
-          <p className="mt-5 font-mono text-xs uppercase tracking-label text-muted">
-            No goals. No quotas. Just curiosity.
-          </p>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr] lg:items-end lg:gap-8">
+        </h1>
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-[1.3fr_1fr] md:items-end md:gap-8">
           <div className="min-w-0 border-l-2 border-rust pl-4">
             <p className="label mb-1">Today’s question</p>
-            <p className="display text-4xl sm:text-6xl">What sounds good today?</p>
+            <p className="display text-3xl sm:text-5xl">What sounds good today?</p>
           </div>
-          <div className="flex min-w-0 flex-col gap-3">
-            <a href={href('discover')} className="btn-primary w-full text-sm">
-              Open the Discovery Engine <ArrowRight size={16} aria-hidden />
+          <div className="flex min-w-0 gap-2">
+            <a href={href('pulse')} className="btn-primary flex-1 text-sm">
+              What’s on nearby <ArrowRight size={16} aria-hidden />
             </a>
-            <button type="button" className="btn w-full" onClick={surprise}>
-              <Dices size={16} aria-hidden /> Surprise me
+            <button type="button" className="btn" onClick={() => navigate('discover', { surprise: String(Date.now()) })}>
+              <Dices size={16} aria-hidden /> Surprise
             </button>
           </div>
         </div>
-        <div className="mt-4">
+      </section>
+
+      {/* ── Three paths ──────────────────────────────────────────── */}
+      <nav aria-label="Discovery paths">
+        <ul className="grid grid-cols-1 border-y border-line md:grid-cols-3">
+          {PATHS.map((p) => (
+            <li key={p.n} className="border-line md:[&:not(:last-child)]:border-r [&:not(:last-child)]:border-b md:[&:not(:last-child)]:border-b-0">
+              <a href={p.to} className="group flex items-baseline gap-4 px-1 py-4 transition-colors hover:bg-white/[0.02] md:block md:px-5 md:py-6">
+                <span className="font-mono text-xs text-rust">{p.n}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="display block text-3xl group-hover:text-rust md:mt-4 md:text-4xl">{p.title}</span>
+                  <span className="mt-1 block text-sm text-muted">{p.blurb}</span>
+                </span>
+                <span className="font-jp text-[10px] tracking-[0.2em] text-muted md:mt-3 md:block" lang="ja">
+                  {p.jp}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* ── Today's local possibilities ──────────────────────────── */}
+      <section aria-labelledby="local-title">
+        <div className="mb-3 flex items-end justify-between border-b border-line pb-2">
+          <div>
+            <p className="label">The Local Pulse · {local.label}</p>
+            <h2 id="local-title" className="display text-3xl">
+              Around St. Pete
+            </h2>
+          </div>
+          <a href={href('pulse')} className="label hover:text-paper">
+            All listings →
+          </a>
+        </div>
+        <div className="mb-3">
           <WeatherStrip />
+        </div>
+        <ul className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
+          {local.list.map((e) => (
+            <li key={e.id} className="bg-ink p-4">
+              <p className="label text-rust">{formatWhen(e)}</p>
+              <a href={href('pulse', { view: 'upcoming' })} className="display mt-1 block text-xl hover:text-rust">
+                {e.title}
+              </a>
+              <p className="mt-1 text-xs text-muted">{[e.venue, e.city].filter(Boolean).join(' · ')}</p>
+            </li>
+          ))}
+          {local.community && (
+            <li className="bg-ink p-4">
+              <p className="label text-rust">
+                {formatYmd(local.community.next!)}
+                {ruleTime(local.community.c, local.community.next!) && ` · ${ruleTime(local.community.c, local.community.next!)}`}
+              </p>
+              <a href={href('pulse', { view: 'anytime' })} className="display mt-1 block text-xl hover:text-rust">
+                {local.community.c.name}
+              </a>
+              <p className="mt-1 text-xs text-muted">Recurring · {local.community.c.city}</p>
+            </li>
+          )}
+          {local.place && (
+            <li className="bg-ink p-4">
+              <p className="label">Somewhere new to you</p>
+              <a href={href('local', { place: local.place.id })} className="display mt-1 block text-xl hover:text-rust">
+                {local.place.name}
+              </a>
+              <p className="mt-1 text-xs text-muted">
+                {local.place.neighborhood} · {local.place.categories[0]}
+              </p>
+            </li>
+          )}
+          {!pulse.data && !local.community && !local.place && <li className="bg-ink p-4 text-sm text-muted">Listings are loading…</li>}
+        </ul>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a href={href('plan')} className="btn">
+            Plan a mini-adventure
+          </a>
+          <a href={href('pulse', { quick: 'date' })} className="btn">
+            Date day
+          </a>
+          <a href={href('pulse', { quick: 'friends' })} className="btn">
+            With friends
+          </a>
         </div>
       </section>
 
-      {/* ── Featured ────────────────────────────────────────────── */}
+      {/* ── Pick a Vibe ──────────────────────────────────────────── */}
+      <section aria-labelledby="vibe-title">
+        <div className="mb-1 flex items-end justify-between pb-2">
+          <div>
+            <p className="label">Quick discovery · 気分で選ぶ</p>
+            <h2 id="vibe-title" className="display text-4xl md:text-5xl">
+              Pick a vibe<span className="text-rust">.</span>
+            </h2>
+          </div>
+        </div>
+        <VibePicker />
+      </section>
+
+      {/* ── The Weekly Drop ──────────────────────────────────────── */}
+      <DropTeaser />
+
+      {/* ── Featured ─────────────────────────────────────────────── */}
       {featured && (
         <section aria-labelledby="featured-title">
           <a
             href={href('discover', { exp: featured.id })}
-            className="group grid grid-cols-1 border border-line bg-hunter/30 transition-colors hover:bg-hunter/50 md:grid-cols-[auto_1fr]"
+            className="group grid grid-cols-1 border border-line bg-hunter/30 transition-colors hover:bg-hunter/50 md:grid-cols-[2fr_3fr]"
           >
-            <div className="flex items-center justify-center border-b border-line p-6 md:border-b-0 md:border-r">
-              <span className="font-display text-7xl text-rust md:text-8xl">01</span>
-            </div>
+            <EditorialImage subject={featured.id} fallbackTags={featured.interests} ratio="3/2" caption={false} className="md:border-r md:border-line" />
             <div className="p-6">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="label text-paper/80">Featured experience · 特集</span>
@@ -113,7 +221,7 @@ export default function Home() {
                   </span>
                 )}
               </div>
-              <h2 id="featured-title" className="display text-4xl sm:text-5xl group-hover:text-rust">
+              <h2 id="featured-title" className="display text-4xl group-hover:text-rust sm:text-5xl">
                 {featured.name}
               </h2>
               <p className="mt-2 max-w-2xl text-paper/85">{featured.description}</p>
@@ -127,71 +235,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── Sections ────────────────────────────────────────────── */}
-      <section aria-labelledby="contents-title">
-        <div className="mb-4 flex items-end justify-between border-b border-line pb-2">
-          <h2 id="contents-title" className="display text-3xl">
-            Contents
-          </h2>
-          <span className="font-jp text-xs text-muted" lang="ja">
-            目次
-          </span>
-        </div>
-        <ul className="grid grid-cols-2 gap-px border border-line bg-line md:grid-cols-4">
-          {NAV.slice(1).map((n) => {
-            const Icon = n.icon;
-            return (
-              <li key={n.route} className="bg-ink">
-                <a href={href(n.route)} className="group flex h-full flex-col p-4 transition-colors hover:bg-ink2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs text-rust">{n.num}</span>
-                    <Icon size={16} aria-hidden className="text-muted group-hover:text-paper" />
-                  </div>
-                  <span className="display mt-6 text-2xl">{n.label}</span>
-                  <span className="mt-1 text-xs text-muted">{BLURBS[n.route]}</span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {/* ── Rotation ────────────────────────────────────────────── */}
-      <section aria-labelledby="rotation-title">
-        <div className="mb-4 flex items-end justify-between border-b border-line pb-2">
-          <div>
-            <p className="label">In rotation · 今日の選択</p>
-            <h2 id="rotation-title" className="display text-3xl">
-              A few ideas
-            </h2>
-          </div>
-          <button type="button" className="btn" onClick={() => setShuffleSeed((s) => s + 1)}>
-            <Shuffle size={14} aria-hidden /> Shuffle
-          </button>
-        </div>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {rotation.map((e) => (
-            <li key={e.id} className="animate-rise">
-              <ExperienceTile exp={e} onOpen={() => navigate('discover', { exp: e.id })} />
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* ── Editions ────────────────────────────────────────────── */}
-      <section aria-labelledby="editions-title">
-        <div className="mb-4 flex items-end justify-between border-b border-line pb-2">
-          <div>
-            <p className="label">Curated editions · 特別号</p>
-            <h2 id="editions-title" className="display text-3xl">
-              Whole days, pre-assembled
-            </h2>
-          </div>
-        </div>
-        <CuratedEditions />
-      </section>
-
-      {/* ── Recently saved ──────────────────────────────────────── */}
+      {/* ── Recently saved ───────────────────────────────────────── */}
       <section aria-labelledby="recent-title">
         <div className="mb-4 flex items-end justify-between border-b border-line pb-2">
           <h2 id="recent-title" className="display text-3xl">
@@ -208,8 +252,8 @@ export default function Home() {
             {recent.map((s) => (
               <li key={s.id}>
                 <a href={href('collection')} className="flex items-baseline justify-between gap-3 py-3 hover:text-rust">
-                  <span>
-                    <span className="label mr-3">{KIND_LABEL[s.kind]}</span>
+                  <span className="min-w-0">
+                    <span className="label mr-3">{KIND_LABEL[s.kind] ?? s.kind}</span>
                     {s.title}
                   </span>
                   <span className="shrink-0 font-mono text-[11px] text-muted">{formatDate(s.savedAt)}</span>

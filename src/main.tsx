@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { StoreProvider } from './hooks/useStore';
+import { DropProvider } from './hooks/useDrop';
 import { PulseProvider } from './hooks/usePulse';
 import { SyncProvider } from './hooks/useSync';
 import { WeatherProvider } from './hooks/useWeather';
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')!).render(
       <SyncProvider>
         <WeatherProvider>
           <PulseProvider>
-            <App />
+            <DropProvider>
+              <App />
+            </DropProvider>
           </PulseProvider>
         </WeatherProvider>
       </SyncProvider>

@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "issue": 4,
+  "slug": "before-the-hype",
+  "title": "Before the Hype",
+  "theme": "Streetwear archives, skate culture and sneaker history",
+  "status": "scheduled",
+  "publishDate": "2026-12-04",
+  "intro": "Before resale apps and release-day bots, streetwear was small shops, short runs and friends who skated. This issue is about the culture, not the shopping: the people, places and designs that made a few brands mean something, back when you had to be there to know.",
+  "featured": "bape-ura-harajuku",
+  "items": [
+    {
+      "id": "bape-ura-harajuku",
+      "column": "fit",
+      "format": "feature",
+      "title": "A Bathing Ape, Before the World Caught On",
+      "dek": "Nigo, Ura-Harajuku and the art of making less.",
+      "body": [
+        "A Bathing Ape started in 1993 in Ura-Harajuku, the warren of back streets behind Tokyo’s Harajuku, where a handful of young designers and DJs — Nigo, Jun Takahashi of Undercover, Hiroshi Fujiwara — were turning American skate, punk and hip-hop references into something distinctly Tokyo. Nigo’s idea was scarcity before scarcity was a business model: small runs, tiny shops, word of mouth. If you wanted the shirt, you had to know someone or be there.",
+        "The visual language came fast and stuck: the ape head, the shark hoodie, and a camouflage that swapped soldiers for cartoon apes. Then came the Bapesta, a sneaker that borrowed the silhouette of Nike’s Air Force 1 and replaced the swoosh with a star — loud, glossy, and in colors Nike wouldn’t touch. In the 2000s, Pharrell Williams brought the brand into American hip-hop, and Nigo co-founded Billionaire Boys Club and Ice Cream with him.",
+        "Fame changed it. BAPE was sold to the Hong Kong fashion group I.T in 2011, and Nigo left soon after; he has since become artistic director at Kenzo. Whatever you think of the brand now, the early years are a case study in how a small scene, a strong graphic identity and deliberate restraint can create desire without advertising.",
+        "Go looking for the archive, not the store. Old lookbooks, Japanese street-style magazines and early-2000s photos on fan archives show how the clothes were actually worn — oversized, layered, mixed with vintage. Treat it like a record dig: pick one year and follow it as far as it goes."
+      ],
+      "why": "Early-2000s streetwear is your era, and BAPE is the story of how Tokyo rewired it.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1993–2011",
+      "creators": [
+        "Nigo"
+      ],
+      "tags": [
+        "Streetwear",
+        "BAPE",
+        "Japanese design",
+        "2000s",
+        "Ura-Harajuku"
+      ],
+      "exploreMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: A Bathing Ape",
+          "url": "https://en.wikipedia.org/wiki/A_Bathing_Ape",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Nigo (designer)",
+          "url": "https://en.wikipedia.org/wiki/Nigo_(designer)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "nigo",
+          "relation": "founded by",
+          "note": "Nigo founded A Bathing Ape in 1993.",
+          "basis": "fact"
+        },
+        {
+          "to": "pharrell-williams",
+          "relation": "collaborated with",
+          "note": "Pharrell and Nigo co-founded Billionaire Boys Club.",
+          "basis": "fact"
+        },
+        {
+          "to": "air-force-1",
+          "relation": "Bapesta modeled on",
+          "note": "The Bapesta’s silhouette is based on Nike’s Air Force 1.",
+          "basis": "fact"
+        },
+        {
+          "to": "supreme-lafayette",
+          "relation": "kindred spirit",
+          "note": "Our pairing: two shops that built desire through scarcity and scene.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "supreme-lafayette",
+      "column": "fit",
+      "format": "brief",
+      "title": "Supreme, Lafayette Street, 1994",
+      "dek": "A skate shop first, with a ramp-friendly layout and a borrowed box logo.",
+      "body": [
+        "James Jebbia opened Supreme on Lafayette Street in Manhattan in 1994, built around the city’s skaters — the shop was laid out so boards could roll through. The red box logo nods to the artist Barbara Kruger’s text works. Before the lines around the block, it was a place to hang out; the early skate videos and photos show that version best."
+      ],
+      "why": "Culture over shopping: the skate-shop origin story behind a brand you know.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1994",
+      "creators": [
+        "James Jebbia"
+      ],
+      "tags": [
+        "Streetwear",
+        "Skateboarding",
+        "New York",
+        "1990s"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Supreme (brand)",
+          "url": "https://en.wikipedia.org/wiki/Supreme_(brand)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "kids-1995",
+          "relation": "same scene",
+          "note": "Our pairing: both come out of the same mid-90s downtown New York skate world.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "kids-1995",
+      "column": "screen",
+      "format": "brief",
+      "title": "Kids (1995)",
+      "dek": "Larry Clark’s raw, controversial portrait of New York skate kids — with real skaters in the cast.",
+      "body": [
+        "Kids, directed by photographer Larry Clark and written by a 19-year-old Harmony Korine, follows a day in the lives of New York teenagers. It was controversial on release and remains hard going. Its importance to skate culture is the cast: real Washington Square skaters, including Justin Pierce and Harold Hunter, playing versions of their world. Watch knowing what it is — a document of a scene as much as a film."
+      ],
+      "why": "Mid-90s New York skate culture on screen — a primary source for the era your streetwear interest lives in.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1995",
+      "creators": [
+        "Larry Clark",
+        "Harmony Korine"
+      ],
+      "tags": [
+        "Film",
+        "Skateboarding",
+        "New York",
+        "1990s"
+      ],
+      "exploreMinutes": 95,
+      "sources": [
+        {
+          "label": "Wikipedia: Kids (film)",
+          "url": "https://en.wikipedia.org/wiki/Kids_(film)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "pigeon-dunk",
+      "column": "fit",
+      "format": "brief",
+      "title": "The Pigeon Dunk Night",
+      "dek": "In 2005, a New York sneaker release nearly became a riot.",
+      "body": [
+        "Jeff Staple’s 2005 “Pigeon” Nike SB Dunk Low was a small run tied to his Reed Space shop on the Lower East Side. The crowd that turned up was big enough to make the New York Post, and the night became shorthand for when sneaker releases tipped from niche to mania. Read about it for the turning point, not the resale price."
+      ],
+      "why": "Sneaker history’s hinge moment — the before and after you lived through.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "2005",
+      "creators": [
+        "Jeff Staple"
+      ],
+      "tags": [
+        "Sneakers",
+        "Nike SB",
+        "New York",
+        "2000s"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Nike Dunk",
+          "url": "https://en.wikipedia.org/wiki/Nike_Dunk",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Jeff Staple",
+          "url": "https://en.wikipedia.org/wiki/Jeff_Staple",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "gel-lyte-iii",
+      "column": "fit",
+      "format": "brief",
+      "title": "ASICS Gel-Lyte III and the Split Tongue",
+      "dek": "A 1990 running shoe that became a collaborator’s canvas.",
+      "body": [
+        "The Gel-Lyte III was designed by Shigeyuki Mitsui and released in 1990 with a split tongue meant to stop it sliding around while you ran. Runners moved on; sneaker shops didn’t. Through the 2000s and 2010s it became one of the most collaborated-on silhouettes outside Nike and Jordan, with store and designer editions that are their own small history of independent sneaker retail."
+      ],
+      "why": "ASICS is on your list — this is its best-told design story.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1990",
+      "creators": [
+        "Shigeyuki Mitsui"
+      ],
+      "tags": [
+        "Sneakers",
+        "ASICS",
+        "Design history"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: ASICS",
+          "url": "https://en.wikipedia.org/wiki/ASICS",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "spot-tampa-am",
+      "column": "local-find",
+      "format": "brief",
+      "title": "Skatepark of Tampa",
+      "dek": "Just across the bay, and one of the most important skateparks in the world.",
+      "body": [
+        "Skatepark of Tampa has hosted Tampa Am and Tampa Pro, contests that helped launch generations of pro careers, and its shop is a small archive of skate culture in itself. Go on a regular afternoon, watch the session, look at the boards on the wall — and if your old board is still in the closet, bring it."
+      ],
+      "why": "Skate culture that isn’t on a screen — and a short drive from St. Pete.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Skateboarding",
+        "Tampa",
+        "Skate shops"
+      ],
+      "exploreMinutes": 120,
+      "sources": [
+        {
+          "label": "Skatepark of Tampa",
+          "url": "https://skateparkoftampa.com/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "local": {
+        "placeId": "pl-spot"
+      }
+    }
+  ]
+}

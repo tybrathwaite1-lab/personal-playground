@@ -4,6 +4,7 @@ import type {
   Experience,
   Range,
   TimeFilter,
+  VibePreset,
 } from '../types';
 
 export const DEFAULT_FILTERS: DiscoveryFilters = {
@@ -152,4 +153,34 @@ export function formatDuration(r: Range): string {
   if (r.min === r.max) return fmtMinutes(r.min);
   if (r.max < 60) return `${r.min}–${r.max} min`;
   return `${fmtMinutes(r.min)} – ${fmtMinutes(r.max)}`;
+}
+
+// ─── Pick a Vibe ────────────────────────────────────────────────────
+
+/** Experiences matching a vibe preset. Interests narrow when they can; they never empty the pool. */
+export function vibePool(all: Experience[], v: VibePreset): Experience[] {
+  const f: DiscoveryFilters = { ...DEFAULT_FILTERS, ...v.filters };
+  let pool = filterExperiences(all, f);
+  if (v.environments?.length) pool = pool.filter((e) => e.environments.some((x) => v.environments!.includes(x)));
+  if (v.moods?.length) pool = pool.filter((e) => e.moods.some((m) => v.moods!.includes(m)));
+  if (v.maxCost !== undefined) pool = pool.filter((e) => e.cost.min <= v.maxCost!);
+  if (v.maxTotal !== undefined) pool = pool.filter((e) => e.cost.max <= v.maxTotal!);
+  if (v.minutes) pool = pool.filter((e) => e.duration.min <= v.minutes![1] && e.duration.max >= v.minutes![0]);
+  if (v.interests?.length) {
+    const needles = v.interests.map((i) => i.toLowerCase());
+    const tagged = pool.filter((e) => e.interests.some((t) => needles.some((n) => t.toLowerCase().includes(n))));
+    if (tagged.length) pool = tagged;
+  }
+  return pool;
+}
+
+/** Turn a preset into Discovery Engine URL params (for "open in the engine"). */
+export function vibeToParams(v: VibePreset): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v.filters)) if (val) out[k] = String(val);
+  if (!out.environment && v.environments?.length === 1) out.environment = v.environments[0];
+  if (!out.mood && v.moods?.length === 1) out.mood = v.moods[0];
+  if (!out.budget && v.maxTotal !== undefined) out.budget = v.maxTotal <= 0 ? 'free' : v.maxTotal <= 25 ? 'u25' : v.maxTotal <= 50 ? 'u50' : 'u100';
+  if (!out.time && v.minutes) out.time = v.minutes[1] <= 30 ? 'under30' : v.minutes[1] <= 90 ? 'hour' : 'oneToThree';
+  return out;
 }

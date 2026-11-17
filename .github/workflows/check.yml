@@ -23,6 +23,15 @@ jobs:
         run: npm run lint
         continue-on-error: true
       - run: npm test
+      - name: Validate Weekly Drop editions (strict)
+        run: npm run content
+      - name: Check source links (report only)
+        run: npm run links
+        continue-on-error: true
+      - name: Weekly Drop candidate leads (unreviewed, never auto-published)
+        run: npx tsx scripts/drop/candidates.ts
+        continue-on-error: true
+
       - name: Local Pulse ingest (live feeds)
         run: npx tsx scripts/pulse/ingest.ts --out public/data/pulse.json
       - name: Build

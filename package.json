@@ -6,11 +6,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsx scripts/drop/build.ts && tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "content": "tsx scripts/drop/build.ts --strict",
+    "links": "tsx scripts/drop/check-links.ts",
+    "pulse": "tsx scripts/pulse/ingest.ts",
+    "predev": "tsx scripts/drop/build.ts"
   },
   "dependencies": {
     "@fontsource/anton": "^5.1.0",

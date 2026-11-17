@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "issue": 2,
+  "slug": "the-future-that-never-was",
+  "title": "The Future That Never Was",
+  "theme": "Dreamcast, Y2K design and experimental technology",
+  "status": "scheduled",
+  "publishDate": "2026-11-20",
+  "intro": "Around 2000, the future was translucent plastic, dial-up modems in game consoles and cartoon outlines on 3D graphics. Most of it didn’t last — the Dreamcast was discontinued in 2001 — but it left behind some of the most inventive games and designs of the era. This issue goes back to the optimism.",
+  "featured": "jet-set-radio",
+  "items": [
+    {
+      "id": "jet-set-radio",
+      "column": "select-player",
+      "format": "feature",
+      "title": "Jet Set Radio: Graffiti, Rollerblades and Cel-Shading",
+      "dek": "Sega’s 2000 Dreamcast game looked like nothing else, and still doesn’t.",
+      "body": [
+        "Jet Set Radio came out on the Dreamcast in 2000, made by Sega’s internal studio Smilebit, and its pitch fits in one sentence: skate around a stylized Tokyo — “Tokyo-to” — tagging walls before the police and rival gangs shut you down. What made it famous was how it looked. It was one of the first games to use cel-shading, drawing thick black outlines and flat colors over 3D models so that the whole world looked like an animated comic. Two decades of games have borrowed the trick since.",
+        "Graffiti here isn’t decoration; it’s the verb. You spray tags by tracing gestures with the analog stick, bigger pieces need longer inputs, and the game shipped with an editor so you could design your own tags. For anyone who fills a blackbook, it’s a strange pleasure to see letters treated as the point of a game rather than background texture.",
+        "Then there’s the sound. Most of the soundtrack is by Hideki Naganuma — chopped funk, hip-hop and J-pop samples run through a blender at high tempo, the sound of a pirate radio station broadcasting to the kids who run the streets. Naganuma returned for the 2002 Xbox sequel, Jet Set Radio Future, and his tracks are still passed around as a genre of their own.",
+        "Jet Set Radio didn’t sell like a blockbuster. Its legacy is in the people it shaped: artists, designers and musicians who saw a console game treat street culture, illustration and sampling as one thing. Playing it today, the controls feel stiff and the camera fights you. The style doesn’t. Watch a long play of the first levels, then look at your own handstyles with fresh eyes."
+      ],
+      "why": "Graffiti, sampling-heavy music, Japanese design and the Dreamcast in one place — four of your threads tied in a knot.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "2000",
+      "creators": [
+        "Smilebit",
+        "Hideki Naganuma"
+      ],
+      "tags": [
+        "Dreamcast",
+        "Graffiti",
+        "Japanese design",
+        "Soundtracks",
+        "Retro gaming"
+      ],
+      "exploreMinutes": 60,
+      "sources": [
+        {
+          "label": "Wikipedia: Jet Set Radio",
+          "url": "https://en.wikipedia.org/wiki/Jet_Set_Radio",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Hideki Naganuma",
+          "url": "https://en.wikipedia.org/wiki/Hideki_Naganuma",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "dreamcast",
+          "relation": "released on",
+          "note": "Jet Set Radio launched on Sega’s Dreamcast in 2000.",
+          "basis": "fact"
+        },
+        {
+          "to": "hideki-naganuma",
+          "relation": "music by",
+          "note": "Hideki Naganuma composed most of the soundtrack.",
+          "basis": "fact"
+        },
+        {
+          "to": "smilebit",
+          "relation": "developed by",
+          "note": "Developed by Sega’s internal studio Smilebit.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "project-justice",
+      "column": "select-player",
+      "format": "brief",
+      "title": "Project Justice",
+      "dek": "Capcom’s high-school team brawler, the forgotten sequel to Rival Schools.",
+      "body": [
+        "Project Justice (2000 in arcades, then Dreamcast) continues Rival Schools: three-on-three fights between Japanese high-school teams, with flashy team-up supers and a story mode that plays like a bizarre school anime. It never got the attention of Street Fighter III or Marvel vs. Capcom 2, which is exactly why it’s worth a night now — a whole Capcom roster that most players skipped."
+      ],
+      "why": "Fighting games, the Dreamcast and overlooked Capcom history — find casual partners at the Tampa Gaming Dojo.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "2000",
+      "creators": [
+        "Capcom"
+      ],
+      "tags": [
+        "Fighting games",
+        "Dreamcast",
+        "Capcom",
+        "Retro gaming"
+      ],
+      "exploreMinutes": 45,
+      "sources": [
+        {
+          "label": "Wikipedia: Project Justice",
+          "url": "https://en.wikipedia.org/wiki/Project_Justice",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "rival-schools",
+          "relation": "sequel to",
+          "note": "Project Justice is the sequel to Rival Schools: United by Fate (1997).",
+          "basis": "fact"
+        },
+        {
+          "to": "sega-naomi",
+          "relation": "ran on",
+          "note": "The arcade version ran on Sega’s NAOMI board, the Dreamcast’s arcade cousin.",
+          "basis": "fact"
+        },
+        {
+          "to": "dreamcast",
+          "relation": "ported to",
+          "note": "Released for the Dreamcast after the arcade.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "phantasy-star-online",
+      "column": "archive",
+      "format": "brief",
+      "title": "When Consoles Got Online: Phantasy Star Online",
+      "dek": "The Dreamcast shipped with a modem, and in 2000 it got a reason to use it.",
+      "body": [
+        "The Dreamcast was the first major console with a modem in the box, and Phantasy Star Online (2000) turned that into something new: an online role-playing game on a console, with players from different countries grouping up and talking through a built-in translation of common phrases. It’s the ancestor of every online lobby you’ve sat in since."
+      ],
+      "why": "Gaming history with a clear before and after — and a reminder the future was invented on dial-up.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "2000",
+      "creators": [
+        "Sonic Team"
+      ],
+      "tags": [
+        "Gaming history",
+        "Dreamcast",
+        "Online games"
+      ],
+      "exploreMinutes": 25,
+      "sources": [
+        {
+          "label": "Wikipedia: Phantasy Star Online",
+          "url": "https://en.wikipedia.org/wiki/Phantasy_Star_Online",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Dreamcast",
+          "url": "https://en.wikipedia.org/wiki/Dreamcast",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "dreamcast",
+          "relation": "released on",
+          "note": "Launched on the Dreamcast in late 2000.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "cari-y2k",
+      "column": "rabbit-hole",
+      "format": "brief",
+      "title": "The Consumer Aesthetics Research Institute",
+      "dek": "An independent archive that gives names to the looks of recent decades.",
+      "body": [
+        "CARI is a volunteer-run archive that collects and classifies the visual styles of consumer culture from the 1970s onward — product shots, packaging, interfaces, ads — and gives them names like Y2K Futurism and Frutiger Aero. Start with the Y2K collections: translucent plastics, chrome type, iMac colors and the cheerful techno-optimism of the turn of the millennium."
+      ],
+      "why": "An independent website with a real point of view, and a deep visual reference for Y2K design.",
+      "freshness": "timeless",
+      "depth": "lesser-known",
+      "tags": [
+        "Y2K",
+        "Design history",
+        "Independent websites",
+        "Archives"
+      ],
+      "exploreMinutes": 45,
+      "sources": [
+        {
+          "label": "Consumer Aesthetics Research Institute",
+          "url": "https://cari.institute/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Y2K aesthetic",
+          "url": "https://en.wikipedia.org/wiki/Y2K_aesthetic",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "y2k-translucent",
+      "column": "fit",
+      "format": "brief",
+      "title": "See-Through: The Translucent Plastic Moment",
+      "dek": "How the 1998 iMac made the inside of things fashionable.",
+      "body": [
+        "Apple’s 1998 iMac, in translucent “Bondi Blue,” set off a few years when everything wanted to show its insides: clear Game Boy Colors and controllers, see-through phones, pagers and headphones. Look at the period’s product design next to Y2K streetwear and you’ll see the same optimism — chrome, gloss and the sense that technology was something to wear on the outside."
+      ],
+      "why": "Design history behind the clear controllers you remember — and a cue for your next retro hardware hunt.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1998",
+      "tags": [
+        "Y2K",
+        "Design history",
+        "Retro hardware"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: iMac G3",
+          "url": "https://en.wikipedia.org/wiki/iMac_G3",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "dreamcast-today",
+      "column": "lab",
+      "format": "brief",
+      "title": "Dreamcast, Still Online",
+      "dek": "Hobbyists have kept the console alive for two decades.",
+      "body": [
+        "The Dreamcast’s life didn’t end when Sega stopped making it in 2001. A dedicated community has kept making homebrew games, revived some online servers and built hardware mods like optical-drive replacements that load games from SD cards. If you have the console in a closet, it’s one of the most rewarding restoration projects in retro gaming."
+      ],
+      "why": "Retro hardware restoration with a living community attached.",
+      "freshness": "timeless",
+      "depth": "lesser-known",
+      "tags": [
+        "Retro hardware",
+        "Restoration",
+        "Dreamcast",
+        "Homebrew"
+      ],
+      "exploreMinutes": 40,
+      "sources": [
+        {
+          "label": "Wikipedia: Dreamcast",
+          "url": "https://en.wikipedia.org/wiki/Dreamcast",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Dreamcast homebrew",
+          "url": "https://en.wikipedia.org/wiki/Dreamcast_homebrew",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "dreamcast",
+          "relation": "about",
+          "note": "The console and its long afterlife.",
+          "basis": "fact"
+        }
+      ]
+    }
+  ]
+}

@@ -251,6 +251,12 @@ export interface VibePreset {
   maxCost?: number;
   /** Duration window in minutes the experience must overlap. */
   minutes?: [number, number];
+  /** Any of these environments (OR). */
+  environments?: Environment[];
+  /** Any of these moods (OR). */
+  moods?: Mood[];
+  /** Max total estimated cost (cost.max, USD). */
+  maxTotal?: number;
   custom?: boolean;
 }
 

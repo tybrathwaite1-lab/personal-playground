@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "issue": 7,
+  "slug": "concrete-and-culture",
+  "title": "Concrete & Culture",
+  "theme": "Graffiti, urban history, photography and basketball",
+  "status": "scheduled",
+  "publishDate": "2026-12-25",
+  "intro": "Cities keep their culture on their surfaces: trains, walls, playgrounds, sidewalks. This issue goes back to New York in the 1970s and ’80s, when writers turned subway cars into moving galleries and two photographers made sure the world saw it — then comes home to the walls of St. Pete.",
+  "featured": "subway-art",
+  "items": [
+    {
+      "id": "subway-art",
+      "column": "archive",
+      "format": "feature",
+      "title": "Subway Art and the Moving Gallery",
+      "dek": "Martha Cooper and Henry Chalfant photographed the trains before they were buffed.",
+      "body": [
+        "In the late 1970s and early ’80s, New York’s subway cars were covered in some of the most inventive lettering ever painted — whole-car pieces with names in interlocking, arrow-studded wildstyle, rolling through the city for everyone to see. The writers knew the work wouldn’t last. Two photographers made sure it did.",
+        "Martha Cooper, a newspaper photographer, and Henry Chalfant, a sculptor, worked separately at first and then together, documenting painted trains and the young writers who made them. Chalfant developed a method of photographing a whole moving car in sections and stitching the prints into one long image. Their book Subway Art came out in 1984 and traveled further than any train ever could — it became a bible for graffiti writers around the world, passed hand to hand, studied page by page.",
+        "Watch Style Wars alongside it. The 1983 documentary by Tony Silver and Henry Chalfant captures the writers, the city’s campaign against them and the early days of breaking and rap, at the moment before the transit authority finished cleaning the trains. It’s both a history lesson and one of the best films ever made about young people and art.",
+        "For your blackbook, pay attention to the lettering. Study how the best pieces build letters from simple skeletons — a plain capital that you can still read underneath — and then add connections, arrows and breaks. Pick one page from the book, draw its skeleton first, and only then decorate it."
+      ],
+      "why": "Graffiti is one of your core interests — this is the archive that the whole culture learned from.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1977–1984",
+      "creators": [
+        "Martha Cooper",
+        "Henry Chalfant"
+      ],
+      "tags": [
+        "Graffiti",
+        "Photography",
+        "New York",
+        "Street art history"
+      ],
+      "exploreMinutes": 90,
+      "sources": [
+        {
+          "label": "Wikipedia: Subway Art",
+          "url": "https://en.wikipedia.org/wiki/Subway_Art",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Style Wars",
+          "url": "https://en.wikipedia.org/wiki/Style_Wars",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Martha Cooper",
+          "url": "https://en.wikipedia.org/wiki/Martha_Cooper",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "style-wars",
+          "relation": "companion film",
+          "note": "Chalfant co-directed the 1983 documentary Style Wars.",
+          "basis": "fact"
+        },
+        {
+          "to": "wild-style-1983",
+          "relation": "same era",
+          "note": "Wild Style (1983) brought the same scene to a fiction film.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "wild-style-1983",
+      "column": "screen",
+      "format": "brief",
+      "title": "Wild Style (1983)",
+      "dek": "Charlie Ahearn’s film is often called the first hip-hop movie.",
+      "body": [
+        "Wild Style is a loose fiction built around real people — graffiti writer Lee Quiñones, Fab 5 Freddy, the Cold Crush Brothers and others — and it caught graffiti, MCing, DJing and breaking together before anyone was sure what to call the combination. The title is also the name of the most complex graffiti lettering style."
+      ],
+      "why": "All four pillars of early hip-hop on film, with real writers playing themselves.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1983",
+      "creators": [
+        "Charlie Ahearn"
+      ],
+      "tags": [
+        "Film",
+        "Hip-hop",
+        "Graffiti",
+        "New York"
+      ],
+      "exploreMinutes": 85,
+      "sources": [
+        {
+          "label": "Wikipedia: Wild Style",
+          "url": "https://en.wikipedia.org/wiki/Wild_Style",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "subway-art",
+          "relation": "same era",
+          "note": "Made in the same New York scene documented in Subway Art.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "dondi-white",
+      "column": "blackbook",
+      "format": "brief",
+      "title": "Dondi White’s Letters",
+      "dek": "A writer whose clean, precise style influenced a generation.",
+      "body": [
+        "Dondi White was one of the most respected subway writers of his era, known for clean, controlled letters and pieces like “Children of the Grave Part 3” — photographed being painted for Subway Art. He later moved his work onto canvas and showed internationally. Look at how disciplined his letterforms are; there’s nothing random in them."
+      ],
+      "why": "A masterclass in letter structure for anyone filling a blackbook.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1970s–1980s",
+      "creators": [
+        "Dondi White"
+      ],
+      "tags": [
+        "Graffiti",
+        "Lettering",
+        "New York"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Dondi White",
+          "url": "https://en.wikipedia.org/wiki/Dondi_White",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "subway-art",
+          "relation": "documented in",
+          "note": "Martha Cooper photographed Dondi painting for the book.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "rucker-park",
+      "column": "archive",
+      "format": "brief",
+      "title": "Rucker Park",
+      "dek": "Harlem’s streetball cathedral, since the Holcombe Rucker tournaments began in 1950.",
+      "body": [
+        "Holcombe Rucker, a New York parks employee, started a summer tournament in Harlem in 1950 to keep kids playing and in school. The court that now carries his name became the heart of streetball: playground legends, pros showing up in summer leagues, crowds on the fences. Read the history, then shoot around somewhere with a crowd watching."
+      ],
+      "why": "Basketball culture and urban history, from the place it all gets measured against.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1950–",
+      "creators": [
+        "Holcombe Rucker"
+      ],
+      "tags": [
+        "Basketball",
+        "Streetball",
+        "New York",
+        "History"
+      ],
+      "exploreMinutes": 20,
+      "sources": [
+        {
+          "label": "Wikipedia: Rucker Park",
+          "url": "https://en.wikipedia.org/wiki/Rucker_Park",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "vivian-maier",
+      "column": "lab",
+      "format": "brief",
+      "title": "Vivian Maier’s Street",
+      "dek": "A nanny who shot more than 100,000 photographs that almost nobody saw while she lived.",
+      "body": [
+        "Vivian Maier worked as a nanny in Chicago and photographed the streets on her days off, mostly with a Rolleiflex held at waist level, so subjects saw her looking down, not at them. Her negatives were found at an auction in 2007, and her work became known only after she died in 2009. Try her waist-level habit with your phone: it changes how people react."
+      ],
+      "why": "Street photography with a practical technique you can try this week.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1950s–1990s",
+      "creators": [
+        "Vivian Maier"
+      ],
+      "tags": [
+        "Street photography",
+        "Photography history",
+        "Chicago"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Wikipedia: Vivian Maier",
+          "url": "https://en.wikipedia.org/wiki/Vivian_Maier",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "warehouse-walls",
+      "column": "local-find",
+      "format": "brief",
+      "title": "The Walls of the Warehouse Arts District",
+      "dek": "St. Pete’s own open-air gallery, best seen on foot.",
+      "body": [
+        "St. Petersburg has painted hundreds of walls over the past decade, and the Warehouse Arts District is a good place to start: murals, studios and galleries around the Pinellas Trail. Go on a weekday morning with a camera and a blackbook, or on ArtWalk night when the studios open. Look at the lettering pieces as closely as the big murals."
+      ],
+      "why": "Graffiti and photography, a short drive away — your Subway Art homework.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Murals",
+        "St. Petersburg",
+        "Street photography"
+      ],
+      "exploreMinutes": 90,
+      "sources": [
+        {
+          "label": "St. Petersburg Arts Alliance — ArtWalk",
+          "url": "https://stpeteartsalliance.org/jc92",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "local": {
+        "placeId": "pl-warehouse-arts"
+      }
+    }
+  ]
+}

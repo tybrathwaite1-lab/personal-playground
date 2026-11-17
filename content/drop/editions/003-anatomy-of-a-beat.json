@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "issue": 3,
+  "slug": "anatomy-of-a-beat",
+  "title": "Anatomy of a Beat",
+  "theme": "Sampling history, underground artists and producers",
+  "status": "scheduled",
+  "publishDate": "2026-11-27",
+  "intro": "Every loop you love was somebody else’s record first. This issue follows the thread from a soul break to a sampler to a Tokyo producer who made jazz-rap feel like weather. You know DOOM and Nujabes already — so think of them as landmarks, and these as the side streets.",
+  "featured": "nujabes-champloo",
+  "items": [
+    {
+      "id": "nujabes-champloo",
+      "column": "listen",
+      "format": "feature",
+      "title": "Nujabes and the Samurai Champloo Thread",
+      "dek": "How a Shibuya record-shop owner made jazz-rap the sound of an anime — and of a generation of late nights.",
+      "body": [
+        "Jun Seba ran a record shop and a label, Hydeout Productions, in Tokyo before most of the world knew the name Nujabes. His two solo albums, Metaphorical Music (2003) and Modal Soul (2005), built a sound out of jazz piano, soft strings and patient drums — sample-based hip-hop that felt more like a long walk than a party. He died in a car accident in Tokyo in 2010, and the records have only grown since.",
+        "The bridge to most listeners was Samurai Champloo (2004), Shinichirō Watanabe’s anime about two swordsmen and a girl wandering Edo-period Japan to a hip-hop soundtrack. Nujabes shared scoring duties with Fat Jon, Force of Nature and Tsutchie, and his tracks — among them “Aruarian Dance” and the opening theme “Battlecry,” with Shing02 on the mic — gave the show its unusual calm. Watanabe had done the same trick a few years earlier with Cowboy Bebop and Yoko Kanno’s jazz band, the Seatbelts: let the music set the world’s rules.",
+        "If you know Modal Soul front to back, go sideways rather than back. Listen to Metaphorical Music with the liner notes open and look up the source records — the producer was a digger first, and the samples lead you to Japanese and American jazz you may never have heard. Then follow Shing02, the MC who worked with him across the long “Luv(sic)” series of singles.",
+        "The deeper lesson is about tone. Nujabes rarely chopped samples into something aggressive; he found the gentlest four bars in a record and let them breathe. Put on a jazz record you’ve never heard tonight and listen for the loop he might have found in it."
+      ],
+      "why": "You already love Nujabes — this follows the documented links outward to the anime, the director and the collaborators.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "2003–2010",
+      "creators": [
+        "Nujabes",
+        "Shing02",
+        "Fat Jon"
+      ],
+      "tags": [
+        "Sampling",
+        "Jazz rap",
+        "Anime",
+        "Lo-fi",
+        "Producers"
+      ],
+      "exploreMinutes": 90,
+      "sources": [
+        {
+          "label": "Wikipedia: Nujabes",
+          "url": "https://en.wikipedia.org/wiki/Nujabes",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Samurai Champloo",
+          "url": "https://en.wikipedia.org/wiki/Samurai_Champloo",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "samurai-champloo",
+          "relation": "scored",
+          "note": "Nujabes co-wrote the Samurai Champloo soundtrack (2004).",
+          "basis": "fact"
+        },
+        {
+          "to": "shing02",
+          "relation": "collaborated with",
+          "note": "Shing02 and Nujabes made the “Luv(sic)” series together.",
+          "basis": "fact"
+        },
+        {
+          "to": "shinichiro-watanabe",
+          "relation": "worked with",
+          "note": "Watanabe directed Samurai Champloo.",
+          "basis": "fact"
+        },
+        {
+          "to": "madlib-shades-of-blue",
+          "relation": "kindred spirit",
+          "note": "Our pairing: two producers who turned jazz records into hip-hop.",
+          "basis": "editorial"
+        }
+      ]
+    },
+    {
+      "id": "madlib-shades-of-blue",
+      "column": "listen",
+      "format": "brief",
+      "title": "Madlib — Shades of Blue",
+      "dek": "DOOM’s Madvillainy partner, let loose in the Blue Note vaults.",
+      "body": [
+        "A year before Madvillainy, Blue Note gave Madlib access to its catalog, and he came back with Shades of Blue (2003): remixes, re-recordings and loops of classic jazz sides. It’s the clearest window into the record collection behind the beats you know from Madvillainy — and it’ll send you to Blue Note albums you can find in any St. Pete crate."
+      ],
+      "why": "A step sideways from MF DOOM into the jazz records that fed the beats.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "2003",
+      "creators": [
+        "Madlib"
+      ],
+      "tags": [
+        "Sampling",
+        "Jazz",
+        "Producers",
+        "Vinyl"
+      ],
+      "exploreMinutes": 50,
+      "sources": [
+        {
+          "label": "Wikipedia: Madlib",
+          "url": "https://en.wikipedia.org/wiki/Madlib",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: Shades of Blue (Madlib album)",
+          "url": "https://en.wikipedia.org/wiki/Shades_of_Blue_(Madlib_album)",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "madlib",
+          "relation": "by",
+          "note": "Madlib, producer of Madvillainy with MF DOOM.",
+          "basis": "fact"
+        },
+        {
+          "to": "blue-note",
+          "relation": "from the vaults of",
+          "note": "Made from Blue Note Records’ catalog.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "amen-break",
+      "column": "archive",
+      "format": "brief",
+      "title": "Six Seconds That Built Genres",
+      "dek": "The Amen break: a 1969 drum solo that became jungle, drum and bass and a thousand hip-hop beats.",
+      "body": [
+        "In 1969, the soul band The Winstons released “Color Him Father,” with an instrumental B-side called “Amen, Brother.” Its few-second drum break — played by G. C. Coleman — became one of the most sampled recordings ever made, chopped into hip-hop, then sped up into jungle and drum and bass. The band was paid nothing for it for decades. Listen to the original, then hear it everywhere."
+      ],
+      "why": "Sampling history at its most concrete — and a little unjust, which makes it stick.",
+      "freshness": "archive",
+      "depth": "accessible",
+      "year": "1969",
+      "creators": [
+        "The Winstons",
+        "G. C. Coleman"
+      ],
+      "tags": [
+        "Sampling",
+        "Drums",
+        "Music history"
+      ],
+      "exploreMinutes": 15,
+      "sources": [
+        {
+          "label": "Wikipedia: Amen break",
+          "url": "https://en.wikipedia.org/wiki/Amen_break",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "dilla-mpc",
+      "column": "lab",
+      "format": "brief",
+      "title": "The MPC in the Museum",
+      "dek": "How a drum machine became an instrument — and why J Dilla’s is in the Smithsonian.",
+      "body": [
+        "Akai’s MPC samplers, first designed with Roger Linn in the late 1980s, let producers play chopped samples on pads like a drum kit. J Dilla pushed the MPC3000 into loose, off-grid swing that changed how hip-hop drums feel. His machine is now held by the Smithsonian’s National Museum of African American History and Culture. Try programming one beat without quantizing it and you’ll hear the idea."
+      ],
+      "why": "Music production, gear history and a technique you can try at home tonight.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "1988–2006",
+      "creators": [
+        "Roger Linn",
+        "J Dilla"
+      ],
+      "tags": [
+        "Music production",
+        "Sampling",
+        "Hardware",
+        "Producers"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "Wikipedia: Akai MPC",
+          "url": "https://en.wikipedia.org/wiki/Akai_MPC",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        },
+        {
+          "label": "Wikipedia: J Dilla",
+          "url": "https://en.wikipedia.org/wiki/J_Dilla",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "j-dilla",
+          "relation": "used by",
+          "note": "J Dilla’s MPC3000 is held by the Smithsonian.",
+          "basis": "fact"
+        }
+      ]
+    },
+    {
+      "id": "whosampled",
+      "column": "rabbit-hole",
+      "format": "brief",
+      "title": "WhoSampled",
+      "dek": "A community-built map of who borrowed what from whom.",
+      "body": [
+        "WhoSampled is a crowd-sourced database of samples, covers and remixes, with side-by-side players for the original and the new track. Pick a song you know by heart, go to its sample list, and play the originals all the way through. It’s the fastest way from a beat you love to an album you’ve never heard."
+      ],
+      "why": "The practical tool behind this whole issue — built by listeners, not an algorithm.",
+      "freshness": "timeless",
+      "depth": "accessible",
+      "tags": [
+        "Sampling",
+        "Independent websites",
+        "Music discovery"
+      ],
+      "exploreMinutes": 30,
+      "sources": [
+        {
+          "label": "WhoSampled",
+          "url": "https://www.whosampled.com/",
+          "kind": "official",
+          "verifiedAt": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "id": "shing02-luvsic",
+      "column": "listen",
+      "format": "brief",
+      "title": "Shing02 and the Luv(sic) Series",
+      "dek": "Six parts, a decade-plus, one long conversation over Nujabes beats.",
+      "body": [
+        "Shing02 is a Japanese-American MC who raps in English and Japanese, and his longest collaboration with Nujabes was the “Luv(sic)” series — a sequence of tracks that runs through Nujabes’s lifetime and was completed after his death. Listen in order: it plays like a single story about love, loss and music, told by someone writing to a friend."
+      ],
+      "why": "A deeper cut that rewards the attention you already give Nujabes.",
+      "freshness": "archive",
+      "depth": "lesser-known",
+      "year": "2001–2013",
+      "creators": [
+        "Shing02",
+        "Nujabes"
+      ],
+      "tags": [
+        "Hip-hop",
+        "Japanese hip-hop",
+        "Lyrics"
+      ],
+      "exploreMinutes": 40,
+      "sources": [
+        {
+          "label": "Wikipedia: Shing02",
+          "url": "https://en.wikipedia.org/wiki/Shing02",
+          "kind": "reference",
+          "verifiedAt": "2026-11-17"
+        }
+      ],
+      "related": [
+        {
+          "to": "nujabes-champloo",
+          "relation": "with",
+          "note": "The Luv(sic) series pairs Shing02’s verses with Nujabes’s production.",
+          "basis": "fact"
+        }
+      ]
+    }
+  ]
+}

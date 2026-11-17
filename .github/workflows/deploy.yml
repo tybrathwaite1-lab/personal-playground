@@ -40,6 +40,10 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Weekly Drop candidate leads (unreviewed, never auto-published)
+        run: npx tsx scripts/drop/candidates.ts
+        continue-on-error: true
+
       - name: Refresh Local Pulse (public event calendars)
         run: npx tsx scripts/pulse/ingest.ts --out public/data/pulse.json
         env:
