@@ -122,7 +122,7 @@ test('feed items without a UID keep one id per session', () => {
   const ten = normalizeIcs(parseIcs(ics('100000'))[0], 'tours', '')!;
   const two = normalizeIcs(parseIcs(ics('140000'))[0], 'tours', '')!;
   assert.notEqual(ten.id, two.id);
-  assert.equal(ten.id, 'tours:house-tour-2026-11-21t1000');
+  assert.equal(ten.id, 'tours:house-tour-2026-11-21t1000-hall');
   assert.equal(dedupe([ten, two]).length, 2);
 });
 
@@ -130,4 +130,112 @@ test('events sort by actual instant, not by string', () => {
   const lateNy = ev({ id: 'a:1', start: '2026-11-20T23:00:00-05:00' }); // 04:00Z on the 21st
   const earlyUtc = ev({ id: 'b:1', title: 'Other', start: '2026-11-21T01:00:00.000Z' }); // 8 PM NY on the 20th
   assert.deepEqual([lateNy, earlyUtc].sort(byStart).map((e) => e.id), ['b:1', 'a:1']);
+});
+
+// ─── Review revisions (independent review of #14) ─────────────────────
+
+test('a matching venue name in two different known cities never merges', () => {
+  const a = ev({ id: 'src-a:x', venue: 'City Hall', address: undefined, city: 'St. Petersburg' });
+  const b = ev({ id: 'src-b:y', venue: 'City Hall', address: undefined, city: 'Tampa', sourceIds: ['src-b'] });
+  assert.equal(dedupe([a, b]).length, 2);
+});
+
+test('a matching street address in two different known cities never merges', () => {
+  const a = ev({ id: 'src-a:x', venue: 'Gallery A', address: '100 Main St, Dunedin, FL', city: 'Dunedin' });
+  const b = ev({ id: 'src-b:y', venue: 'Gallery B', address: '100 Main St, Safety Harbor, FL', city: 'Safety Harbor', sourceIds: ['src-b'] });
+  assert.equal(dedupe([a, b]).length, 2);
+});
+
+test('the same venue name at explicitly different street addresses never merges', () => {
+  const a = ev({ id: 'src-a:x', venue: 'Coffee Co', address: '100 1st Ave N, St. Petersburg, FL' });
+  const b = ev({ id: 'src-b:y', venue: 'Coffee Co', address: '2500 Central Ave, St. Petersburg, FL', sourceIds: ['src-b'] });
+  assert.equal(dedupe([a, b]).length, 2);
+});
+
+test('incomplete venue info stays conservative: a venue-less listing merges into the only plausible match', () => {
+  const full = ev({ id: 'src-a:1' });
+  const bare = ev({ id: 'src-b:1', venue: undefined, address: undefined, city: undefined, sourceIds: ['src-b'] });
+  assert.equal(dedupe([full, bare]).length, 1);
+  const other = ev({ id: 'src-c:1', venue: 'Other Hall', address: '5 Elm St, St. Petersburg, FL', sourceIds: ['src-c'] });
+  assert.equal(dedupe([full, other, bare]).length, 3, 'ambiguous between two venues: kept apart');
+});
+
+const ics = (body: string) =>
+  parseIcs(`BEGIN:VCALENDAR\r\nVERSION:2.0\r\n${body}END:VCALENDAR\r\n`);
+const vevent = (o: { summary: string; start: string; location?: string; uid?: string; allDay?: boolean }) =>
+  `BEGIN:VEVENT\r\n${o.uid ? `UID:${o.uid}\r\n` : ''}SUMMARY:${o.summary}\r\n${o.allDay ? `DTSTART;VALUE=DATE:${o.start}` : `DTSTART;TZID=America/New_York:${o.start}`}\r\n${o.location ? `LOCATION:${o.location}\r\n` : ''}END:VEVENT\r\n`;
+const NOW = '2026-11-17T12:00:00.000Z';
+
+test('UID-less fallback ids include the venue: same title and time at two venues get distinct ids', () => {
+  const items = ics(
+    vevent({ summary: 'Trivia Night', start: '20261204T190000', location: 'Bar One, 100 1st Ave N, St. Petersburg, FL' }) +
+      vevent({ summary: 'Trivia Night', start: '20261204T190000', location: 'Cafe Two, 900 Central Ave, St. Petersburg, FL' }),
+  );
+  const events = items.map((i) => normalizeIcs(i, 'src-a', NOW)!);
+  assert.notEqual(events[0].id, events[1].id);
+  const out = dedupe(events);
+  assert.equal(out.length, 2);
+  assert.equal(new Set(out.map((e) => e.id)).size, 2);
+});
+
+test('all-day and midnight-timed occurrences of the same title stay separate with distinct ids', () => {
+  const items = ics(
+    vevent({ summary: 'Art Walk', start: '20261205', allDay: true, location: 'Gallery, 1 Main St, St. Petersburg, FL' }) +
+      vevent({ summary: 'Art Walk', start: '20261205T000000', location: 'Gallery, 1 Main St, St. Petersburg, FL' }),
+  );
+  const events = items.map((i) => normalizeIcs(i, 'src-a', NOW)!);
+  assert.equal(Date.parse(events[0].start), Date.parse(events[1].start), 'precondition: same instant');
+  assert.notEqual(events[0].id, events[1].id);
+  assert.equal(dedupe(events).length, 2);
+});
+
+test('daylight-saving fall-back: 1:30 AM EDT and 1:30 AM EST are distinct events with distinct ids', () => {
+  const edt = '2026-11-01T05:30:00.000Z'; // 1:30 AM EDT
+  const est = '2026-11-01T06:30:00.000Z'; // 1:30 AM EST, one hour later
+  assert.equal(toNyIso(edt), '2026-11-01T01:30:00-04:00');
+  assert.equal(toNyIso(est), '2026-11-01T01:30:00-05:00');
+  const items = ics(
+    `BEGIN:VEVENT\r\nSUMMARY:Late Set\r\nDTSTART:20261101T053000Z\r\nLOCATION:Club, 1 Main St, St. Petersburg, FL\r\nEND:VEVENT\r\n` +
+      `BEGIN:VEVENT\r\nSUMMARY:Late Set\r\nDTSTART:20261101T063000Z\r\nLOCATION:Club, 1 Main St, St. Petersburg, FL\r\nEND:VEVENT\r\n`,
+  );
+  const events = items.map((i) => normalizeIcs(i, 'src-a', NOW)!);
+  assert.notEqual(events[0].id, events[1].id);
+  const out = dedupe(events);
+  assert.equal(out.length, 2);
+  assert.deepEqual(out.map((e) => e.start), ['2026-11-01T01:30:00-04:00', '2026-11-01T01:30:00-05:00']);
+});
+
+test('ordinary times keep readable ids (no offset outside the repeated hour)', () => {
+  const [e] = ics(vevent({ summary: 'Late Set', start: '20261101T023000', location: 'Club, 1 Main St, St. Petersburg, FL' })).map((i) => normalizeIcs(i, 'src-a', NOW)!);
+  assert.match(e.id, /^src-a:late-set-2026-11-01t0230-club$/);
+});
+
+test('distinct events always leave dedupe with unique ids, even when inputs share one', () => {
+  const a = ev({ id: 'src-a:dup', city: 'Tampa', venue: 'Library' , address: undefined});
+  const b = ev({ id: 'src-a:dup', city: 'Largo', venue: 'Library', address: undefined });
+  const out = dedupe([b, a]);
+  assert.equal(out.length, 2);
+  assert.equal(new Set(out.map((e) => e.id)).size, 2);
+  assert.deepEqual(dedupe([a, b]).map((e) => e.id), out.map((e) => e.id), 'suffixes are order-independent');
+});
+
+test('merged price fields all come from one listing; missing ones are cleared, never inherited', () => {
+  type Priced = PulseEvent & { priceMin?: number; priceMax?: number };
+  // The richer listing (chosen as the base) has a structured price but no note/free flag...
+  const richer = ev({ id: 'src-a:1', description: 'A much longer and richer description of the event.' }) as Priced;
+  richer.priceMin = 10;
+  richer.priceMax = 40;
+  delete richer.priceNote;
+  delete richer.free;
+  // ...and the other listing says only "free" with no structured amounts.
+  const other = ev({ id: 'src-b:1', sourceIds: ['src-b'], description: 'Short.', priceNote: 'Free', free: true });
+  const [m] = dedupe([richer, other]) as Priced[];
+  const fields = { priceNote: m.priceNote, free: m.free, priceMin: m.priceMin, priceMax: m.priceMax };
+  const fromRicher = { priceNote: undefined, free: undefined, priceMin: 10, priceMax: 40 };
+  const fromOther = { priceNote: 'Free', free: true, priceMin: undefined, priceMax: undefined };
+  assert.ok(
+    JSON.stringify(fields) === JSON.stringify(fromRicher) || JSON.stringify(fields) === JSON.stringify(fromOther),
+    `mixed price record: ${JSON.stringify(fields)}`,
+  );
+  assert.equal(m.free === true && m.priceMin !== undefined, false, 'never "free" with another listing\'s amount');
 });
