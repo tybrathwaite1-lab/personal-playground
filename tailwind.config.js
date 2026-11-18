@@ -32,6 +32,9 @@ export default {
         sans: ['"IBM Plex Sans"', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'Menlo', 'monospace'],
         jp: ['"Hiragino Sans"', '"Hiragino Kaku Gothic ProN"', '"Noto Sans JP"', '"Yu Gothic"', 'sans-serif'],
+        // Decorative handwritten accent only (Caveat Bold, loaded with <Annotation>); never for
+        // essential labels, controls or body copy.
+        hand: ['Caveat', '"Bradley Hand"', '"Segoe Print"', 'cursive'],
       },
       letterSpacing: {
         label: '0.18em',
@@ -58,6 +61,12 @@ export default {
         DEFAULT: '2px',
       },
       keyframes: {
+        // Graphic primitives: a stamp landing. Disabled by the global reduced-motion rule.
+        'stamp-in': {
+          '0%': { opacity: '0', transform: 'scale(1.35) rotate(var(--stamp-angle, 0deg))' },
+          '70%': { opacity: '1', transform: 'scale(0.96) rotate(var(--stamp-angle, 0deg))' },
+          '100%': { opacity: '1', transform: 'scale(1) rotate(var(--stamp-angle, 0deg))' },
+        },
         rise: {
           '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -69,6 +78,7 @@ export default {
       },
       animation: {
         rise: 'rise 320ms ease-out both',
+        'stamp-in': 'stamp-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both',
         flicker: 'flicker 1.6s ease-in-out infinite',
       },
     },

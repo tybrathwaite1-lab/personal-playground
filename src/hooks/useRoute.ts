@@ -33,17 +33,36 @@ export const ROUTES: RouteName[] = [
   'backup',
 ];
 
+/**
+ * Hidden review routes: reachable only by typing the URL, never linked from navigation,
+ * never part of ROUTES (so the app, its navigation and the standard screenshot matrix are
+ * unchanged). Each one is code-split.
+ */
+export type PreviewName = 'styleguide';
+export const PREVIEWS: PreviewName[] = ['styleguide'];
+
 export interface Route {
   name: RouteName;
   /** Optional query, e.g. #/discover?exp=exp-analog-evening */
   params: URLSearchParams;
+  /** A hidden review route (e.g. #/styleguide); `name` stays 'home' for everything else. */
+  preview: PreviewName | null;
 }
 
-function parse(hash: string): Route {
+/**
+ * Route hashes start with `#/` (or are empty). A bare fragment such as `#main` is an in-page
+ * anchor (e.g. a skip link's default navigation), not a route, so it must not change the page.
+ */
+export function isRouteHash(hash: string): boolean {
+  return hash === '' || hash === '#' || hash.startsWith('#/');
+}
+
+export function parseHash(hash: string): Route {
   const clean = hash.replace(/^#\/?/, '');
   const [path, query = ''] = clean.split('?');
+  const preview = (PREVIEWS as string[]).includes(path) ? (path as PreviewName) : null;
   const name = (ROUTES as string[]).includes(path) ? (path as RouteName) : 'home';
-  return { name, params: new URLSearchParams(query) };
+  return { name, params: new URLSearchParams(query), preview };
 }
 
 export function href(name: RouteName, params?: Record<string, string>): string {
@@ -56,10 +75,12 @@ export function navigate(name: RouteName, params?: Record<string, string>): void
 }
 
 export function useRoute(): Route {
-  const [route, setRoute] = useState<Route>(() => parse(window.location.hash));
+  const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
   useEffect(() => {
     const onHash = () => {
-      setRoute(parse(window.location.hash));
+      // In-page anchors keep the current route (and its scroll position).
+      if (!isRouteHash(window.location.hash)) return;
+      setRoute(parseHash(window.location.hash));
       window.scrollTo({ top: 0 });
     };
     window.addEventListener('hashchange', onHash);

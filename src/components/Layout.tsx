@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { href, type RouteName } from '../hooks/useRoute';
+import { InPageLink } from './InPageLink';
 import { useStore } from '../hooks/useStore';
 import { useSync } from '../hooks/useSync';
 
@@ -69,9 +70,10 @@ export function Layout({ current, children }: { current: RouteName; children: Re
 
   return (
     <div className="min-h-dvh">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:bg-paper focus:px-3 focus:py-2 focus:text-ink">
+      {/* In-page link: moves focus to <main> without replacing the route in the URL. */}
+      <InPageLink to="main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:bg-paper focus:px-3 focus:py-2 focus:text-ink">
         Skip to content
-      </a>
+      </InPageLink>
 
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header className="pt-safe sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
@@ -135,7 +137,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
         </div>
       )}
 
-      <main id="main" className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-6 md:pt-10 lg:pb-16">
+      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-6 md:pt-10 lg:pb-16">
         {children}
       </main>
 

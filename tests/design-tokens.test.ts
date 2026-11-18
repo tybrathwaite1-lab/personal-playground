@@ -57,7 +57,12 @@ for (const m of css.matchAll(/\.surface-([\w-]+)\s*\{([^}]*)\}/g)) if (m[2].incl
 
 test('every surface declares the full token set', () => {
   assert.deepEqual([...surfaces.keys()], ['ink', 'raised', 'hunter', 'editorial', 'cream', 'orange', 'mustard', 'pink', 'cobalt', 'olive', 'forest']);
-  for (const [name, v] of surfaces) assert.deepEqual([...v.keys()].sort(), ['accent', 'control', 'fg', 'fg-muted', 'focus', 'rule', 'surface'], name);
+  for (const [name, v] of surfaces) {
+    assert.deepEqual([...v.keys()].sort(), ['accent', 'control', 'duo-art', 'fg', 'fg-muted', 'focus', 'rule', 'surface'], name);
+    // Duotone artwork multiplies onto light surfaces and screens onto dark ones.
+    const dark = lum(resolve(v.get('surface')!, v)) < 0.18;
+    assert.equal(v.get('duo-art'), dark ? 'screen' : 'multiply', `${name} duotone blend`);
+  }
   // Every surface class also paints its background and text.
   const painted = /((?:\.surface-[\w-]+,\s*)+\.surface-[\w-]+)\s*\{\s*background-color: rgb\(var\(--surface\)\);\s*color: rgb\(var\(--fg\)\);/.exec(css);
   assert.ok(painted);
@@ -77,9 +82,36 @@ test('every surface pair meets WCAG AA: text 4.5:1, focus indicator and control 
   assert.equal(rows.length, 11);
 });
 
+test('surface-aware controls (.ui-*) keep every state accessible on every surface', () => {
+  for (const [name, v] of surfaces) {
+    const bg = resolve(v.get('surface')!, v);
+    const fg = resolve(v.get('fg')!, v);
+    const states: [string, number, number][] = [
+      // Primary button: surface-colored text on an fg fill, at rest and on hover (fg at 90%).
+      ['primary text', contrast(bg, fg), 4.5],
+      ['primary hover text', contrast(bg, over(fg, 0.9, bg)), 4.5],
+      ['primary fill vs surface', contrast(fg, bg), 3],
+      // Secondary buttons and chips on hover: fg text on a 10% fg wash.
+      ['hover text', contrast(fg, over(fg, 0.1, bg)), 4.5],
+      // Hover strengthens the boundary to fg (the control token alone can dip below 3:1 on the wash).
+      ['hover boundary', contrast(fg, over(fg, 0.1, bg)), 3],
+      // Pressed chip: surface text on fg, at rest and on hover (fg at 90%); its fill against the
+      // surface, and the focus ring around it (drawn with a 2px gap on the surface).
+      ['pressed chip text', contrast(bg, fg), 4.5],
+      ['pressed chip hover text', contrast(bg, over(fg, 0.9, bg)), 4.5],
+      ['pressed chip fill vs surface', contrast(fg, bg), 3],
+      ['pressed chip hover fill vs surface', contrast(over(fg, 0.9, bg), bg), 3],
+      ['focus ring vs surface', contrast(resolve(v.get('focus')!, v), bg), 3],
+      // Placeholder text uses fg-muted on the surface.
+      ['placeholder', contrast(resolve(v.get('fg-muted')!, v), bg), 4.5],
+    ];
+    for (const [label, ratio, min] of states) assert.ok(ratio >= min, `${name}: ${label} ${ratio.toFixed(2)}:1`);
+  }
+});
+
 test(':root defaults are the Field Guide ink surface (application background unchanged)', () => {
   const ink = surfaces.get('ink')!;
-  for (const k of ['surface', 'fg', 'fg-muted', 'accent', 'focus', 'control', 'rule']) assert.equal(palette.get(k), ink.get(k), `--${k}`);
+  for (const k of ['surface', 'fg', 'fg-muted', 'accent', 'focus', 'control', 'rule', 'duo-art']) assert.equal(palette.get(k), ink.get(k), `--${k}`);
   assert.deepEqual(P('ink'), [0x14, 0x16, 0x14], 'app background stays #141614');
   assert.deepEqual(P('ink-2'), [0x21, 0x25, 0x20]);
   assert.deepEqual(P('hunter'), [0x28, 0x3b, 0x31]);

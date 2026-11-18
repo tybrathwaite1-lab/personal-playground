@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Layout, NAV } from './components/Layout';
 import { useRoute } from './hooks/useRoute';
 import Backup from './pages/Backup';
@@ -14,13 +14,28 @@ import Pulse from './pages/Pulse';
 import Drop from './pages/Drop';
 import Rediscover from './pages/Rediscover';
 
+// Hidden review route (#/styleguide), code-split so it adds nothing to the app bundle.
+const StyleGuide = lazy(() => import('./styleguide/StyleGuide'));
+
 export default function App() {
   const route = useRoute();
 
   useEffect(() => {
+    if (route.preview === 'styleguide') {
+      document.title = 'Style guide (preview) — Personal Playground';
+      return;
+    }
     const label = NAV.find((n) => n.route === route.name)?.label ?? (route.name === 'backup' ? 'Backup' : '');
     document.title = route.name === 'home' ? 'Personal Playground' : `${label} — Personal Playground`;
-  }, [route.name]);
+  }, [route.name, route.preview]);
+
+  if (route.preview === 'styleguide') {
+    return (
+      <Suspense fallback={<p className="p-6 font-mono text-xs uppercase tracking-label text-fg-muted">Loading style guide…</p>}>
+        <StyleGuide />
+      </Suspense>
+    );
+  }
 
   const page = (() => {
     switch (route.name) {

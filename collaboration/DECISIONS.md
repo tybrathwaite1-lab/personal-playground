@@ -91,3 +91,10 @@ Context: Claude's read-only assessment of the approved creative direction (share
 - **Type hierarchy:** ordinary body 16px; editorial body 17–18px; labels 12–13px; display ≈ 40–56px mobile and 72–112px desktop. Oversized, unusually tight type is for deliberate cover treatments only.
 - **Zoom:** rem-based sizing is a design safeguard, not proof of 200% zoom; manual reflow verification remains required.
 - **PR 2's handwriting accent:** Caveat Bold, self-hosted via Fontsource with license and transfer-size verification. One handwritten face only, never for essential labels or body copy.
+
+## 2026-11-18 — Graphic primitives and the style guide (PR 2)
+- **Decoration and content are separate:** every decorative layer (paper edges, tape, grain, annotations, decorative stamps) renders through one `aria-hidden`, `pointer-events: none` wrapper. Essential text and controls never depend on it.
+- **New components use the surface-aware controls and tokens** (`.ui-*`, `text-fg`, `border-control`, …), not fixed Field Guide color utilities.
+- **Caveat Bold** (`@fontsource/caveat` 5.3.0, OFL-1.1) is the single handwritten face: decorative only, Latin 700, loaded only with the `Annotation` component.
+- **Artwork credits are always explicit** (illustration, AI-assisted illustration, or photo). AI-assisted artwork is never presented as a photograph.
+- **Preview routes** (e.g. `#/styleguide`) live outside `ROUTES` and navigation, and are code-split. Their screenshots come from a separate read-only evidence workflow, so the standard screenshot matrix and the publisher's security policy stay unchanged.

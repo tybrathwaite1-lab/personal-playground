@@ -1,6 +1,34 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 1: accessible tokens and typography, revision 2)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 2: graphic primitives and the style guide)
+
+- **PR #28** (tokens and typography): approved at `301479e`, merged as `c2a5974`.
+- **PR 2 (this):**
+  - **Graphic primitives:** surface, paper edges, tape, stamps, restrained grain, handwritten annotations and artwork treatments (plain, duotone, halftone, cutout; missing-artwork fallback; explicit credit).
+  - **Surface-aware controls** (`.ui-*`).
+  - **A hidden, code-split `#/styleguide`** with realistic compositions plus component demonstrations: nested surfaces, long headlines, missing artwork, visible focus, reduced motion, responsive layouts.
+  - **Caveat Bold** (OFL-1.1, Latin 700, 51,020 B WOFF2): decorative only, and loaded only by the components that use it. The app shell requests no Caveat file.
+- **Style-guide evidence** comes from a separate read-only workflow (`styleguide.yml`) at 390 and 1280 px. The standard harness, its matrix and the publisher policy are unchanged. Screenshots are on the evidence branch named in the PR, with SHA-256 hashes matching the run log.
+- **Acceptance checklist (manual, still required):** 200% zoom and reflow; Safari (macOS and iOS); a real phone.
+- **Leftover temporary branch:** `tmp/pr-2-caveat-lockfile` resolved the Caveat lockfile. Please delete it, along with the evidence branch once review is done.
+- Home, navigation, data and app behavior are unchanged. No Issue 09 content and no Newsstand page.
+- **Revision 1** (ChatGPT review of `d6ec713`; creative direction approved):
+  - **In-page links keep the route:** the router ignores bare `#fragments`, and `InPageLink` moves focus without changing the URL. This also fixes the app's "Skip to content" link, which used to fall back to Home.
+  - **The cover headline** is sized to its column, with no broken words from 320 to 1440 px.
+  - **Displayed artwork must be credited** (type and runtime), and failed images recover.
+  - **Browser tests** activate the skip and internal links and measure rendered hover, pressed and focus colors. The style-guide workflow now runs in strict mode.
+  - **Revision 2** (P2 from ChatGPT's re-review of `0878905`):
+    - The app's "Skip to content" link and Pulse's "Sources" link now use `InPageLink`, and `<main>` is programmatically focusable, so the URL keeps its route and a refresh reopens the same page.
+    - Browser tests activate them by keyboard. They check the exact original hash (including route parameters), focus, scrolling and route preservation after a reload.
+    - **Compatibility:**
+      - Route URLs and unknown-route fallback are unchanged.
+      - A bare-fragment hash change now keeps the current page instead of switching to Home.
+      - Opening a bare-fragment URL directly (e.g. an old `#main` bookmark, or a link opened in a new tab) still lands on Home, as before.
+  - **Methodology note:** of the 124 standard screenshots, **112 are byte-identical** (and pixel-identical) to `main`. The earlier "117" used a perceptual threshold (fewer than 0.1% of pixels differing by more than 24/255), which counted small capture-timing differences as identical.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 1: accessible tokens and typography, revision 2)
 
 - **PR #27 (PP-011):** approved by ChatGPT and merged at `78a4e5e`. **Post-merge verification:**
   - Deploy to GitHub Pages run 44379304877: build, deploy and smoke all succeeded.

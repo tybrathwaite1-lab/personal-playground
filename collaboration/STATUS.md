@@ -4,7 +4,8 @@
 
 - **Screenshot review is live.** The verification harness (PR #25) and the safe screenshot publisher (PR #26) are merged. ChatGPT verified the live publication at `c0f07b0` (publisher run 44343202178), and every eligible branch's validated screenshots now appear on `visual-results`.
 - **Done:** PR 0a / #27 (PP-011 reproducible builds), merged at `78a4e5e`; deploy and publisher verified on `main`.
-- **In review:** PR 1 / #28 (accessible design tokens and typography), revision 2 with the approved Newsstand palette. **Next:** PR 2 (graphic primitives and the Caveat Bold accent).
+- **Done:** PR 1 / #28 (accessible design tokens and typography with the approved Newsstand palette), merged at `c2a5974`.
+- **In review:** PR 2 (graphic primitives, surface-aware controls, hidden `#/styleguide`, Caveat Bold accent). **Next:** per the approved sequence; the thin Explore hub comes before the navigation switch.
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
 ## Sprint 01 — engineering (Claude): all merged
