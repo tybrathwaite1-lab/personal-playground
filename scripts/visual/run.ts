@@ -129,10 +129,16 @@ async function hideFixedOverlays(page: Page): Promise<string[]> {
     for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
       const cs = getComputedStyle(el);
       if (cs.position === 'fixed') {
+        // `visibility` is animatable: without this, the app's transitions delay the change past the screenshot.
+        el.style.setProperty('transition', 'none', 'important');
         el.style.setProperty('visibility', 'hidden', 'important');
         hidden.push(`${el.tagName.toLowerCase()}${el.getAttribute('aria-label') ? `[${el.getAttribute('aria-label')}]` : ''}:${cs.display}`);
       }
     }
+    return hidden;
+  }).then(async (hidden) => {
+    // Let style changes reach a painted frame.
+    await page.evaluate(() => new Promise<void>((ok) => requestAnimationFrame(() => requestAnimationFrame(() => ok()))));
     return hidden;
   });
 }
@@ -286,12 +292,11 @@ async function main() {
         await page.screenshot({ path: join(out, fold), type: 'jpeg', quality: 70 });
         // Full page: fixed overlays (bottom nav, grain) would otherwise be painted where the screen
         // ended and cover content, so they're hidden for this shot only.
-        const hidden = await hideFixedOverlays(page);
+        await hideFixedOverlays(page);
         const stillVisible = await visibleFixed(page);
+        if (stillVisible.length) throw new Error(`#/${route} @ ${width}px: fixed overlays still visible before full-page shot: ${stillVisible.join(', ')}`);
         const file = `${width}/${route}.jpg`;
         await page.screenshot({ path: join(out, file), fullPage: true, type: 'jpeg', quality: 70 });
-        const afterShot = await visibleFixed(page);
-        if (width === 390 && route === 'home') console.log(`  [diag] hid ${JSON.stringify(hidden)}; visible before shot ${JSON.stringify(stillVisible)}; after ${JSON.stringify(afterShot)}`);
         const ok = overflowPx <= 1 && !errors.length && !(axeResult && axeResult.length);
         shots.push({ route, width, file, fold, overflowPx, offenders, axe: axeResult, pageErrors: errors, ok });
         console.log(`${ok ? '✓' : '⚠'} ${String(width).padStart(4)}px #/${route}${overflowPx > 1 ? ` overflow ${overflowPx}px` : ''}${errors.length ? ` errors ${errors.length}` : ''}${axeResult?.length ? ` axe ${axeResult.map((a) => a.id).join(',')}` : ''}`);
