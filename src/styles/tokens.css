@@ -5,60 +5,66 @@
  * 1. Palette: raw colors. Never use these directly for text; pick a surface.
  * 2. Surfaces: each `.surface-*` class sets a tested set of pairs:
  *      --surface    background
- *      --fg         body text            ≥ 4.5:1 on --surface
- *      --fg-muted   secondary text       ≥ 4.5:1
- *      --accent     accent text/labels   ≥ 4.5:1
- *      --focus      focus indicator      ≥ 3:1 (WCAG 1.4.11, 2.4.7)
- *      --rule       decorative hairlines (no contrast requirement; not a control boundary)
+ *      --fg         body text                       ≥ 4.5:1 on --surface
+ *      --fg-muted   secondary text                  ≥ 4.5:1
+ *      --accent     accent text/labels              ≥ 4.5:1
+ *      --focus      focus indicator                 ≥ 3:1 (WCAG 1.4.11, 2.4.7)
+ *      --control    boundary of inputs/buttons/chips ≥ 3:1 (WCAG 1.4.11): identifies controls
+ *      --rule       decorative hairlines only (no contrast requirement; never a control boundary)
  *    Every pair is checked by tests/design-tokens.test.ts. Children inherit the variables, so
- *    `text-fg`, `text-accent`, `bg-surface`, `border-rule` and the focus ring adapt to the
- *    nearest surface.
- * 3. :root is the ink surface, so existing pages render as before.
+ *    `text-fg`, `text-accent`, `bg-surface`, `border-control`, `border-rule` and the focus ring
+ *    adapt to the nearest surface.
+ * 3. :root is the Field Guide ink surface, so the application background is unchanged.
  *
- * The Newsstand palette below is PROVISIONAL (engineering values that pass every pair) until
- * ChatGPT's palette pairs are approved; only the values change when they arrive.
+ * Field Guide surfaces (ink, raised, hunter) keep the existing app colors. Newsstand surfaces
+ * use the approved palette pairs (ChatGPT, 2026-11-18): background / foreground / muted /
+ * accent / focus, exactly as approved. "Editorial ink" is a separate Newsstand surface, not the
+ * app background.
  */
 
 :root {
-  /* Palette: the existing Field Guide colors. */
+  /* Palette: Field Guide (existing application colors). */
   --pp-ink: 20 22 20; /* #141614 */
   --pp-ink-2: 33 37 32; /* #212520 */
   --pp-paper: 233 223 201; /* #E9DFC9 */
   --pp-muted: 168 170 153; /* #A8AA99 */
   --pp-hunter: 40 59 49; /* #283B31 */
-  --pp-line: 61 69 59; /* #3D453B */
+  --pp-line: 61 69 59; /* #3D453B: decorative rules */
+  --pp-control: 115 123 107; /* #737B6B: control boundaries (≥ 3:1 on ink, cards, hunter tints) */
   /* Rust, adjusted from #B76940 (4.42:1 on ink, 3.78 on cards): now ≥ 4.5 on ink, cards and
      hunter-tinted headers, and ink text on rust buttons is ≥ 4.5. */
   --pp-rust: 212 126 71; /* #D47E47 */
   --pp-rust-hover: 222 139 85; /* #DE8B55 */
 
-  /* Palette: Newsstand (provisional). */
-  --pp-cream: 243 235 216; /* #F3EBD8 */
-  --pp-orange: 232 120 58; /* #E8783A */
-  --pp-cobalt: 43 73 168; /* #2B49A8 */
-  --pp-mustard: 231 180 63; /* #E7B43F */
-  --pp-pink: 242 169 184; /* #F2A9B8 */
-  --pp-olive: 78 91 38; /* #4E5B26: darkened from the mock so cream body text passes */
-  --pp-forest: 31 59 44; /* #1F3B2C */
-  --pp-apricot: 235 165 126; /* #EBA57E: accent on dark greens */
-  --pp-gold: 246 201 91; /* #F6C95B: accent on cobalt and olive */
+  /* Palette: Newsstand (approved). */
+  --pp-ns-ink: 32 37 31; /* #20251F editorial ink */
+  --pp-ns-paper: 255 244 219; /* #FFF4DB light text on dark surfaces */
+  --pp-ns-cream: 241 227 198; /* #F1E3C6 */
+  --pp-ns-orange: 244 119 56; /* #F47738 */
+  --pp-ns-mustard: 244 198 50; /* #F4C632 (also the accent on dark surfaces) */
+  --pp-ns-pink: 233 159 178; /* #E99FB2 */
+  --pp-ns-cobalt: 22 74 183; /* #164AB7 (also the focus color on light surfaces) */
+  --pp-ns-olive: 168 181 107; /* #A8B56B */
+  --pp-ns-forest: 32 78 63; /* #204E3F */
 
-  /* Default surface: ink (same as .surface-ink). */
+  /* Default surface: Field Guide ink (same as .surface-ink). */
   --surface: var(--pp-ink);
   --fg: var(--pp-paper);
   --fg-muted: var(--pp-muted);
   --accent: var(--pp-rust);
   --focus: var(--pp-rust);
+  --control: var(--pp-control);
   --rule: var(--pp-line);
 }
 
-/* ── Surfaces ─────────────────────────────────────────────────────────── */
+/* ── Field Guide surfaces ─────────────────────────────────────────────── */
 .surface-ink {
   --surface: var(--pp-ink);
   --fg: var(--pp-paper);
   --fg-muted: var(--pp-muted);
   --accent: var(--pp-rust);
   --focus: var(--pp-rust);
+  --control: var(--pp-control);
   --rule: var(--pp-line);
 }
 .surface-raised {
@@ -67,80 +73,102 @@
   --fg-muted: var(--pp-muted);
   --accent: var(--pp-rust);
   --focus: var(--pp-rust);
+  --control: var(--pp-control);
   --rule: var(--pp-line);
 }
 .surface-hunter {
   --surface: var(--pp-hunter);
   --fg: var(--pp-paper);
   --fg-muted: 181 184 166; /* #B5B8A6 */
-  --accent: var(--pp-apricot);
+  --accent: 235 165 126; /* #EBA57E */
   --focus: var(--pp-paper);
+  --control: 181 184 166; /* #B5B8A6 */
   --rule: 74 94 82; /* #4A5E52 */
 }
+
+/* ── Newsstand surfaces (approved pairs) ──────────────────────────────── */
+.surface-editorial {
+  --surface: var(--pp-ns-ink);
+  --fg: var(--pp-ns-paper);
+  --fg-muted: 196 200 183; /* #C4C8B7 */
+  --accent: var(--pp-ns-mustard);
+  --focus: var(--pp-ns-mustard);
+  --control: 196 200 183; /* = muted */
+  --rule: 88 89 78; /* #58594E */
+}
 .surface-cream {
-  --surface: var(--pp-paper);
-  --fg: var(--pp-ink);
-  --fg-muted: 77 80 70; /* #4D5046 */
-  --accent: 142 63 23; /* #8E3F17 */
-  --focus: var(--pp-ink);
-  --rule: 200 190 166; /* #C8BEA6 */
+  --surface: var(--pp-ns-cream);
+  --fg: var(--pp-ns-ink);
+  --fg-muted: 83 89 76; /* #53594C */
+  --accent: 146 50 25; /* #923219 */
+  --focus: var(--pp-ns-cobalt);
+  --control: 83 89 76; /* = muted */
+  --rule: 189 180 156; /* #BDB49C */
 }
 .surface-orange {
-  --surface: var(--pp-orange);
-  --fg: var(--pp-ink);
-  --fg-muted: 43 38 32; /* #2B2620 */
-  --accent: var(--pp-ink);
-  --focus: var(--pp-ink);
-  --rule: var(--pp-ink);
-}
-.surface-cobalt {
-  --surface: var(--pp-cobalt);
-  --fg: var(--pp-cream);
-  --fg-muted: 217 221 240; /* #D9DDF0 */
-  --accent: var(--pp-gold);
-  --focus: var(--pp-cream);
-  --rule: 90 116 196; /* #5A74C4 */
+  --surface: var(--pp-ns-orange);
+  --fg: 22 26 22; /* #161A16 */
+  --fg-muted: 53 35 27; /* #35231B */
+  --accent: 68 32 13; /* #44200D */
+  --focus: var(--pp-ns-ink);
+  --control: 53 35 27; /* = muted */
+  --rule: 188 96 48; /* #BC6030 */
 }
 .surface-mustard {
-  --surface: var(--pp-mustard);
-  --fg: var(--pp-ink);
-  --fg-muted: 58 49 28; /* #3A311C */
-  --accent: 110 44 12; /* #6E2C0C */
-  --focus: var(--pp-ink);
-  --rule: var(--pp-ink);
+  --surface: var(--pp-ns-mustard);
+  --fg: var(--pp-ns-ink);
+  --fg-muted: 81 80 43; /* #51502B */
+  --accent: 112 49 15; /* #70310F */
+  --focus: var(--pp-ns-cobalt);
+  --control: 81 80 43; /* = muted */
+  --rule: 191 158 45; /* #BF9E2D */
 }
 .surface-pink {
-  --surface: var(--pp-pink);
-  --fg: var(--pp-ink);
-  --fg-muted: 63 35 41; /* #3F2329 */
-  --accent: 126 35 56; /* #7E2338 */
-  --focus: var(--pp-ink);
-  --rule: var(--pp-ink);
+  --surface: var(--pp-ns-pink);
+  --fg: var(--pp-ns-ink);
+  --fg-muted: 81 64 74; /* #51404A */
+  --accent: 118 35 69; /* #762345 */
+  --focus: var(--pp-ns-cobalt);
+  --control: 81 64 74; /* = muted */
+  --rule: 183 128 141; /* #B7808D */
+}
+.surface-cobalt {
+  --surface: var(--pp-ns-cobalt);
+  --fg: var(--pp-ns-paper);
+  --fg-muted: 220 230 255; /* #DCE6FF */
+  --accent: var(--pp-ns-mustard);
+  --focus: var(--pp-ns-mustard);
+  --control: 220 230 255; /* = muted */
+  --rule: 80 116 192; /* #5074C0 */
 }
 .surface-olive {
-  --surface: var(--pp-olive);
-  --fg: var(--pp-cream);
-  --fg-muted: 220 224 198; /* #DCE0C6 */
-  --accent: var(--pp-gold);
-  --focus: var(--pp-cream);
-  --rule: 112 125 70; /* #707D46 */
+  --surface: var(--pp-ns-olive);
+  --fg: var(--pp-ns-ink);
+  --fg-muted: 57 65 38; /* #394126 */
+  --accent: 52 61 25; /* #343D19 */
+  --focus: var(--pp-ns-ink);
+  --control: 57 65 38; /* = muted */
+  --rule: 134 145 88; /* #869158 */
 }
 .surface-forest {
-  --surface: var(--pp-forest);
-  --fg: var(--pp-cream);
-  --fg-muted: 188 201 184; /* #BCC9B8 */
-  --accent: var(--pp-apricot);
-  --focus: var(--pp-cream);
-  --rule: 61 90 73; /* #3D5A49 */
+  --surface: var(--pp-ns-forest);
+  --fg: var(--pp-ns-paper);
+  --fg-muted: 197 216 199; /* #C5D8C7 */
+  --accent: var(--pp-ns-mustard);
+  --focus: var(--pp-ns-mustard);
+  --control: 197 216 199; /* = muted */
+  --rule: 88 120 102; /* #587866 */
 }
+
 .surface-ink,
 .surface-raised,
 .surface-hunter,
+.surface-editorial,
 .surface-cream,
 .surface-orange,
-.surface-cobalt,
 .surface-mustard,
 .surface-pink,
+.surface-cobalt,
 .surface-olive,
 .surface-forest {
   background-color: rgb(var(--surface));

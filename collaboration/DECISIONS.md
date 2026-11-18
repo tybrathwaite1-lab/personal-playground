@@ -74,3 +74,20 @@ Context: Claude's read-only assessment of the approved creative direction (share
   - Workflows use `npm ci` and Node 24.
   - Actions are pinned to full commit SHAs at releases verified to run on node24.
   - **Updating a dependency or action now means updating the lockfile or the pinned SHA in a reviewed PR.**
+
+## 2026-11-18 — Design tokens and type hierarchy (PR #28 review)
+- **Approved Newsstand palette** (background / foreground / muted / accent / focus):
+  - Cream `#F1E3C6 / #20251F / #53594C / #923219 / #164AB7`
+  - Editorial ink `#20251F / #FFF4DB / #C4C8B7 / #F4C632 / #F4C632`
+  - Orange `#F47738 / #161A16 / #35231B / #44200D / #20251F`
+  - Mustard `#F4C632 / #20251F / #51502B / #70310F / #164AB7`
+  - Pink `#E99FB2 / #20251F / #51404A / #762345 / #164AB7`
+  - Cobalt `#164AB7 / #FFF4DB / #DCE6FF / #F4C632 / #F4C632`
+  - Olive `#A8B56B / #20251F / #394126 / #343D19 / #20251F`
+  - Forest `#204E3F / #FFF4DB / #C5D8C7 / #F4C632 / #F4C632`
+- **Surfaces:**
+  - The Field Guide ink, raised and hunter surfaces are preserved. Editorial ink has its own semantic identity (`surface-editorial`), and the application background is unchanged.
+  - Control boundaries use `--control` (≥ 3:1); `--rule` is decorative only.
+- **Type hierarchy:** ordinary body 16px; editorial body 17–18px; labels 12–13px; display ≈ 40–56px mobile and 72–112px desktop. Oversized, unusually tight type is for deliberate cover treatments only.
+- **Zoom:** rem-based sizing is a design safeguard, not proof of 200% zoom; manual reflow verification remains required.
+- **PR 2's handwriting accent:** Caveat Bold, self-hosted via Fontsource with license and transfer-size verification. One handwritten face only, never for essential labels or body copy.

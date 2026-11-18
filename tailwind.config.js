@@ -24,6 +24,7 @@ export default {
         },
         accent: 'rgb(var(--accent) / <alpha-value>)',
         focus: 'rgb(var(--focus) / <alpha-value>)',
+        control: 'rgb(var(--control) / <alpha-value>)',
         rule: 'rgb(var(--rule) / <alpha-value>)',
       },
       fontFamily: {
@@ -35,18 +36,20 @@ export default {
       letterSpacing: {
         label: '0.18em',
       },
-      // Type scale (Sprint 02, PR 1). Body copy is ≥ 16px with line-height ≥ 1.5. Fluid sizes
-      // always include a rem term, so they scale with browser zoom and text size (WCAG 1.4.4).
+      // Type hierarchy (Sprint 02, agreed 2026-11-18): ordinary body 16px; editorial body
+      // 17–18px; labels 12–13px; display ≈ 40–56px on mobile and 72–112px on desktop. Oversized,
+      // unusually tight type is reserved for deliberate cover treatments (`text-cover`), never
+      // ordinary headings. Fluid sizes include a rem term so they follow browser text size and
+      // zoom; that is a design safeguard, not proof of 200% reflow (verified manually).
       fontSize: {
-        label: ['0.6875rem', { lineHeight: '1.4', letterSpacing: '0.18em' }],
+        label: ['clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem)', { lineHeight: '1.4', letterSpacing: '0.16em' }],
         small: ['0.875rem', { lineHeight: '1.5' }],
         body: ['1rem', { lineHeight: '1.6' }],
-        lede: ['clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem)', { lineHeight: '1.5' }],
-        title: ['clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem)', { lineHeight: '1' }],
-        'display-s': ['clamp(2.25rem, 1.8rem + 2vw, 3.25rem)', { lineHeight: '0.95' }],
-        'display-m': ['clamp(3rem, 2.2rem + 3.5vw, 5rem)', { lineHeight: '0.9' }],
-        'display-l': ['clamp(3.75rem, 2.5rem + 6vw, 7.5rem)', { lineHeight: '0.88' }],
-        'display-xl': ['clamp(4.5rem, 2.5rem + 9vw, 10rem)', { lineHeight: '0.85' }],
+        'body-editorial': ['clamp(1.0625rem, 1rem + 0.2vw, 1.125rem)', { lineHeight: '1.65' }],
+        heading: ['clamp(1.5rem, 1.3rem + 0.9vw, 2.25rem)', { lineHeight: '1.1' }],
+        display: ['clamp(2.5rem, 1.67rem + 3.54vw, 4.5rem)', { lineHeight: '0.95' }],
+        'display-lg': ['clamp(3rem, 1.72rem + 6.59vw, 7rem)', { lineHeight: '0.92' }],
+        cover: ['clamp(4.5rem, 2.5rem + 9vw, 10rem)', { lineHeight: '0.85' }],
       },
       maxWidth: {
         measure: '65ch',

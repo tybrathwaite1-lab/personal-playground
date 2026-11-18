@@ -63,7 +63,7 @@
     @apply border border-line bg-ink2;
   }
   .btn {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 border border-line px-4 font-mono text-xs uppercase tracking-label text-paper transition-colors hover:border-paper/60 hover:bg-white/[0.03] disabled:opacity-40;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 border border-control px-4 font-mono text-xs uppercase tracking-label text-paper transition-colors hover:border-paper/60 hover:bg-white/[0.03] disabled:opacity-40;
   }
   .btn-primary {
     @apply inline-flex min-h-[48px] items-center justify-center gap-2 border border-rust bg-rust px-5 font-mono text-xs uppercase tracking-label text-ink transition-colors hover:border-rust-hover hover:bg-rust-hover disabled:opacity-40;
@@ -72,7 +72,7 @@
     @apply inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 text-muted transition-colors hover:text-paper;
   }
   .chip {
-    @apply inline-flex min-h-[38px] items-center gap-1.5 border border-line px-3 text-sm text-muted transition-colors hover:border-paper/50 hover:text-paper;
+    @apply inline-flex min-h-[38px] items-center gap-1.5 border border-control px-3 text-sm text-muted transition-colors hover:border-paper/50 hover:text-paper;
   }
   .chip[aria-pressed='true'] {
     @apply border-paper bg-paper text-ink;
@@ -81,7 +81,7 @@
     @apply inline-flex items-center border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted;
   }
   .input {
-    @apply w-full border border-line bg-ink px-3 py-2.5 text-base text-paper placeholder:text-muted/80 focus:border-paper/70 focus:outline-none;
+    @apply w-full border border-control bg-ink px-3 py-2.5 text-base text-paper placeholder:text-muted/80 focus:border-paper;
   }
   .scrollbar-none {
     scrollbar-width: none;

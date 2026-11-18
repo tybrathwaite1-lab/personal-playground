@@ -3,7 +3,8 @@
 **Sprint 02, "The Newsstand Effect", is in progress** (authorized by the owner on 2026-11-18). Sprint 01 "Make discovery dependable" is complete; production was verified at `68186d8`.
 
 - **Screenshot review is live.** The verification harness (PR #25) and the safe screenshot publisher (PR #26) are merged. ChatGPT verified the live publication at `c0f07b0` (publisher run 44343202178), and every eligible branch's validated screenshots now appear on `visual-results`.
-- **In review:** PR 0a (PP-011 reproducible builds and supported Actions runtimes); next, PR 1 (accessible design tokens and typography).
+- **Done:** PR 0a / #27 (PP-011 reproducible builds), merged at `78a4e5e`; deploy and publisher verified on `main`.
+- **In review:** PR 1 / #28 (accessible design tokens and typography), revision 2 with the approved Newsstand palette. **Next:** PR 2 (graphic primitives and the Caveat Bold accent).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
 ## Sprint 01 — engineering (Claude): all merged
@@ -37,7 +38,7 @@ Open issues: PP-005 #6, PP-006 #7, PP-007 #8, PP-009 #10, PP-010 #11, PP-011 #12
 
 ## Outstanding verification
 - Real-device mobile/offline behavior, real-device sync, and visual review of the new planner and Pulse copy (PP-010).
-- Reproducible-build lockfile (PP-011): in review as Sprint 02 PR 0a.
+- Reproducible-build lockfile (PP-011): done (#27). Follow-ups: `engines`/lockfile Node metadata; authenticate action SHAs in the pin test.
 - Recurrence expansion (PP-007).
 - The React sync hook's stale-state guard is code-reviewed only.
 
