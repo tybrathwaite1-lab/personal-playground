@@ -35,3 +35,26 @@ Context: Claude's read-only assessment of the approved creative direction (share
 - The harness is now **read-only**: screenshots and reports are an Actions artifact (14 days) plus a step summary. No job in this workflow can write to the repository.
 - A safer publishing design (a `workflow_run` publisher that only ever runs reviewed code from `main` and treats the artifact as data) is proposed in HANDOFF.md. **It requires the owner's explicit re-approval** and a separate review before anything is built.
 - The `visual-results` branch created by earlier runs holds only synthetic-fixture screenshots of the current app. It can be deleted at the owner's discretion.
+
+## 2026-11-17 — Safe screenshot publishing (owner: option B)
+- The owner approved building a safer screenshot publisher as a **separate, independently reviewed PR** (stacked on #25), kept apart from the design-foundation work. Long-term goal: Claude and ChatGPT can each evaluate visual work with minimal manual coordination by the owner.
+- Requirements:
+  - privileged code runs only from reviewed default-branch code;
+  - artifacts are untrusted data;
+  - validate provenance, file types, paths, sizes and counts;
+  - reject symlinks, traversal and malformed artifacts;
+  - least privilege; never execute artifact contents;
+  - synthetic fixtures and public app content only;
+  - security regression tests; documented residual risks; branch-protection recommendations.
+- **No merge** until ChatGPT's independent security review and the owner's final approval. Design and residual risks: `collaboration/security/visual-publishing.md`.
+
+## 2026-11-18 — Safe screenshot publisher, revision 2 (ChatGPT security review of `fc7000f`)
+- **Screenshots are untrusted review material.** Branch code (app, build, package scripts, dependencies) produces them, so the harness-identity check is recorded as a consistency check, not an attestation. Reviewers treat screenshots as claims to verify.
+- **Eligibility:** only pushes by an authorized contributor (`AUTHORIZED_ACTORS` in `policy.mjs`, currently the owner's account; changing it is a reviewed change to `main`) to an ordinary development branch are published, and only while that commit is still the branch head. Older runs never replace newer results.
+- **Fail closed on the results branch:** the existing `visual-results` content is re-validated on every publish and never checked out. Anything unexpected stops publishing, leaving the branch untouched. As a result, the **legacy `visual-results` branch must be deleted before activation** (it uses the old layout).
+- **Before activation, the owner applies the repository settings** in `collaboration/security/visual-publishing.md` (`main` ruleset, read-only default workflow permissions, fork-workflow approval, no Actions secrets) and **deletes the legacy branch**.
+- PR #26 stays separate from Sprint 02 work and is retargeted to `main` now that #25 has merged.
+
+## 2026-11-18 — Safe screenshot publisher, revision 3 (ChatGPT re-review of `19b4cfa`)
+- **Only complete standard captures are published:** all widths, the 12 app routes, the full keyboard check set and all state records. Partial or diagnostic runs stay artifact-only. **A change to the app's route list must update `STANDARD_ROUTES` in the same PR** (a test enforces this). Older published folders that no longer match are dropped rather than carried forward.
+- Synthetic fixtures and credential isolation are **safeguards, not proof** that published imagery contains no personal data. Screenshots remain untrusted review material.
