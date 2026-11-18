@@ -47,3 +47,10 @@ Context: Claude's read-only assessment of the approved creative direction (share
   - synthetic fixtures and public app content only;
   - security regression tests; documented residual risks; branch-protection recommendations.
 - **No merge** until ChatGPT's independent security review and the owner's final approval. Design and residual risks: `collaboration/security/visual-publishing.md`.
+
+## 2026-11-18 — Safe screenshot publisher, revision 2 (ChatGPT security review of `fc7000f`)
+- **Screenshots are untrusted review material.** Branch code (app, build, package scripts, dependencies) produces them, so the harness-identity check is recorded as a consistency check, not an attestation. Reviewers treat screenshots as claims to verify.
+- **Eligibility:** only pushes by an authorized contributor (`AUTHORIZED_ACTORS` in `policy.mjs`, currently the owner's account; changing it is a reviewed change to `main`) to an ordinary development branch are published, and only while that commit is still the branch head. Older runs never replace newer results.
+- **Fail closed on the results branch:** the existing `visual-results` content is re-validated on every publish and never checked out. Anything unexpected stops publishing, leaving the branch untouched. As a result, the **legacy `visual-results` branch must be deleted before activation** (it uses the old layout).
+- **Before activation, the owner applies the repository settings** in `collaboration/security/visual-publishing.md` (`main` ruleset, read-only default workflow permissions, fork-workflow approval, no Actions secrets) and **deletes the legacy branch**.
+- PR #26 stays separate from Sprint 02 work and is retargeted to `main` now that #25 has merged.

@@ -1,6 +1,31 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (safe screenshot publisher)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (safe screenshot publisher, revision 2)
+
+- **ChatGPT's security review of `fc7000f`:** changes requested (two P1s, four P2s, P3 hardening). **All are addressed** on PR #26 (branch `visual/safe-publisher`). The PR is **retargeted to `main`** now that #25 has merged.
+- **Corrections:**
+  - **P1 harness provenance:** documented as consistency, not attestation; artifacts are untrusted review material. Added an authorized-contributor and eligible-branch gate. A static test proves the capture workflow holds no write access, secrets or credentials.
+  - **P1 results trust boundary:** no checkout; strict tree validation (regular files at expected paths); every carried folder re-validated; clean tree from validated blobs; fetch failures fail closed.
+  - **P2 folder collisions:** hash-suffixed folders.
+  - **P2 ZIP structure:** zip64, boundaries, flag/CRC/size and descriptor agreement, exact tiling.
+  - **P2 strict report schema:** coverage, required axe and keyboard records, "not run" made explicit.
+  - **P2 stale publication:** freshness checked twice, older runs refused, full SHA and run id recorded, lease push.
+  - **P3:** structural-JPEG wording and tests; code-span neutralization; checkout pinned to `workflow_sha`; accurate token description.
+- **Evidence:**
+  - 31 unit and 8 end-to-end publisher tests;
+  - 35/35 mutation checks caught;
+  - 11/11 real-world archives (Python, `zip` CLI, JSZip; descriptors and zip64) and 10/10 Chromium JPEGs pass;
+  - a hostile report rendered with `marked` and `markdown-it` yields only expected links and images.
+  - Details are in `collaboration/security/visual-publishing.md` (revision 2).
+- **Owner, before activation:**
+  - apply the required repository settings in the security doc;
+  - confirm there are no Actions secrets;
+  - delete the legacy `visual-results` branch (the publisher fails closed on its old layout).
+- **Needs:** ChatGPT's re-review; then the owner's final approval. **Do not merge before both.**
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-17 (safe screenshot publisher)
 
 - **The owner approved option B.** The safe publisher is built in its own PR (branch `visual/safe-publisher`), **stacked on #25** (its base branch is #25's, so its diff is publisher-only). It's separate from the design-foundation work.
 - **Design, controls, tests, residual risks and recommended repository settings:** `collaboration/security/visual-publishing.md`. In short:
