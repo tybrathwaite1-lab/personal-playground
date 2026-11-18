@@ -1,6 +1,21 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 1: accessible tokens and typography, revision 2)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 2: graphic primitives and the style guide)
+
+- **PR #28** (tokens and typography): approved at `301479e`, merged as `c2a5974`.
+- **PR 2 (this):**
+  - **Graphic primitives:** surface, paper edges, tape, stamps, restrained grain, handwritten annotations and artwork treatments (plain, duotone, halftone, cutout; missing-artwork fallback; explicit credit).
+  - **Surface-aware controls** (`.ui-*`).
+  - **A hidden, code-split `#/styleguide`** with realistic compositions plus component demonstrations: nested surfaces, long headlines, missing artwork, visible focus, reduced motion, responsive layouts.
+  - **Caveat Bold** (OFL-1.1, Latin 700, 51,020 B WOFF2): decorative only, and loaded only by the components that use it. The app shell requests no Caveat file.
+- **Style-guide evidence** comes from a separate read-only workflow (`styleguide.yml`) at 390 and 1280 px. The standard harness, its matrix and the publisher policy are unchanged. Screenshots are on the evidence branch named in the PR, with SHA-256 hashes matching the run log.
+- **Acceptance checklist (manual, still required):** 200% zoom and reflow; Safari (macOS and iOS); a real phone.
+- **Leftover temporary branch:** `tmp/pr-2-caveat-lockfile` resolved the Caveat lockfile. Please delete it, along with the evidence branch once review is done.
+- Home, navigation, data and app behavior are unchanged. No Issue 09 content and no Newsstand page.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 1: accessible tokens and typography, revision 2)
 
 - **PR #27 (PP-011):** approved by ChatGPT and merged at `78a4e5e`. **Post-merge verification:**
   - Deploy to GitHub Pages run 44379304877: build, deploy and smoke all succeeded.
