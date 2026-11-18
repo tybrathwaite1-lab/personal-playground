@@ -56,6 +56,12 @@ interface WidthResult {
   fonts: { caveatLoaded: boolean; caveatRequests: { url: string; bytes: number }[] };
 }
 
+/**
+ * tsx (esbuild keepNames) wraps named functions in `__name(...)`; functions sent to the page via
+ * evaluate() then need that helper in the browser too. It only labels functions.
+ */
+const NAME_SHIM = 'window.__name = window.__name || function (f) { return f; };';
+
 async function newContext(browser: Browser, origin: string, width: number, reducedMotion: 'reduce' | 'no-preference', blocked: Set<string>) {
   const ctx = await browser.newContext({
     viewport: { width, height: WIDTHS[width] },
@@ -65,6 +71,7 @@ async function newContext(browser: Browser, origin: string, width: number, reduc
     reducedMotion,
     serviceWorkers: 'block',
   });
+  await ctx.addInitScript(NAME_SHIM);
   await ctx.route('**/*', (route) => {
     const url = new URL(route.request().url());
     if (url.origin === origin) return route.continue();
@@ -353,6 +360,7 @@ async function coverChecks(browser: Browser, origin: string, blocked: Set<string
   await mkdir(join(OUT, 'cover'), { recursive: true });
   for (const width of [320, 390, 768, 1024, 1280, 1440]) {
     const ctx = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce', serviceWorkers: 'block' });
+    await ctx.addInitScript(NAME_SHIM);
     await ctx.route('**/*', (route) => {
       const url = new URL(route.request().url());
       if (url.origin === origin) return route.continue();
