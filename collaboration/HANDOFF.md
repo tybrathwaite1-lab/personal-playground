@@ -10,7 +10,16 @@
   - all actions upgraded off the removed Node 20 runtime and pinned to full commit SHAs;
   - a regression test guards all of this.
   - Details and limitations are in the PR.
-- **Live refusal scenarios:** see "Publisher live refusal checks" below.
+- **Publisher live refusal checks** (2026-11-18). Real runs on this branch, with no writes to production results. `visual-results` stayed at `d63ad5243de9` throughout:
+  | Scenario | Trigger | Publisher run | Outcome |
+  |---|---|---|---|
+  | Stale run (branch moved on) | Visual check 44357898826 @ `32cdafb` completed; `83685e7` was pushed seconds later | [44358639064](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44358639064) | ✅ "Not published: … the branch has moved on or was deleted since this run" |
+  | Harness changed on a branch | Visual check 44358646980 @ `83685e7` (this PR changes `visual.yml`) | [44359267912](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44359267912) | ✅ "Not published: … changes the screenshot harness (.github/workflows/visual.yml)" |
+
+  Both ran trusted code `c0f07b0` (the pinned workflow commit).
+  - **Not exercised live:**
+    - **A tampered `visual-results`.** Doing it live would mean writing to production results. It stays covered by the 11 tampered-results end-to-end cases.
+    - **A re-run of an older run.** The proxy doesn't allow Claude to trigger re-runs. The owner can do it from the Actions UI; the expected outcome is "Not published (newer results)" or "branch has moved on".
 
 ---
 
