@@ -6,9 +6,11 @@
  * installs each into a scratch project that uses this repository's .npmrc:
  *   1. unreviewed — not mentioned in allowScripts: its script must NOT run (and, with
  *      strict-allow-scripts, the install must fail);
- *   2. denied     — allowScripts entry `false`: the install succeeds and the script must NOT run;
- *   3. approved   — allowScripts entry `true`: the script MUST run (a positive control proving
- *      the markers work and that scripts are blocked by the policy, not disabled outright).
+ *   2. denied     — denied with `npm install-scripts deny`: the install succeeds and the script
+ *      must NOT run;
+ *   3. approved   — approved with `npm install-scripts approve`: the script MUST run (a positive
+ *      control proving the markers work and that scripts are blocked by the policy, not
+ *      disabled outright).
  * Finally it lists this repository's install scripts not covered by allowScripts (must be none).
  *
  * Synthetic packages only, installed from local tarballs with --offline: no registry access,
@@ -49,22 +51,45 @@ function makePackage(name) {
   return join(root, file);
 }
 
-function install(caseName, pkgName, allowScripts) {
-  const tarball = makePackage(pkgName);
-  const dir = join(root, 'case', caseName);
-  mkdirSync(dir, { recursive: true });
-  const project = { name: `probe-${caseName}`, version: '1.0.0', private: true, dependencies: { [pkgName]: `file:${tarball}` } };
-  if (allowScripts) project.allowScripts = allowScripts;
-  writeFileSync(join(dir, 'package.json'), JSON.stringify(project, null, 2));
-  if (existsSync(join(repo, '.npmrc'))) copyFileSync(join(repo, '.npmrc'), join(dir, '.npmrc'));
-  const r = spawnSync('npm', ['install', '--offline', '--no-audit', '--no-fund'], {
+const run = (dir, argv) => {
+  const r = spawnSync('npm', argv, {
     cwd: dir,
     encoding: 'utf8',
     env: { ...process.env, PROBE_MARKERS: markers, npm_config_cache: join(root, 'cache') },
   });
+  return { exit: r.status, output: `$ npm ${argv.join(' ')}\n${r.stdout}\n${r.stderr}`.trim() };
+};
+
+/**
+ * Installs one synthetic package into a scratch project that uses this repository's .npmrc.
+ * `review` is how its install script is reviewed before the real install:
+ *   - 'none': not reviewed at all;
+ *   - 'deny' / 'approve': npm itself records the decision with `npm install-scripts deny|approve`
+ *     after a script-free install (--ignore-scripts), so the allowScripts entry has exactly the
+ *     form npm expects. node_modules and the lockfile are then removed and the package is
+ *     installed again normally, which is the install whose behaviour is checked.
+ */
+function install(caseName, pkgName, review) {
+  const tarball = makePackage(pkgName);
+  const dir = join(root, 'case', caseName);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: `probe-${caseName}`, version: '1.0.0', private: true, dependencies: { [pkgName]: `file:${tarball}` } }, null, 2));
+  if (existsSync(join(repo, '.npmrc'))) copyFileSync(join(repo, '.npmrc'), join(dir, '.npmrc'));
+  const log = [];
+  if (review !== 'none') {
+    const pre = run(dir, ['install', '--ignore-scripts', '--offline', '--no-audit', '--no-fund']);
+    const rec = run(dir, ['install-scripts', review, pkgName]);
+    log.push(pre.output, rec.output);
+    if (existsSync(join(markers, `${pkgName}.ran`))) log.push('!! marker written during --ignore-scripts install');
+    rmSync(join(dir, 'node_modules'), { recursive: true, force: true });
+    rmSync(join(dir, 'package-lock.json'), { force: true });
+    rmSync(join(markers, `${pkgName}.ran`), { force: true });
+  }
+  const policy = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).allowScripts;
+  const real = run(dir, ['install', '--offline', '--no-audit', '--no-fund']);
+  log.push(real.output);
   const ran = existsSync(join(markers, `${pkgName}.ran`));
-  const output = `${r.stdout}\n${r.stderr}`.trim();
-  return { caseName, exit: r.status, ran, output };
+  return { caseName, exit: real.exit, ran, policy, output: log.join('\n') };
 }
 
 const results = [];
@@ -72,9 +97,9 @@ const expect = [];
 if (!supported) {
   expect.push(`npm ${npmVersion} predates allowScripts enforcement (needs ${MIN.join('.')}+)`);
 } else {
-  const unreviewed = install('unreviewed', 'pp-probe-unreviewed');
-  const denied = install('denied', 'pp-probe-denied', { 'pp-probe-denied': false });
-  const approved = install('approved', 'pp-probe-approved', { 'pp-probe-approved': true });
+  const unreviewed = install('unreviewed', 'pp-probe-unreviewed', 'none');
+  const denied = install('denied', 'pp-probe-denied', 'deny');
+  const approved = install('approved', 'pp-probe-approved', 'approve');
   results.push(unreviewed, denied, approved);
   if (unreviewed.ran) expect.push('unreviewed: the install script RAN');
   if (unreviewed.exit === 0) expect.push('unreviewed: install succeeded; strict-allow-scripts should fail it');
@@ -87,6 +112,7 @@ if (!supported) {
 // This repository: no installed package may have install scripts outside allowScripts.
 const ls = spawnSync('npm', ['install-scripts', 'ls'], { cwd: repo, encoding: 'utf8' });
 const lsOut = `${ls.stdout}${ls.stderr}`.trim();
+if (ls.status !== 0 || !/No packages with unreviewed install scripts/.test(lsOut)) expect.push('this repository has install scripts not covered by allowScripts (npm install-scripts ls)');
 const npmrc = existsSync(join(repo, '.npmrc')) ? readFileSync(join(repo, '.npmrc'), 'utf8').trim() : '(none)';
 const policy = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8')).allowScripts ?? {};
 
@@ -98,7 +124,7 @@ const lines = [
   '| Synthetic package | allowScripts | npm exit | postinstall ran? | Expected |',
   '|---|---|---|---|---|',
   ...results.map((r) => {
-    const entry = { unreviewed: '(absent)', denied: 'false', approved: 'true' }[r.caseName];
+    const entry = r.policy ? `\`${JSON.stringify(r.policy)}\`` : '(none)';
     const want = r.caseName === 'approved' ? 'runs' : r.caseName === 'denied' ? 'install ok, no run' : 'install fails, no run';
     return `| pp-probe-${r.caseName} | ${entry} | ${r.exit} | ${r.ran ? 'yes' : 'no'} | ${want} |`;
   }),
