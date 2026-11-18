@@ -7,9 +7,10 @@
   - The owner completed manual acceptance against `2115aca` with zero defects: desktop, in-page navigation, 200% and 400% zoom, keyboard, artwork recovery, macOS Safari 9/9, iPhone Safari (physical device) 9/9, reduced motion 5/5, and Home/Discover/Pulse regressions 9/9.
   - Acceptance used a private-port GitHub Codespace running the Vite development server, so no service worker was installed and Sync was never connected.
 - **Pre-merge check:** the PR head was still `2115aca`, and Check (44397305587), Visual (44397305389) and Style guide (44397305352) were all green.
+- **Branch protection (resolved):** Claude's session couldn't read `main`'s protection rules. ChatGPT inspected the active "Protect main" ruleset (#27562180): it requires a pull request and the `check` CI job, blocks deletion and non-fast-forward updates, and has no bypass actors. The required `check` passed on `2115aca`.
 - **Merge:** merge commit `b8b39bc` (same strategy as #26–#28). Its tree is identical to `2115aca` (`git diff` is empty).
 - **Production:**
-  - Deploy run 44410662810 passed its build (208/208 tests), deploy and smoke jobs. The smoke check found deployed commit `b8b39bc` and bundle `index-BCRZKX9R.js`.
+  - Deploy run 44410662810 passed its build (208/208 tests, the current count; Sprint 01 closed at 142), deploy and smoke jobs. The smoke check found deployed commit `b8b39bc` and bundle `index-BCRZKX9R.js`.
   - Visual check, the style-guide evidence run and the screenshot publisher (44412005691) also passed on `main`.
 - **Post-deploy browser smoke test (live site, desktop Chrome):**
   - Home, Discover, Pulse and `#/styleguide` render with no script errors and no horizontal overflow.

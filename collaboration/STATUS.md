@@ -20,10 +20,11 @@
 | PP-003 Venue proximity | #4 closed | Publisher venue coordinates when plausible, precision per stop, straight-line labels, no unverified "easy walk" | [#21](https://github.com/tybrathwaite1-lab/personal-playground/pull/21) · `7265213` |
 | PP-004 Outing budget and timing | #5 closed | Combined budget, no overlaps, plan clock (overnight, same-day), drop-in vs fixed, scope disclosure, warnings vs neutral info | [#22](https://github.com/tybrathwaite1-lab/personal-playground/pull/22) · `68186d8` |
 
-**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** on main (all passing). Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
+**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** at Sprint 01 close (`68186d8`). **Current count on main: 208** (all passing, at `b8b39bc`). Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
 
 ## Production (verified)
 Latest: deploy of main `b8b39bc` (PR #29, [run 44410662810](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44410662810)):
+- **Branch protection:** the active "Protect main" ruleset (#27562180) requires a pull request and the `check` CI job, blocks deletion and non-fast-forward updates, and has no bypass actors. `check` passed on the accepted commit `2115aca`. ChatGPT inspected the ruleset on 2026-11-18.
 - **Jobs:** build ✅ (208/208 tests), deploy ✅, smoke ✅ (`--expect-commit b8b39bc` passed; bundle `index-BCRZKX9R.js`).
 - **Pulse:** 128 events, 6/7 sources (SPAA HTTP 403, listings carried over).
 - **Browser smoke test:** Home, Discover, Pulse and `#/styleguide` pass; the service worker is active and serves the new build.
@@ -31,7 +32,7 @@ Latest: deploy of main `b8b39bc` (PR #29, [run 44410662810](https://github.com/t
 Sprint 01 baseline:
 Deploy of main `68186d8` ([run 44210815361](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44210815361)):
 - **Jobs:** build ✅, deploy ✅ (Pages "Reported success"), smoke ✅.
-- **Build log:** 142/142 tests; Pulse 134 listings → 132 events, 7/7 sources; 29 of 132 events with validated venue coordinates.
+- **Build log:** 142/142 tests (the Sprint 01 closing count); Pulse 134 listings → 132 events, 7/7 sources; 29 of 132 events with validated venue coordinates.
 - **Post-deploy smoke check against the live site:** app shell, bundle, `sw.js` and manifest load; `pulse.json` fresh (generated 00:49Z), 132 events, 66 with structured prices, consistency checks pass.
 - **`version.json` reports commit `68186d8`**, built 00:49:22Z. The smoke job's `--expect-commit` check passed.
 - **Merged code = approved code:** `git diff 956dd4f 68186d8` is empty, so the merge commit's tree is identical to the head ChatGPT approved. The live bundle `index-CH5MV--X.js` is the same file CI built from `956dd4f` (run 44205215205).
