@@ -1,6 +1,10 @@
-# Status — 2026-11-18 (Sprint 01 closed; Sprint 02 in planning)
+# Status — 2026-11-18 (Sprint 02 "The Newsstand Effect" in progress)
 
-**Sprint 01 "Make discovery dependable" is complete.** ChatGPT independently reviewed and approved every engineering PR, and the owner merged them all. Production is verified at merge commit `68186d8`. **Sprint 02, "The Newsstand Effect", is in planning.** The creative direction is approved; Claude's technical assessment is with ChatGPT for independent review; owner decisions are recorded in DECISIONS.md. The only implementation so far is the owner-approved **visual verification harness** (PR #25, merged: screenshots, overflow, keyboard and accessibility checks; read-only, artifacts only). The owner-approved **safe screenshot publisher** (PR #26, option B) is in revision 3. ChatGPT has confirmed the P1 architecture fixes, and the narrow final corrections await its verification and the owner's final approval. Before activation, the owner applies the repository settings and deletes the legacy `visual-results` branch.
+**Sprint 02, "The Newsstand Effect", is in progress** (authorized by the owner on 2026-11-18). Sprint 01 "Make discovery dependable" is complete; production was verified at `68186d8`.
+
+- **Screenshot review is live.** The verification harness (PR #25) and the safe screenshot publisher (PR #26) are merged. ChatGPT verified the live publication at `c0f07b0` (publisher run 44343202178), and every eligible branch's validated screenshots now appear on `visual-results`.
+- **In review:** PR 0a (PP-011 reproducible builds and supported Actions runtimes); next, PR 1 (accessible design tokens and typography).
+- The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
 ## Sprint 01 — engineering (Claude): all merged
 | ID | Issue | Outcome | PR · merge |
@@ -33,7 +37,7 @@ Open issues: PP-005 #6, PP-006 #7, PP-007 #8, PP-009 #10, PP-010 #11, PP-011 #12
 
 ## Outstanding verification
 - Real-device mobile/offline behavior, real-device sync, and visual review of the new planner and Pulse copy (PP-010).
-- Reproducible-build lockfile (PP-011).
+- Reproducible-build lockfile (PP-011): in review as Sprint 02 PR 0a.
 - Recurrence expansion (PP-007).
 - The React sync hook's stale-state guard is code-reviewed only.
 

@@ -58,3 +58,19 @@ Context: Claude's read-only assessment of the approved creative direction (share
 ## 2026-11-18 — Safe screenshot publisher, revision 3 (ChatGPT re-review of `19b4cfa`)
 - **Only complete standard captures are published:** all widths, the 12 app routes, the full keyboard check set and all state records. Partial or diagnostic runs stay artifact-only. **A change to the app's route list must update `STANDARD_ROUTES` in the same PR** (a test enforces this). Older published folders that no longer match are dropped rather than carried forward.
 - Synthetic fixtures and credential isolation are **safeguards, not proof** that published imagery contains no personal data. Screenshots remain untrusted review material.
+
+## 2026-11-18 — Sprint 02 authorized; PR #26 verified live
+- **Sprint 02 "The Newsstand Effect" is authorized.** Order: PR 0a (PP-011), then PR 1 (accessible tokens and typography), then the approved sequence. The thin functional Explore hub comes before the navigation switch, and the existing homepage stays functional until the owner approves the Newsstand preview.
+- **Creative principles** (owner):
+  - Consistency in experience; freedom in expression.
+  - Creative freedom on the page; predictability in the controls.
+  - Bold editorial compositions, expressive color, original artwork and varied edition identities.
+  - St. Petersburg is our home, not our entire subject matter.
+  - No goals, no quotas: just curiosity.
+- **The Issue 09 creative package stays in draft** until its integration phase. No draft editorial content is published.
+- **PR #26 live publication verified** by ChatGPT: production `c0f07b0`, publisher run 44343202178, results correctly generated on `visual-results`. Live refusal scenarios are exercised without writing to production results (HANDOFF.md).
+- **PP-011 approach:**
+  - The lockfile is generated on GitHub's runner (Node 24, npm 11), since Claude can't reach the registry.
+  - Workflows use `npm ci` and Node 24.
+  - Actions are pinned to full commit SHAs at releases verified to run on node24.
+  - **Updating a dependency or action now means updating the lockfile or the pinned SHA in a reviewed PR.**

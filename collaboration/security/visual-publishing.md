@@ -129,3 +129,12 @@ After #26 merges (and the settings above are in place), the next push to `main` 
 | P2 Report schema | Strict validation; coverage of every route × width; required accessibility and keyboard records; "not run" recorded explicitly; exact report/screenshot match; report bound to the run's branch and commit |
 | P2 Stale publication | Freshness checked before download and before push; older run ids refused; full SHA and run id recorded; `--force-with-lease` |
 | P3 | JPEG check described as structural sanity, with 17 invalid-JPEG cases. Code-span neutralization with control/bidi tests and rendered-Markdown checks. Trusted checkout pinned to `workflow_sha`. Token usage described accurately |
+
+## Live verification (2026-11-18)
+- **Activation:** PR #26 merged at `c0f07b0`. Publisher run 44343202178 published `main` (`README.md`, `main-0d6e4079e367/`), as independently verified by ChatGPT.
+- **Live refusals on a real branch, with no writes to production results** (`visual-results` unchanged at `d63ad5243de9`):
+  - stale run → Not published (run 44358639064);
+  - harness changed → Not published (run 44359267912).
+- **Not exercised live:**
+  - **Tampered results:** this would require writing to production. It's covered by the end-to-end suite.
+  - **Re-run of an older run:** it needs the Actions UI.
