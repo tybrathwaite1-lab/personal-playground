@@ -1,6 +1,80 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (#22 review revision 2: fixes A–C)
+## Latest — Claude (engineering) → owner and ChatGPT, 2026-11-17 (Sprint 01 closeout)
+
+### Final approval
+- **#22 (PP-004):** approved by ChatGPT at head `956dd4f` and merged by the owner as `68186d8`. ChatGPT independently confirmed the head, the merge commit, and the closure of issue #5.
+- **All Sprint 01 engineering PRs** are approved and merged: #14, #16, #17, #18, #20, #21, #22.
+- **Issues closed:** #2, #3, #4, #5, #9.
+
+### Production verification
+Run 44210815361 deployed `68186d8`:
+- build, deploy and smoke jobs all succeeded;
+- `version.json` = `68186d8` and the smoke check's commit match passed;
+- the live bundle `index-CH5MV--X.js` is the same file built from the approved head;
+- `pulse.json` is fresh and consistent: 132 events, 7/7 sources, 29 with validated venue coordinates.
+
+The merge commit's tree is identical to the approved head (`git diff 956dd4f 68186d8` is empty). Details are in STATUS.md.
+
+### Accepted limitations (approved with the PRs; none blocking)
+**Sync (PP-008)**
+- The privacy check and the write are separate requests, not atomic.
+- A write already in flight can't be retracted.
+- Anything written before a repository is made public stays in its history.
+- The token is stored in each browser's localStorage.
+- A settings edit on a device still running the old app behaves like the old whole-object sync.
+- Tombstones expire after 180 days.
+- The hook's stale-state guard is code-reviewed only.
+
+**Events (PP-001, PP-002)**
+- The same event listed at different start minutes stays duplicated.
+- Non-event listings (e.g. "Museum Closed…") can appear.
+- RRULE recurrence isn't expanded (PP-007).
+- Prices are conservative heuristics: when unsure they're "unknown", and aggregator text can mislead.
+
+**Proximity (PP-003)**
+- No routing: every distance is a straight line.
+- Venue coordinates exist only where publishers provide them (29 of 132 live events). Places and communities stay city-level until coordinates are researched and cited.
+- The radius filter uses city centers for stops without venue coordinates.
+
+**Planner (PP-004)**
+- Travel to the first stop is a fixed 30-minute allowance.
+- Opening hours are unknown; midnight is the cutoff for places.
+- Stops are never reordered.
+- Flexible stops start within the chosen part of the day.
+- Drop-in visits assume about 120 minutes and need at least 45 minutes left to join.
+- Fixed-start events are attended in full.
+- "Known" preferences come from category profiles.
+- The UI is verified by typecheck and build only, not in a browser.
+
+**Smoke check (#20)**
+- A failure is reported but doesn't roll back the deploy.
+- On branches, it checks production, not the branch.
+
+### Remaining backlog: for collective Sprint 02 prioritization (unranked, nothing started)
+**Open issues**
+- PP-005 #6: local sources and feeds (ChatGPT research; publisher permission pending).
+- PP-006 #7: strict production editorial validation.
+- PP-007 #8: recurring calendar events (RRULE).
+- PP-009 #10: Weekly Drop editorial checks still outstanding.
+- PP-010 #11: real-device mobile, offline and sync verification, including a visual review of the new planner copy.
+- PP-011 #12: reproducible builds (lockfile) and documentation.
+
+**Follow-ups surfaced during Sprint 01** (no issues yet; open them only if agreed)
+- Cited venue coordinates (`coords` with `source` and `verifiedOn`) for frequently used places and communities. Research first, then data.
+- An exclusion rule for non-event listings such as closures.
+- Review of the 180-day tombstone expiry for long-offline devices.
+- An optional React test harness for hooks and UI. This needs approval for a new dev dependency.
+- Planner refinements: reordering stops, estimating first-stop travel (note: this touches the owner's location, so privacy needs considering), and opening-hours data.
+- Maintenance:
+  - GitHub Actions warns that `actions/checkout@v4`, `actions/setup-node@v4` and `actions/deploy-pages@v4` target the deprecated Node 20 (currently forced onto Node 24).
+  - Merged branches could be deleted: `integration/sprint-01-review`, `pp-00x-*`, `sprint-01/close-out` and the collaboration/editorial/research branches. That's the owner's call.
+
+Engineering has **not** started Sprint 02 work.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-17 (#22 review revision 2: fixes A–C)
 
 ChatGPT reviewed head `38451d5` and requested three targeted correctness fixes. Each was reproduced on that head before editing, and each fix is small and local to `src/utils/adventure.ts`.
 

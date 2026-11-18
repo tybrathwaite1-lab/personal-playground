@@ -1,27 +1,40 @@
-# Status — 2026-11-17 (late night)
+# Status — 2026-11-17 (Sprint 01 closed)
 
-Phase I complete; Phase II live. Workshop merged (#1); Sprint 01 approved. ChatGPT's PP-005 research (#13, #15) merged. ChatGPT independently reviewed and approved #14, #16, #17, #18, #20, #21; **the owner merged all six.**
+**Sprint 01 "Make discovery dependable" is complete.** ChatGPT independently reviewed and approved every engineering PR, and the owner merged them all. Production is verified at merge commit `68186d8`. **Sprint 02 has not started**: its priorities will be agreed by the owner, ChatGPT and Claude together.
 
-## Sprint 01 — engineering (Claude)
-| ID | Issue | State | PR |
+## Sprint 01 — engineering (Claude): all merged
+| ID | Issue | Outcome | PR · merge |
 |---|---|---|---|
-| PP-008 Sync safeguards | #9 | **Merged** (`2dc4386`) | [#18](https://github.com/tybrathwaite1-lab/personal-playground/pull/18) |
-| PP-001 Preserve distinct event sessions | #2 | **Merged** (`0bba619`) | [#14](https://github.com/tybrathwaite1-lab/personal-playground/pull/14) |
-| PP-002 Admission price extraction | #3 | **Merged** (`fec3c4e`) | [#16](https://github.com/tybrathwaite1-lab/personal-playground/pull/16) |
-| Sprint 01 handoff docs | — | **Merged** (`8386c51`) | [#17](https://github.com/tybrathwaite1-lab/personal-playground/pull/17) |
-| Close-out: cross-PR tests + production smoke check | — | **Merged** (`8205487`) | [#20](https://github.com/tybrathwaite1-lab/personal-playground/pull/20) |
-| PP-003 Venue proximity | #4 | **Merged** (`7265213`) | [#21](https://github.com/tybrathwaite1-lab/personal-playground/pull/21) |
-| PP-004 Outing budget and timing | #5 | **In final review** (base `main`). Review rev. 1: overnight/calendar day, same-day timing, estimate scope, neutral notes fixed. Review rev. 2: drop-in slot boundary, published long-event durations, anchored preference mismatches fixed. 142/142 tests | [#22](https://github.com/tybrathwaite1-lab/personal-playground/pull/22) |
+| PP-001 Preserve distinct event sessions | #2 closed | Sessions and venues kept apart; deterministic, order-independent dedupe | [#14](https://github.com/tybrathwaite1-lab/personal-playground/pull/14) · `0bba619` |
+| PP-002 Admission price extraction | #3 closed | Admission-only prices, structured ranges, fees and uncertain totals, conservative "unknown" | [#16](https://github.com/tybrathwaite1-lab/personal-playground/pull/16) · `fec3c4e` |
+| PP-008 Sync safeguards (raised to P1) | #9 closed | Privacy re-verified before every write, fails closed, old/new app versions compatible | [#18](https://github.com/tybrathwaite1-lab/personal-playground/pull/18) · `2dc4386` |
+| Sprint 01 handoff docs | — | — | [#17](https://github.com/tybrathwaite1-lab/personal-playground/pull/17) · `8386c51` |
+| Close-out: cross-PR tests + production smoke check | — | Post-deploy smoke job, `version.json` build stamp | [#20](https://github.com/tybrathwaite1-lab/personal-playground/pull/20) · `8205487` |
+| PP-003 Venue proximity | #4 closed | Publisher venue coordinates when plausible, precision per stop, straight-line labels, no unverified "easy walk" | [#21](https://github.com/tybrathwaite1-lab/personal-playground/pull/21) · `7265213` |
+| PP-004 Outing budget and timing | #5 closed | Combined budget, no overlaps, plan clock (overnight, same-day), drop-in vs fixed, scope disclosure, warnings vs neutral info | [#22](https://github.com/tybrathwaite1-lab/personal-playground/pull/22) · `68186d8` |
 
-## Production
-Deploy of main `7265213` (#20 + #21; [run 44202158495](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44202158495)): build, deploy and the **new post-deploy smoke job** all succeeded. Smoke check against the live site: app shell, bundle `index-BscPe5CW.js` (same as that build), `sw.js`, manifest; **`version.json` confirms commit `7265213` is live**; `pulse.json` fresh (23:46Z), 132 events, 7/7 sources, 67 with structured prices; build log shows 29 of 132 events with validated venue coordinates (#21). The `8205487` deploy was cancelled by the next merge, as designed.
+**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** on main (all passing). Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
+
+## Production (verified)
+Deploy of main `68186d8` ([run 44210815361](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44210815361)):
+- **Jobs:** build ✅, deploy ✅ (Pages "Reported success"), smoke ✅.
+- **Build log:** 142/142 tests; Pulse 134 listings → 132 events, 7/7 sources; 29 of 132 events with validated venue coordinates.
+- **Post-deploy smoke check against the live site:** app shell, bundle, `sw.js` and manifest load; `pulse.json` fresh (generated 00:49Z), 132 events, 66 with structured prices, consistency checks pass.
+- **`version.json` reports commit `68186d8`**, built 00:49:22Z. The smoke job's `--expect-commit` check passed.
+- **Merged code = approved code:** `git diff 956dd4f 68186d8` is empty, so the merge commit's tree is identical to the head ChatGPT approved. The live bundle `index-CH5MV--X.js` is the same file CI built from `956dd4f` (run 44205215205).
 
 ## Research and editorial (ChatGPT)
-- PP-005: source inventory (#13) and feed-verification diligence (#15) merged. Zero new feeds cleared; publisher permission and raw feed tests pending. Integration steps in `research/PP-005-integration-handoff.md` depend on #14, #16 and PP-007.
-- Independent reviews: #14, #16, #17, #18, #20, #21 approved; #22 review revision 2 requested targeted fixes A–C (addressed, awaiting re-review).
+- **PP-005** (#6, open): source inventory (#13) and feed diligence (#15) merged. Zero new feeds cleared; publisher permission and raw-feed tests are pending.
+- **PP-009** (#10, open): editorial review (#19) and correction pass (#23) merged. Not an exhaustive certification; remaining checks are listed in `research/PP-009-corrections.md`.
+- **Reviews:** independent reviews of #14, #16, #17, #18, #20, #21 and #22 all approved.
+
+## Open backlog
+Open issues: PP-005 #6, PP-006 #7, PP-007 #8, PP-009 #10, PP-010 #11, PP-011 #12. Follow-ups surfaced during Sprint 01 are in HANDOFF.md. **None are prioritized yet; that is the Sprint 02 planning conversation.**
 
 ## Outstanding verification
-Real-device mobile/offline behavior and real-device sync (PP-010), reproducible-build lockfile (PP-011) and recurrence expansion (PP-007) remain unverified. The React sync hook's stale-state guard is code-reviewed only (no React test harness; adding one is a new dependency). Synthetic fixtures only; no private data accessed.
+- Real-device mobile/offline behavior, real-device sync, and visual review of the new planner and Pulse copy (PP-010).
+- Reproducible-build lockfile (PP-011).
+- Recurrence expansion (PP-007).
+- The React sync hook's stale-state guard is code-reviewed only.
 
-## Next
-ChatGPT reviews #22's final verification; owner decides on merge.
+Synthetic fixtures only throughout; no private data was accessed.
