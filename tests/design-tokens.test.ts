@@ -77,6 +77,28 @@ test('every surface pair meets WCAG AA: text 4.5:1, focus indicator and control 
   assert.equal(rows.length, 11);
 });
 
+test('surface-aware controls (.ui-*) keep every state accessible on every surface', () => {
+  for (const [name, v] of surfaces) {
+    const bg = resolve(v.get('surface')!, v);
+    const fg = resolve(v.get('fg')!, v);
+    const states: [string, number, number][] = [
+      // Primary button: surface-colored text on an fg fill, at rest and on hover (fg at 90%).
+      ['primary text', contrast(bg, fg), 4.5],
+      ['primary hover text', contrast(bg, over(fg, 0.9, bg)), 4.5],
+      ['primary fill vs surface', contrast(fg, bg), 3],
+      // Secondary buttons and chips on hover: fg text on a 10% fg wash.
+      ['hover text', contrast(fg, over(fg, 0.1, bg)), 4.5],
+      // Hover strengthens the boundary to fg (the control token alone can dip below 3:1 on the wash).
+      ['hover boundary', contrast(fg, over(fg, 0.1, bg)), 3],
+      // Pressed chip: surface text on fg.
+      ['pressed chip text', contrast(bg, fg), 4.5],
+      // Placeholder text uses fg-muted on the surface.
+      ['placeholder', contrast(resolve(v.get('fg-muted')!, v), bg), 4.5],
+    ];
+    for (const [label, ratio, min] of states) assert.ok(ratio >= min, `${name}: ${label} ${ratio.toFixed(2)}:1`);
+  }
+});
+
 test(':root defaults are the Field Guide ink surface (application background unchanged)', () => {
   const ink = surfaces.get('ink')!;
   for (const k of ['surface', 'fg', 'fg-muted', 'accent', 'focus', 'control', 'rule']) assert.equal(palette.get(k), ink.get(k), `--${k}`);

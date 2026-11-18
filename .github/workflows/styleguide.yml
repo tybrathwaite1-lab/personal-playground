@@ -1,0 +1,80 @@
+name: Style guide evidence
+
+# Screenshots and checks for the hidden #/styleguide preview route (Sprint 02 PR 2), at mobile
+# and desktop widths. Read-only: branch code, no secrets, no credentials, no publishing.
+#
+# This is deliberately separate from the standard screenshot harness (visual.yml) and the
+# privileged publisher (visual-publish.yml): their matrix and security policy are unchanged, and
+# this workflow is not part of the harness they verify.
+#
+# Evidence leaves the run as the artifact `styleguide-<sha>` and, for reviewers without artifact
+# access, as SHA-256 hashes plus a gzip/base64 bundle printed to the log (synthetic content
+# only), so any copy of the screenshots can be checked against this run.
+
+on:
+  push:
+    branches-ignore:
+      - image-scout
+      - image-scout-results
+      - visual-results
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: styleguide-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      COMMIT_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium for Playwright
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Style guide screenshots and checks (report-only)
+        run: npx tsx scripts/visual/styleguide.ts --out styleguide-out --branch "$REF_NAME" --commit "$COMMIT_SHA"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f styleguide-out/REPORT.md ]; then cat styleguide-out/REPORT.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: styleguide-${{ github.sha }}
+          path: styleguide-out
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Evidence hashes and bundle
+        if: always()
+        run: |
+          [ -d styleguide-out ] || exit 0
+          cd styleguide-out
+          echo "EVIDENCE-SHA256-BEGIN"
+          find . -type f | LC_ALL=C sort | xargs sha256sum
+          echo "EVIDENCE-SHA256-END"
+          echo "EVIDENCE-BUNDLE-BEGIN"
+          find . -type f ! -name full.jpg | LC_ALL=C sort | tar -czf - -T - | base64 -w 76
+          echo "EVIDENCE-BUNDLE-END"
