@@ -16,6 +16,7 @@ import { directionsLink, formatDate, hostname, isSafeUrl } from '../utils/helper
 import { applyFamiliarity } from '../utils/novelty';
 import { eventPriceRange, formatWhen, inRange, isExpired, nyDate, viewRange, type PulseView } from '../utils/pulse';
 import { isIndoorDay } from '../utils/weather';
+import { InPageLink } from '../components/InPageLink';
 
 type View = PulseView | 'anytime';
 type Quick = 'date' | 'friends' | 'solo' | 'nearby' | 'new' | 'relaxed' | 'community' | 'cheap' | 'surprise';
@@ -196,9 +197,9 @@ export default function Pulse({ params }: { params: URLSearchParams }) {
         <button type="button" className="btn-ghost text-xs" onClick={pulse.refresh} disabled={pulse.loading}>
           <RefreshCw size={14} aria-hidden className={pulse.loading ? 'animate-spin' : ''} /> Refresh
         </button>
-        <a href="#pulse-sources" className="label underline-offset-4 hover:text-paper hover:underline">
+        <InPageLink to="pulse-sources" className="label underline-offset-4 hover:text-paper hover:underline">
           Sources
-        </a>
+        </InPageLink>
       </div>
       {(pulse.stale || pulse.fromCache || (pulse.error && !pulse.data)) && (
         <p className="mb-4 flex items-start gap-2 border-l-2 border-rust pl-3 text-sm text-rust" role="status">

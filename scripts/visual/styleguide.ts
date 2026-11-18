@@ -273,15 +273,55 @@ async function navigationChecks(browser: Browser, origin: string, width: number,
   });
   await ctx.close();
 
-  // The app's own skip link keeps the current page (same router guard).
-  const app = await newContext(browser, origin, width, 'reduce', blocked);
-  const { page: p2 } = await open(app, origin, '#/discover');
-  await p2.keyboard.press('Tab');
-  await p2.keyboard.press('Enter');
-  await p2.waitForTimeout(200);
-  const a = await p2.evaluate(() => ({ title: document.title, h1: document.querySelector('main h1')?.textContent ?? '', hash: location.hash }));
-  checks.push({ name: 'App skip link (#main) keeps the current page', pass: /^Discover/.test(a.title) && /discovery engine/i.test(a.h1), detail: `hash ${a.hash}, title "${a.title}", h1 "${a.h1}"` });
-  await app.close();
+  // The app's in-page links (skip link, Pulse "Sources"): activated by keyboard from a scrolled
+  // position; the exact original hash (route + parameters) must survive, focus and scroll must
+  // reach the target, and a reload must reopen the same route.
+  const cases = [
+    { start: '#/discover?exp=exp-analog-evening', link: 'main', label: 'App skip link on Discover (with route parameters)' },
+    { start: '#/pulse', link: 'main', label: 'App skip link on Pulse' },
+    { start: '#/pulse', link: 'pulse-sources', label: 'Pulse "Sources" link' },
+  ];
+  for (const c of cases) {
+    const app = await newContext(browser, origin, width, 'reduce', blocked);
+    const { page: p2 } = await open(app, origin, c.start);
+    const before = await p2.evaluate(() => ({ hash: location.hash, title: document.title, h1: document.querySelector('main h1')?.textContent ?? '' }));
+    const link = p2.locator(`a[data-in-page-link="${c.link}"]`).first();
+    if (c.link === 'main') {
+      await p2.keyboard.press('Tab'); // the skip link is the first stop
+      await p2.evaluate(() => window.scrollTo(0, 600)); // focus stays on the link
+    } else {
+      await link.scrollIntoViewIfNeeded();
+      await link.focus();
+    }
+    const onLink = await p2.evaluate((to) => (document.activeElement as HTMLElement | null)?.dataset.inPageLink === to, c.link);
+    await p2.keyboard.press('Enter');
+    await p2.waitForTimeout(250);
+    const after = await p2.evaluate((id) => {
+      const t = document.getElementById(id);
+      return { hash: location.hash, title: document.title, h1: document.querySelector('main h1')?.textContent ?? '', focused: document.activeElement?.id ?? '', top: t ? t.getBoundingClientRect().top : NaN };
+    }, c.link);
+    await p2.reload({ waitUntil: 'networkidle' });
+    await p2.waitForTimeout(250);
+    const reloaded = await p2.evaluate(() => ({ hash: location.hash, title: document.title, h1: document.querySelector('main h1')?.textContent ?? '' }));
+    const vh = WIDTHS[width] ?? 800;
+    checks.push({
+      name: `${c.label}: Enter keeps ${c.start}, focuses and scrolls to #${c.link}, survives reload`,
+      pass:
+        onLink &&
+        after.hash === before.hash &&
+        before.hash === c.start &&
+        after.focused === c.link &&
+        after.top >= -2 &&
+        after.top < vh &&
+        after.title === before.title &&
+        after.h1 === before.h1 &&
+        reloaded.hash === c.start &&
+        reloaded.title === before.title &&
+        reloaded.h1 === before.h1,
+      detail: `activated from the link: ${onLink}; hash ${before.hash} → ${after.hash} → after reload ${reloaded.hash}; focus #${after.focused}; target top ${Math.round(after.top)}px; page "${before.title}" → "${after.title}" → after reload "${reloaded.title}"`,
+    });
+    await app.close();
+  }
   return checks;
 }
 

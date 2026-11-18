@@ -54,6 +54,12 @@ test('in-page anchors never replace the route', () => {
   assert.match(read('src/hooks/useRoute.ts'), /if \(!isRouteHash\(window\.location\.hash\)\) return;/);
   const link = html(h(InPageLink, { to: 'sg-main', className: 'x' }, 'Skip'));
   assert.match(link, /^<a href="#sg-main" data-in-page-link="sg-main" class="x">Skip<\/a>$/);
+  // No plain in-page anchors anywhere in the app (they would replace the route in the URL).
+  for (const f of files('src').filter((x) => x.endsWith('.tsx') && !x.endsWith('InPageLink.tsx'))) assert.equal(/href=["'`{]+#(?!\/)/.test(read(f)), false, `${f} has a bare in-page anchor`);
+  const layout = read('src/components/Layout.tsx');
+  assert.match(layout, /<InPageLink to="main"/, 'app skip link uses InPageLink');
+  assert.match(layout, /<main id="main" tabIndex=\{-1\}/, 'skip target is programmatically focusable');
+  assert.match(read('src/pages/Pulse.tsx'), /<InPageLink to="pulse-sources"/);
   // The style guide uses no plain in-page anchors (they would replace the route).
   const sg = read('src/styleguide/StyleGuide.tsx');
   assert.equal(/<a href="#(?!\/)/.test(sg), false);

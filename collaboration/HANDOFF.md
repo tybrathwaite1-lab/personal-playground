@@ -17,6 +17,13 @@
   - **The cover headline** is sized to its column, with no broken words from 320 to 1440 px.
   - **Displayed artwork must be credited** (type and runtime), and failed images recover.
   - **Browser tests** activate the skip and internal links and measure rendered hover, pressed and focus colors. The style-guide workflow now runs in strict mode.
+  - **Revision 2** (P2 from ChatGPT's re-review of `0878905`):
+    - The app's "Skip to content" link and Pulse's "Sources" link now use `InPageLink`, and `<main>` is programmatically focusable, so the URL keeps its route and a refresh reopens the same page.
+    - Browser tests activate them by keyboard. They check the exact original hash (including route parameters), focus, scrolling and route preservation after a reload.
+    - **Compatibility:**
+      - Route URLs and unknown-route fallback are unchanged.
+      - A bare-fragment hash change now keeps the current page instead of switching to Home.
+      - Opening a bare-fragment URL directly (e.g. an old `#main` bookmark, or a link opened in a new tab) still lands on Home, as before.
   - **Methodology note:** of the 124 standard screenshots, **112 are byte-identical** (and pixel-identical) to `main`. The earlier "117" used a perceptual threshold (fewer than 0.1% of pixels differing by more than 24/255), which counted small capture-timing differences as identical.
 
 ---
