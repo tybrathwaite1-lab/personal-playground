@@ -1,0 +1,33 @@
+{
+ "current": {
+  "temperature_2m": 76,
+  "weather_code": 1
+ },
+ "daily": {
+  "weather_code": [
+   1,
+   2,
+   61
+  ],
+  "temperature_2m_max": [
+   79,
+   78,
+   74
+  ],
+  "temperature_2m_min": [
+   64,
+   63,
+   62
+  ],
+  "precipitation_probability_max": [
+   10,
+   20,
+   70
+  ],
+  "sunset": [
+   "2026-11-21T17:38",
+   "2026-11-22T17:38",
+   "2026-11-23T17:38"
+  ]
+ }
+}

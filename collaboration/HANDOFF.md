@@ -1,6 +1,49 @@
 # Handoff
 
-## Latest — Claude (engineering) → owner and ChatGPT, 2026-11-17 (Sprint 01 closeout)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (PR #25 review corrections)
+
+**Context.** The technical assessment for Sprint 02 is with ChatGPT; owner decisions are in DECISIONS.md. The only implementation is the owner-approved visual verification harness, PR #25. No Sprint 02 UI work has started.
+
+### PR #25 corrections (ChatGPT review of `1c29fba`)
+| # | Finding | Resolution |
+|---|---|---|
+| P1 | The publish job ran branch code with repository-wide `contents: write` | **Removed.** The workflow is read-only (`contents: read`, `persist-credentials: false`). Results are a 14-day artifact plus a step summary. `publish.sh` is deleted. A safer design is proposed below for owner re-approval |
+| P2 | Strict could pass without axe | A missing axe now **fails the run in every mode**. `--no-axe` is explicit and local-only, and `--strict --no-axe` is refused |
+| P2 | Only serious/critical violations kept | **All** violations under the WCAG A/AA tags are recorded, at every impact level, with counts by impact. The baseline stays report-only |
+| P2 | Keyboard "check" was a non-empty `outerHTML` | **Seven verified checks** at 390 and 1280 px: focus enters the page; first stop is a skip link to existing content; every stop is interactive; focus keeps progressing (no repeats or traps); stops are scrolled into view; focus indicator present; Shift+Tab returns to the previous *different* stop. The focus-ring screenshot is labelled as evidence only |
+| P2 | GitHub context interpolated into shell | Passed through `env:`. An audit script confirms no `${{ }}` remains inside any `run:` block |
+
+**Regression evidence.** `npm run visual:selftest` runs in CI before the real check. It runs the harness against two synthetic pages (`tests/fixtures/visual/selftest/`) and asserts:
+- the clean page passes `--strict` with axe run, no violations and 7/7 keyboard checks;
+- the broken page fails `--strict`, with overflow, the timer-thrown page error, `color-contrast` (serious) **and** `server-side-image-map` (minor, proving no impact filtering), and the keyboard checks for skip link, trap, focus indicator and Shift+Tab all failing;
+- report-only mode still exits 0;
+- a missing axe fails in both modes;
+- `--strict --no-axe` is refused;
+- explicit `--no-axe` is labelled as "NOT RUN".
+
+### Proposal for owner re-approval: safe screenshot publishing (not built)
+**Why:** reviewers who can't download Actions artifacts can't see screenshots. That includes Claude, whose environment can't reach the artifact storage host. Without publishing, Claude's visual checks rely on the text report and logs.
+
+**Design**
+- A separate `visual-publish.yml`, triggered by `workflow_run` when "Visual check" completes.
+- GitHub always runs `workflow_run` workflows from the **default branch's** definition, so branch code can never change the privileged job until it's been reviewed and merged.
+- Job permissions: `contents: write` and `actions: read` only. It checks out `main`, never the branch.
+- It downloads the run's artifact **as data**:
+  - allowed file types only (`.jpg`, `.json`, `.md`);
+  - size and count limits;
+  - no symlinks;
+  - the branch folder name sanitized through `env:`.
+
+  Nothing from the artifact is executed.
+- It pushes a single parentless commit to `visual-results`.
+
+**Residual risk:** the token is still repository-wide. It's mitigated because only reviewed `main` code runs with it. Optional hardening (owner setting): a ruleset on `main` blocking direct pushes and force-pushes.
+
+**Alternative:** stay artifacts-only. The owner and ChatGPT download screenshots; Claude reviews the text reports.
+
+---
+
+## Previous — Claude (engineering) → owner and ChatGPT, 2026-11-17 (Sprint 01 closeout)
 
 ### Final approval
 - **#22 (PP-004):** approved by ChatGPT at head `956dd4f` and merged by the owner as `68186d8`. ChatGPT independently confirmed the head, the merge commit, and the closure of issue #5.

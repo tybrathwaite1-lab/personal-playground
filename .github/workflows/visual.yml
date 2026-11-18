@@ -1,0 +1,87 @@
+name: Visual check
+
+# Browser screenshots, layout-overflow, keyboard and accessibility checks for every route at
+# 320–1440 px, against a production build with synthetic fixtures and a frozen clock
+# (scripts/visual/run.ts). A self-test first proves the checks fail on a deliberately broken
+# page. Results are a 14-day Actions artifact plus a step summary.
+#
+# Read-only by design: this workflow runs branch code, so it gets no write permission. Any
+# future publishing of screenshots must be a separate, owner-approved design that never
+# executes branch code with write access.
+
+on:
+  push:
+    branches-ignore:
+      - image-scout
+      - image-scout-results
+      - visual-results
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # GitHub context goes through the environment, never interpolated into shell source.
+      REF_NAME: ${{ github.ref_name }}
+      COMMIT_SHA: ${{ github.sha }}
+      REPOSITORY: ${{ github.repository }}
+      RUN_ID: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium for Playwright
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Harness self-test (checks must fail on a broken page)
+        run: npm run visual:selftest
+
+      - name: Cache editorial images
+        uses: actions/cache@v4
+        with:
+          path: public/images/editorial
+          key: images-${{ hashFiles('src/data/images.ts', 'scripts/images/fetch.ts') }}
+          restore-keys: images-
+
+      - name: Fetch and optimize editorial images
+        run: npx tsx scripts/images/fetch.ts
+        continue-on-error: true # pages fall back to typographic placeholders
+
+      - name: Build
+        run: npm run build
+
+      - name: Screenshots and checks (report-only)
+        run: npm run visual -- --out visual-out --branch "$REF_NAME" --commit "$COMMIT_SHA"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f visual-out/REPORT.md ]; then
+            sed -n '1,6p' visual-out/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+            sed -n '/^## Keyboard/,/^## States/p' visual-out/REPORT.md | sed '$d' >> "$GITHUB_STEP_SUMMARY"
+            printf '\nScreenshots and the full report: artifact "visual-%s" on https://github.com/%s/actions/runs/%s\n' "$COMMIT_SHA" "$REPOSITORY" "$RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-${{ github.sha }}
+          path: visual-out
+          retention-days: 14
+          if-no-files-found: ignore

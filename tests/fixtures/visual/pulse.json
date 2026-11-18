@@ -1,0 +1,191 @@
+{
+ "generatedAt": "2026-11-21T11:00:00.000Z",
+ "timezone": "America/New_York",
+ "sources": [
+  {
+   "id": "fixture-a",
+   "name": "Synthetic Calendar A (test fixture)",
+   "homepage": "https://example.org/a",
+   "feed": "https://example.org/a.ics",
+   "ok": true,
+   "lastSuccess": "2026-11-21T11:00:00.000Z",
+   "count": 4
+  },
+  {
+   "id": "fixture-b",
+   "name": "Synthetic Calendar B (test fixture)",
+   "homepage": "https://example.org/b",
+   "feed": "https://example.org/b.ics",
+   "ok": true,
+   "lastSuccess": "2026-11-21T11:00:00.000Z",
+   "count": 3
+  }
+ ],
+ "events": [
+  {
+   "id": "fixture-a:1",
+   "title": "Sample Print Fair",
+   "description": "Synthetic listing used only for screenshot tests.",
+   "start": "2026-11-21T16:00:00-05:00",
+   "end": "2026-11-21T19:00:00-05:00",
+   "allDay": false,
+   "ongoing": false,
+   "venue": "Example Hall",
+   "address": "101 Example Ave, St. Petersburg, FL",
+   "city": "St. Petersburg",
+   "miles": 0.4,
+   "url": "https://example.org/events",
+   "tags": [],
+   "categories": [
+    "Markets",
+    "Art"
+   ],
+   "cancelled": false,
+   "sourceIds": [
+    "fixture-a"
+   ],
+   "verifiedAt": "2026-11-21T11:00:00.000Z",
+   "priceNote": "Free (per listing)",
+   "free": true,
+   "priceMin": 0,
+   "priceMax": 0,
+   "geo": {
+    "lat": 27.7709,
+    "lon": -82.6359
+   },
+   "indoor": true
+  },
+  {
+   "id": "fixture-a:2",
+   "title": "Sample Vinyl Listening Night",
+   "description": "Synthetic listing used only for screenshot tests.",
+   "start": "2026-11-21T19:30:00-05:00",
+   "end": "2026-11-21T22:00:00-05:00",
+   "allDay": false,
+   "ongoing": false,
+   "venue": "Example Records",
+   "address": "102 Example Ave, St. Petersburg, FL",
+   "city": "St. Petersburg",
+   "miles": 2.5,
+   "url": "https://example.org/events",
+   "tags": [],
+   "categories": [
+    "Music"
+   ],
+   "cancelled": false,
+   "sourceIds": [
+    "fixture-a"
+   ],
+   "verifiedAt": "2026-11-21T11:00:00.000Z",
+   "priceNote": "$12 (per listing)",
+   "priceMin": 12,
+   "priceMax": 12,
+   "indoor": true
+  },
+  {
+   "id": "fixture-a:3",
+   "title": "Sample Waterfront Sketch Walk",
+   "description": "Synthetic listing used only for screenshot tests.",
+   "start": "2026-11-22T10:00:00-05:00",
+   "end": "2026-11-22T12:00:00-05:00",
+   "allDay": false,
+   "ongoing": false,
+   "venue": "Example Park",
+   "address": "103 Example Ave, Gulfport, FL",
+   "city": "Gulfport",
+   "miles": 5.1,
+   "url": "https://example.org/events",
+   "tags": [],
+   "categories": [
+    "Outdoors",
+    "Art"
+   ],
+   "cancelled": false,
+   "sourceIds": [
+    "fixture-a"
+   ],
+   "verifiedAt": "2026-11-21T11:00:00.000Z",
+   "priceNote": "Free \u00b7 RSVP (per listing)",
+   "free": true,
+   "priceMin": 0,
+   "priceMax": 0,
+   "indoor": false
+  },
+  {
+   "id": "fixture-a:4",
+   "title": "Sample Retro Game Meetup",
+   "description": "Synthetic listing used only for screenshot tests.",
+   "start": "2026-11-22T14:00:00-05:00",
+   "end": "2026-11-22T17:00:00-05:00",
+   "allDay": false,
+   "ongoing": false,
+   "venue": "Example Arcade",
+   "address": "104 Example Ave, Tampa, FL",
+   "city": "Tampa",
+   "miles": 19.8,
+   "url": "https://example.org/events",
+   "tags": [],
+   "categories": [
+    "Gaming"
+   ],
+   "cancelled": false,
+   "sourceIds": [
+    "fixture-a"
+   ],
+   "verifiedAt": "2026-11-21T11:00:00.000Z",
+   "priceNote": "$20 + fees (see listing for total)",
+   "priceMin": 20
+  },
+  {
+   "id": "fixture-a:5",
+   "title": "Sample Late Set",
+   "description": "Synthetic listing used only for screenshot tests.",
+   "start": "2026-11-21T23:00:00-05:00",
+   "end": "2026-11-22T01:00:00-05:00",
+   "allDay": false,
+   "ongoing": false,
+   "venue": "Example Club",
+   "address": "105 Example Ave, St. Petersburg, FL",
+   "city": "St. Petersburg",
+   "miles": 2.5,
+   "url": "https://example.org/events",
+   "tags": [],
+   "categories": [
+    "Music"
+   ],
+   "cancelled": false,
+   "sourceIds": [
+    "fixture-a"
+   ],
+   "verifiedAt": "2026-11-21T11:00:00.000Z"
+  },
+  {
+   "id": "fixture-a:6",
+   "title": "Sample Exhibition: Paper Worlds",
+   "description": "Synthetic listing used only for screenshot tests.",
+   "start": "2026-11-10T00:00:00-05:00",
+   "end": "2026-12-20T00:00:00-05:00",
+   "allDay": false,
+   "ongoing": true,
+   "venue": "Example Museum",
+   "address": "106 Example Ave, St. Petersburg, FL",
+   "city": "St. Petersburg",
+   "miles": 2.5,
+   "url": "https://example.org/events",
+   "tags": [],
+   "categories": [
+    "Exhibitions",
+    "Art"
+   ],
+   "cancelled": false,
+   "sourceIds": [
+    "fixture-a"
+   ],
+   "verifiedAt": "2026-11-21T11:00:00.000Z",
+   "priceNote": "$18\u2013$25 (per listing)",
+   "priceMin": 18,
+   "priceMax": 25,
+   "indoor": true
+  }
+ ]
+}

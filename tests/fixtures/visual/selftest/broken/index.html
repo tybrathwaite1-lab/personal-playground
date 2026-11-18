@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- Broken on purpose: lang and xml:lang disagree (axe "html-xml-lang-mismatch", impact moderate, WCAG A). -->
+<html lang="en" xml:lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual harness self-test: deliberately broken page</title>
+<style>
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: #ffffff; color: #111111; }
+  /* Broken on purpose: focus indicators removed. */
+  *:focus, *:focus-visible { outline: none !important; box-shadow: none !important; }
+  .faint { color: #c8c8c8; }               /* Broken on purpose: contrast ≈ 1.7:1 (serious). */
+  .wide { width: 2000px; height: 8px; background: #888888; } /* Broken on purpose: horizontal overflow. */
+</style>
+</head>
+<body>
+<main>
+  <h1 id="cover-title">Broken fixture</h1>
+  <p class="faint">Low-contrast text that fails WCAG AA.</p>
+  <!-- Broken on purpose: server-side image map (axe "server-side-image-map", impact minor, WCAG A). -->
+  <p><a href="#/map"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=" alt="Map" width="24" height="24" ismap></a></p>
+  <p><a href="#/first">First link</a></p>
+  <!-- Broken on purpose: keyboard trap (Tab and Shift+Tab can't leave this field). -->
+  <label for="trap">Trap</label> <input id="trap" type="text">
+  <p><a href="#/never">Never reached</a></p>
+  <div class="wide"></div>
+</main>
+<script>
+  document.getElementById('trap').addEventListener('keydown', (e) => { if (e.key === 'Tab') e.preventDefault(); });
+  setTimeout(() => { throw new Error('self-test: deliberate page error'); }, 0);
+</script>
+</body>
+</html>
