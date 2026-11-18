@@ -1,3 +1,5 @@
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,7 +10,7 @@
     -webkit-tap-highlight-color: transparent;
   }
   html {
-    background: #141614;
+    background: rgb(var(--pp-ink));
     -webkit-text-size-adjust: 100%;
   }
   body {
@@ -27,11 +29,12 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.87 0 0 0 0 0.79 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
   ::selection {
-    background: #b76940;
-    color: #141614;
+    background: rgb(var(--pp-rust));
+    color: rgb(var(--pp-ink));
   }
+  /* Focus ring color comes from the nearest surface (tokens.css), always ≥ 3:1 against it. */
   :focus-visible {
-    outline: 2px solid #b76940;
+    outline: 2px solid rgb(var(--focus));
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -60,16 +63,16 @@
     @apply border border-line bg-ink2;
   }
   .btn {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 border border-line px-4 font-mono text-xs uppercase tracking-label text-paper transition-colors hover:border-paper/60 hover:bg-white/[0.03] disabled:opacity-40;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 border border-control px-4 font-mono text-xs uppercase tracking-label text-paper transition-colors hover:border-paper/60 hover:bg-white/[0.03] disabled:opacity-40;
   }
   .btn-primary {
-    @apply inline-flex min-h-[48px] items-center justify-center gap-2 border border-rust bg-rust px-5 font-mono text-xs uppercase tracking-label text-ink transition-colors hover:bg-[#c97a50] disabled:opacity-40;
+    @apply inline-flex min-h-[48px] items-center justify-center gap-2 border border-rust bg-rust px-5 font-mono text-xs uppercase tracking-label text-ink transition-colors hover:border-rust-hover hover:bg-rust-hover disabled:opacity-40;
   }
   .btn-ghost {
     @apply inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 text-muted transition-colors hover:text-paper;
   }
   .chip {
-    @apply inline-flex min-h-[38px] items-center gap-1.5 border border-line px-3 text-sm text-muted transition-colors hover:border-paper/50 hover:text-paper;
+    @apply inline-flex min-h-[38px] items-center gap-1.5 border border-control px-3 text-sm text-muted transition-colors hover:border-paper/50 hover:text-paper;
   }
   .chip[aria-pressed='true'] {
     @apply border-paper bg-paper text-ink;
@@ -78,7 +81,7 @@
     @apply inline-flex items-center border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted;
   }
   .input {
-    @apply w-full border border-line bg-ink px-3 py-2.5 text-base text-paper placeholder:text-muted/60 focus:border-paper/70 focus:outline-none;
+    @apply w-full border border-control bg-ink px-3 py-2.5 text-base text-paper placeholder:text-muted/80 focus:border-paper;
   }
   .scrollbar-none {
     scrollbar-width: none;
@@ -96,13 +99,13 @@
     padding-top: env(safe-area-inset-top);
   }
   .stripe {
-    background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgba(233, 223, 201, 0.06) 6px 7px);
+    background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgb(var(--pp-paper) / 0.06) 6px 7px);
   }
 }
 
 /* ── Map (Leaflet) ─────────────────────────────────────────────── */
 .pp-map {
-  background: #141614;
+  background: rgb(var(--pp-ink));
 }
 .pp-map img {
   max-width: none !important;
@@ -111,40 +114,40 @@
   filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.9) saturate(0.35);
 }
 .pp-map .leaflet-control-attribution {
-  background: rgba(20, 22, 20, 0.85);
-  color: #a8aa99;
+  background: rgb(var(--pp-ink) / 0.85);
+  color: rgb(var(--pp-muted));
 }
 .pp-map .leaflet-control-attribution a {
-  color: #e9dfc9;
+  color: rgb(var(--pp-paper));
 }
 .pp-map .leaflet-bar a {
-  background: #212520;
-  color: #e9dfc9;
-  border-color: #3d453b;
+  background: rgb(var(--pp-ink-2));
+  color: rgb(var(--pp-paper));
+  border-color: rgb(var(--pp-line));
 }
 .pp-pin {
   display: block;
   width: 18px;
   height: 18px;
-  background: #e9dfc9;
-  border: 2px solid #141614;
-  box-shadow: 0 0 0 1px #e9dfc9;
+  background: rgb(var(--pp-paper));
+  border: 2px solid rgb(var(--pp-ink));
+  box-shadow: 0 0 0 1px rgb(var(--pp-paper));
 }
 .pp-pin--fav {
-  background: #b76940;
-  box-shadow: 0 0 0 1px #b76940;
+  background: rgb(var(--pp-rust));
+  box-shadow: 0 0 0 1px rgb(var(--pp-rust));
 }
 .pp-pin--approx {
   background: transparent;
-  border: 2px dashed #e9dfc9;
+  border: 2px dashed rgb(var(--pp-paper));
   box-shadow: none;
 }
 .pp-map .leaflet-popup-content-wrapper,
 .pp-map .leaflet-popup-tip {
-  background: #212520;
-  color: #e9dfc9;
+  background: rgb(var(--pp-ink-2));
+  color: rgb(var(--pp-paper));
   border-radius: 2px;
-  border: 1px solid #3d453b;
+  border: 1px solid rgb(var(--pp-line));
 }
 .pp-popup p {
   margin: 0;
@@ -154,7 +157,7 @@
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #a8aa99;
+  color: rgb(var(--pp-muted));
 }
 .pp-popup__name {
   font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
@@ -165,7 +168,7 @@
 }
 .pp-popup__hood {
   font-size: 12px;
-  color: #a8aa99;
+  color: rgb(var(--pp-muted));
 }
 .pp-popup__links {
   display: flex;
@@ -173,6 +176,6 @@
   margin-top: 8px !important;
 }
 .pp-popup__links a {
-  color: #b76940;
+  color: rgb(var(--pp-rust));
   font-size: 13px;
 }

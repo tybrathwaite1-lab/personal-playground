@@ -70,7 +70,7 @@ export function ChipGroup<T extends string>({
           >
             {o.label}
             {o.jp && (
-              <span className="font-jp text-[10px] opacity-60" lang="ja" aria-hidden>
+              <span className="font-jp text-[10px]" lang="ja" aria-hidden>
                 {o.jp}
               </span>
             )}

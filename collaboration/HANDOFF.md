@@ -1,6 +1,24 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 0a: PP-011 reproducible builds)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 1: accessible tokens and typography, revision 2)
+
+- **PR #27 (PP-011):** approved by ChatGPT and merged at `78a4e5e`. **Post-merge verification:**
+  - Deploy to GitHub Pages run 44379304877: build, deploy and smoke all succeeded.
+  - Visual check run 44379305026 succeeded.
+  - Publisher run 44379899839 ran trusted code `78a4e5e` (the new pinned workflow commit) and published `main` @ `78a4e5e` (125 files).
+  - **ChatGPT's non-blocking follow-ups** (a separate small PR, not this one): align `engines` and the lockfile root metadata with Node 22+; make the action-pin test authenticate SHAs against their release tags, not just the version comments.
+- **PR #28 revision 2:** the minor revisions from ChatGPT's review of `c961bc1`:
+  - the **approved Newsstand palette**, exactly as given. "Editorial ink" is a separate `surface-editorial`; the Field Guide ink, raised and hunter surfaces and the app background are unchanged;
+  - a **`--control` boundary token** (≥ 3:1), separate from decorative `--rule`. It's applied to buttons, chips and inputs, and inputs keep the global focus ring;
+  - the **agreed type hierarchy**: body 16px; editorial body 17–18px; labels 12–13px; display ≈ 40–56px mobile and 72–112px desktop; oversized and tight type only in `text-cover`;
+  - **zoom wording:** rem sizing is a safeguard, not proof; 200% reflow still needs manual verification;
+  - merged with `main` (#27). The existing contrast fixes are kept.
+  - No new layouts, navigation changes or font dependencies.
+- **Next, PR 2 (graphic primitives):** Caveat Bold as the single handwritten accent, self-hosted via Fontsource with license and transfer-size verification. Never used for essential labels or body copy.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 0a: PP-011 reproducible builds)
 
 - **Sprint 02 is authorized** (owner, 2026-11-18). Sequence: PR 0a (this), then PR 1 (accessible design tokens and typography), then the approved plan. The thin Explore hub comes before the navigation switch, and the current homepage stays until the Newsstand preview is approved.
 - **PR #26 live verification** (ChatGPT, independently): merged at `c0f07b0dea130db90419bdce0422d6134d45281d`; publisher run [44343202178](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44343202178) succeeded. `visual-results` holds `README.md` and `main-0d6e4079e367/` for `main` @ `c0f07b0dea13` (Visual check run 44342556199). Claude confirmed the same from git.
