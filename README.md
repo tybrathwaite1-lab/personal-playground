@@ -127,7 +127,7 @@ Candidate leads from RSS feeds (`src/data/candidateFeeds.ts`) show only in the E
 
 ## Run it locally
 
-Requires Node 22+ (CI uses Node 24). Dependencies are pinned by the committed `package-lock.json`.
+Requires Node 24 (`.nvmrc`; CI reads the same file, and `nvm use` picks it up) with its bundled npm 11. Dependencies are pinned by the committed `package-lock.json`. Dependency install scripts are blocked unless `package.json` → `allowScripts` approves them (`.npmrc`: `strict-allow-scripts=true`); none are approved today, because esbuild and sharp ship prebuilt binaries. No local toolchain? A GitHub Codespace on the branch works the same way (`nvm install` then the commands below).
 
 ```bash
 npm ci             # exact versions from package-lock.json (use `npm install <pkg>` only to change dependencies)
@@ -140,7 +140,7 @@ npm run build
 
 ## Deploy
 
-`.github/workflows/deploy.yml` deploys `main` to GitHub Pages: on push, on manual run, and daily for fresh listings. `check.yml` runs tests, strict content validation, the link report and a full build on other branches. No secrets are required. Every workflow installs with `npm ci` from the lockfile and uses GitHub's own actions pinned to full commit SHAs (Node 24 runtime releases).
+`.github/workflows/deploy.yml` deploys `main` to GitHub Pages: on push, on manual run, and daily for fresh listings. `check.yml` runs tests, strict content validation, the link report and a full build on other branches. No secrets are required. Every workflow installs with `npm ci` from the lockfile and uses GitHub's own actions pinned to full commit SHAs listed in `.github/action-pins.json` (Node 24 runtime releases; `verify-action-pins.yml` checks each tag upstream). Workflow tokens are read-only by default; only the Pages deploy job and the two results publishers can write, and none of them runs npm code.
 
 ## Credentials & costs
 

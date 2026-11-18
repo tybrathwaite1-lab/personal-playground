@@ -9,10 +9,10 @@ on:
     # GitHub cron is UTC: 10:17 UTC ≈ 5:17am New York (EST) / 6:17am (EDT).
     - cron: '17 10 * * *'
 
+# Least privilege: the workflow default is read-only. Only the deploy job, which runs no
+# repository or third-party npm code, may write to Pages and mint an OIDC token.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -21,12 +21,17 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read # actions/configure-pages reads the Pages site configuration
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
 
       # Reproducible install from the committed package-lock.json (PP-011).
       - name: Install
@@ -80,6 +85,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write # deploy the uploaded Pages artifact
+      id-token: write # OIDC token required by actions/deploy-pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -94,9 +102,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
       - run: npm ci --no-audit --no-fund
       - name: Production smoke check
         run: npx tsx scripts/smoke/prod.ts "${{ needs.deploy.outputs.page_url }}" --expect-commit "${{ github.sha }}"
