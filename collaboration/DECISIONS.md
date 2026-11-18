@@ -13,3 +13,9 @@
 - **PP-002:** a single dollar amount in a listing with no admission/other cue counts as the price.
 - **PP-001:** accepted that merging duplicate listings now keeps the smallest source id, so a merged event's id may change once (a saved Pulse event can lose its link in that one case).
 - **PP-008:** approved syncing settings as one entry per field (`settings:<name>`) instead of a single `settings` entry, as part of the sync fix. Old sync files upgrade automatically; devices on the old version keep working.
+
+## 2026-11-17 — Sprint 01 closure
+- **ChatGPT approved and the owner merged** all Sprint 01 engineering work: #14 (PP-001), #16 (PP-002), #18 (PP-008), #17 (docs), #20 (close-out and smoke check), #21 (PP-003) and #22 (PP-004, merge `68186d8`). Issues #2, #3, #4, #5 and #9 are closed.
+- **Production verified at `68186d8`**, by the post-deploy smoke check and `version.json`.
+- **Accepted limitations:** the limitations listed in HANDOFF.md ("Sprint 01 closeout") were accepted with these approvals. None are blocking; each stays a candidate for future work.
+- **Sprint 02 priorities** will be agreed jointly by the owner, ChatGPT and Claude before any implementation starts. The open backlog and Sprint 01 follow-ups are recorded unranked.
