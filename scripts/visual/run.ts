@@ -122,13 +122,28 @@ export async function measureOverflow(page: Page): Promise<{ overflowPx: number;
 }
 
 /** Hide position:fixed elements and the body grain pseudo-element (full-page screenshots only). */
-async function hideFixedOverlays(page: Page): Promise<void> {
+async function hideFixedOverlays(page: Page): Promise<string[]> {
   await page.addStyleTag({ content: 'body::before { display: none !important; }' });
-  await page.evaluate(() => {
+  return page.evaluate(() => {
+    const hidden: string[] = [];
     for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
-      if (getComputedStyle(el).position === 'fixed') el.style.visibility = 'hidden';
+      const cs = getComputedStyle(el);
+      if (cs.position === 'fixed') {
+        el.style.setProperty('visibility', 'hidden', 'important');
+        hidden.push(`${el.tagName.toLowerCase()}${el.getAttribute('aria-label') ? `[${el.getAttribute('aria-label')}]` : ''}:${cs.display}`);
+      }
     }
+    return hidden;
   });
+}
+
+/** Diagnostic: fixed elements that are still visible (should be none after hiding). */
+async function visibleFixed(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>('body *'))
+      .filter((el) => getComputedStyle(el).position === 'fixed' && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none')
+      .map((el) => el.tagName.toLowerCase() + (el.getAttribute('aria-label') ? `[${el.getAttribute('aria-label')}]` : '')),
+  );
 }
 
 type AxeRunner = (page: Page) => Promise<AxeViolation[]>;
@@ -271,9 +286,12 @@ async function main() {
         await page.screenshot({ path: join(out, fold), type: 'jpeg', quality: 70 });
         // Full page: fixed overlays (bottom nav, grain) would otherwise be painted where the screen
         // ended and cover content, so they're hidden for this shot only.
-        await hideFixedOverlays(page);
+        const hidden = await hideFixedOverlays(page);
+        const stillVisible = await visibleFixed(page);
         const file = `${width}/${route}.jpg`;
         await page.screenshot({ path: join(out, file), fullPage: true, type: 'jpeg', quality: 70 });
+        const afterShot = await visibleFixed(page);
+        if (width === 390 && route === 'home') console.log(`  [diag] hid ${JSON.stringify(hidden)}; visible before shot ${JSON.stringify(stillVisible)}; after ${JSON.stringify(afterShot)}`);
         const ok = overflowPx <= 1 && !errors.length && !(axeResult && axeResult.length);
         shots.push({ route, width, file, fold, overflowPx, offenders, axe: axeResult, pageErrors: errors, ok });
         console.log(`${ok ? '✓' : '⚠'} ${String(width).padStart(4)}px #/${route}${overflowPx > 1 ? ` overflow ${overflowPx}px` : ''}${errors.length ? ` errors ${errors.length}` : ''}${axeResult?.length ? ` axe ${axeResult.map((a) => a.id).join(',')}` : ''}`);
