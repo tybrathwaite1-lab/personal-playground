@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual harness self-test: clean page</title>
+<style>
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: #ffffff; color: #111111; }
+  a, button { color: #0b3d91; }
+  a { display: inline-block; min-height: 24px; padding: 2px 4px; }
+  button { min-height: 44px; padding: 8px 12px; font: inherit; }
+  input { min-height: 32px; font: inherit; }
+  :focus-visible { outline: 3px solid #0b3d91; outline-offset: 2px; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 8px; top: 8px; background: #ffffff; }
+  header, nav, main { padding: 16px; }
+  nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 16px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><p>Self-test fixture: a small, accessible page that every check should pass.</p>
+  <button type="button" aria-label="Open menu" id="menu">Menu</button></header>
+<nav aria-label="Main"><ul><li><a href="#/pulse">Pulse</a></li><li><a href="#/plan">Plan</a></li><li><a href="#/collection">Collection</a></li></ul></nav>
+<main id="main" tabindex="-1">
+  <h1 id="cover-title">Clean fixture</h1>
+  <p>Readable text with sufficient contrast.</p>
+  <p><a href="https://example.org/">An example link</a></p>
+  <label for="q">Name</label> <input id="q" type="text">
+</main>
+<script>
+  document.getElementById('menu').addEventListener('click', () => {
+    const d = document.createElement('div');
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-label', 'All sections');
+    d.innerHTML = '<a href="#/pulse">Pulse</a>';
+    document.body.appendChild(d);
+  });
+</script>
+</body>
+</html>

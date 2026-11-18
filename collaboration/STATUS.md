@@ -1,6 +1,6 @@
 # Status — 2026-11-17 (Sprint 01 closed; Sprint 02 in planning)
 
-**Sprint 01 "Make discovery dependable" is complete.** ChatGPT independently reviewed and approved every engineering PR, and the owner merged them all. Production is verified at merge commit `68186d8`. **Sprint 02, "The Newsstand Effect", is in planning.** The creative direction is approved; Claude's technical assessment is with ChatGPT for independent review; owner decisions are recorded in DECISIONS.md. The only implementation so far is the owner-approved **visual verification harness** (screenshots, overflow and accessibility checks), in its own PR.
+**Sprint 01 "Make discovery dependable" is complete.** ChatGPT independently reviewed and approved every engineering PR, and the owner merged them all. Production is verified at merge commit `68186d8`. **Sprint 02, "The Newsstand Effect", is in planning.** The creative direction is approved; Claude's technical assessment is with ChatGPT for independent review; owner decisions are recorded in DECISIONS.md. The only implementation so far is the owner-approved **visual verification harness** (PR #25: screenshots, overflow, keyboard and accessibility checks). It's now read-only after review; screenshot publishing to a branch awaits the owner's re-approval of a safer design.
 
 ## Sprint 01 — engineering (Claude): all merged
 | ID | Issue | Outcome | PR · merge |

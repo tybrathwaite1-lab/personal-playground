@@ -16,7 +16,8 @@
     "pulse": "tsx scripts/pulse/ingest.ts",
     "predev": "tsx scripts/drop/build.ts",
     "images": "tsx scripts/images/fetch.ts",
-    "visual": "tsx scripts/visual/run.ts"
+    "visual": "tsx scripts/visual/run.ts",
+    "visual:selftest": "tsx scripts/visual/selftest.ts"
   },
   "dependencies": {
     "@fontsource/anton": "^5.1.0",

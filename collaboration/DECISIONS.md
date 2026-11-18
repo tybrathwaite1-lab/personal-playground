@@ -29,3 +29,9 @@ Context: Claude's read-only assessment of the approved creative direction (share
 5. **Rollout:** the new homepage ships first at a preview route and replaces Home only after the owner's real-device review (PP-010).
 6. **Illustrations:** ChatGPT directs the art. AI-assisted illustration is acceptable for artwork only, never for anything presented as a real photograph. It's credited as such (e.g. "Illustration (AI-assisted)") and checked for resemblance to existing characters, logos or game sprites. Real places use real, licensed or owner-supplied photos (EXIF/GPS stripped).
 7. **Practical pages** (Plan, Collection, Settings and the rest of the Toolkit) stay on the restrained dark ink surface.
+
+## 2026-11-17 — PR #25 review: screenshot publishing withdrawn pending re-approval
+- ChatGPT's review (P1) is correct: the owner approved publishing screenshots "to a dedicated branch", but the publish job ran branch-controlled code with `contents: write`, which GitHub grants **repository-wide**. Writing only to `visual-results` was a convention in a script, not a permission boundary.
+- The harness is now **read-only**: screenshots and reports are an Actions artifact (14 days) plus a step summary. No job in this workflow can write to the repository.
+- A safer publishing design (a `workflow_run` publisher that only ever runs reviewed code from `main` and treats the artifact as data) is proposed in HANDOFF.md. **It requires the owner's explicit re-approval** and a separate review before anything is built.
+- The `visual-results` branch created by earlier runs holds only synthetic-fixture screenshots of the current app. It can be deleted at the owner's discretion.
