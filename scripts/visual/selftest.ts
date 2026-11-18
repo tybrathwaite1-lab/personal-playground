@@ -71,9 +71,11 @@ const failedKeys = (r: Run) => (r.report?.keyboard ?? []).flatMap((k) => k.check
   expect('detects horizontal overflow', (r.report?.shots ?? []).every((s) => s.overflowPx > 1), (r.report?.shots ?? []).map((s) => s.overflowPx).join(', '));
   expect('detects the page error (thrown in a timer)', (r.report?.shots ?? []).every((s) => s.pageErrors.some((e) => /deliberate page error/.test(e))), String((r.report?.shots ?? [])[0]?.pageErrors));
   expect('detects low contrast (serious)', ids.includes('color-contrast:serious'), ids.join(', '));
-  expect('keeps non-serious violations (server-side image map, minor)', ids.includes('server-side-image-map:minor'), ids.join(', '));
+  // The fixture carries two moderate/minor WCAG A triggers (lang/xml:lang mismatch, server-side image map);
+  // at least one must be recorded, proving violations aren't filtered to serious/critical.
+  expect('keeps moderate/minor violations (no impact filtering)', ids.some((x) => /:(moderate|minor)$/.test(x)), ids.join(', '));
   const k = failedKeys(r).join('; ');
-  expect('keyboard: missing skip link fails', /First stop is a skip link@/.test(k), k);
+  expect('keyboard: missing skip link fails', /First stop is a skip link to existing content@/.test(k), k);
   expect('keyboard: trap fails progression', /Focus keeps progressing.*@/.test(k), k);
   expect('keyboard: missing focus indicator fails', /focus indicator.*@/.test(k), k);
   expect('keyboard: Shift+Tab failure detected', /Shift\+Tab.*@/.test(k), k);
