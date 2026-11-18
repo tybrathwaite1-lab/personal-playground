@@ -267,7 +267,9 @@ export function placeStop(p: Place): Stop {
 
 /** `planDate` sets the clock the window is measured on (defaults to the event's own start date). */
 export function eventStop(e: PulseEvent, planDate = nyDate(Date.parse(e.start))): Stop {
-  const mins = Math.round(e.end && !e.ongoing ? Math.min(240, Math.max(45, (Date.parse(e.end) - Date.parse(e.start)) / 60000)) : 120);
+  // A fixed-start event lasts as long as its listing says; only undated/all-day/multi-day visits are estimated.
+  const published = e.end ? (Date.parse(e.end) - Date.parse(e.start)) / 60000 : NaN;
+  const mins = !e.ongoing && !e.allDay && published > 0 ? Math.round(published) : 120;
   const fmt = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
   const timed = !e.ongoing && !e.allDay;
   const startDay = nyDate(Date.parse(e.start));
@@ -487,7 +489,10 @@ function visitLength(s: Stop, arrival: number): number {
  */
 export function schedule(a: Stop, b: Stop | undefined, transport: Transport, clock: Clock): Schedule | null {
   const travel = b ? travelMinutes(proximity(a, b), transport) : 0;
-  const earliestFor = (s: Stop) => (s.window ? Math.max(s.window.earliest, clock.today ? clock.floor : -Infinity) : clock.floor);
+  // Fixed starts can't move (same-day reachability is checked against `floor`). Drop-ins and
+  // flexible stops never begin before the chosen part of the day (or now + lead today).
+  const earliestFor = (s: Stop) =>
+    !s.window ? clock.floor : s.window.kind === 'drop-in' ? Math.max(s.window.earliest, clock.floor) : Math.max(s.window.earliest, clock.today ? clock.floor : -Infinity);
   // Places (hours unknown) start within the chosen part of the day and are done by midnight.
   const ok = (s: Stop, t: number) => (s.window ? t <= s.window.latest : t < clock.slotEnd && t + s.minutes <= DAY_END);
 
@@ -498,7 +503,7 @@ export function schedule(a: Stop, b: Stop | undefined, transport: Transport, clo
   if (!b) return { start: aStart, end: aStart + aVisit, travel: 0, wait: 0, visits: [aVisit], arrivals: [aStart] };
 
   const ready = aStart + aVisit + travel;
-  const bStart = b.window ? Math.max(ready, b.window.earliest) : ready;
+  const bStart = Math.max(ready, earliestFor(b));
   if (!ok(b, bStart)) return null;
   const bVisit = visitLength(b, bStart);
   return { start: aStart, end: bStart + bVisit, travel, wait: bStart - ready, visits: [aVisit, bVisit], arrivals: [aStart, bStart] };
@@ -515,41 +520,65 @@ export function sequence(a: Stop, b: Stop, transport: Transport, clock: Clock = 
 
 const fmtHours = (m: number) => (m % 60 ? `${Math.floor(m / 60)} hr ${m % 60} min` : `${m / 60} hr`);
 
-/** Which of the user's filters this stop doesn't meet (only checked for anchors, which bypass filters). */
-function anchorConflicts(s: Stop, o: AdventureOptions, now: number, clock: Clock): string[] {
+/**
+ * Which of the user's filters this stop doesn't meet (only checked for anchors, which bypass
+ * filters). `timing` conflicts mean it can't happen on this plan's clock; `other` ones (budget,
+ * radius, known preference mismatches) are warned about but the plan is still built.
+ */
+function anchorConflicts(s: Stop, o: AdventureOptions, now: number, clock: Clock): { timing: string[]; other: string[] } {
+  const timing: string[] = [];
   const out: string[] = [];
   const cap = BUDGET_CAP[o.budget];
   if (s.event) {
     const e = s.event;
-    if (e.cancelled) out.push('it’s listed as cancelled');
-    else if (isExpired(e, now)) out.push('it has already ended');
-    if (!onDate(e, o.date)) out.push(`it isn’t on the date you chose (${nyDate(Date.parse(e.start))})`);
-    else if (!e.ongoing && !e.allDay && slotOf(e.start) !== o.slot) out.push(`it starts in the ${slotOf(e.start)}, not the ${o.slot}`);
+    if (e.cancelled) timing.push('it’s listed as cancelled');
+    else if (isExpired(e, now)) timing.push('it has already ended');
+    if (!onDate(e, o.date)) timing.push(`it isn’t on the date you chose (${nyDate(Date.parse(e.start))})`);
+    else if (!e.ongoing && !e.allDay && slotOf(e.start) !== o.slot) timing.push(`it starts in the ${slotOf(e.start)}, not the ${o.slot}`);
   }
   if (s.community) {
-    if (!occurrences(s.community, o.date, o.date).length) out.push('it doesn’t meet on the date you chose');
-    else if (s.window && !inWindow(s.window, o.slot)) out.push(`its published time isn’t in the ${o.slot}`);
+    if (!occurrences(s.community, o.date, o.date).length) timing.push('it doesn’t meet on the date you chose');
+    else if (s.window && !inWindow(s.window, o.slot)) timing.push(`its published time isn’t in the ${o.slot}`);
   }
   // Same day: is it still possible to get there?
   if (clock.today && s.window && clock.now !== undefined && !(s.event && isExpired(s.event, now))) {
     if (s.window.latest < clock.floor) {
-      if (s.window.kind === 'drop-in') out.push(`it’s too late to join today (last entry about ${clockLabel(s.window.latest)})`);
-      else if (s.window.earliest <= clock.now) out.push(`it already started at ${clockLabel(s.window.earliest)}`);
-      else out.push(`it starts at ${clockLabel(s.window.earliest)} — probably too soon to get there`);
+      if (s.window.kind === 'drop-in') timing.push(`it’s too late to join today (last entry about ${clockLabel(s.window.latest)})`);
+      else if (s.window.earliest <= clock.now) timing.push(`it already started at ${clockLabel(s.window.earliest)}`);
+      else timing.push(`it starts at ${clockLabel(s.window.earliest)} — probably too soon to get there`);
     }
   }
-  if (!s.window && clock.over) out.push(`the ${o.slot} is already over today`);
+  if (!s.window && clock.over) timing.push(`the ${o.slot} is already over today`);
+  // Preferences the stop's own data answers (unknowns are neutral info, not conflicts).
+  const wantIndoor = o.weather === 'indoor' || (o.weather === 'auto' && o.indoorDay);
+  const wantOutdoor = o.weather === 'outdoor';
+  const weatherClash = (indoor: boolean | undefined) =>
+    (wantIndoor && indoor === false && `it’s outdoors${o.weather === 'auto' ? ' and the forecast looks wet' : ''}`) ||
+    (wantOutdoor && indoor === true && 'it’s indoors');
+  const companyWord = o.company === 'partner' ? 'a date' : o.company === 'friends' ? 'a group of friends' : 'going solo';
   if (s.place) {
     const prof = CATEGORY_PROFILE[s.place.categories[0]];
     if (o.slot === 'evening' && prof.daytimeOnly) out.push('it’s usually a daytime place');
     if (o.slot !== 'evening' && prof.eveningOnly) out.push('it’s usually an evening place');
+    if ((o.company === 'partner' && !prof.date) || (o.company === 'friends' && !prof.friends)) out.push(`it isn’t usually suited to ${companyWord}`);
+    if (o.energy !== 'any' && prof.energy !== o.energy) out.push(`it’s usually ${prof.energy} energy, not ${o.energy}`);
+    if (o.atmosphere !== 'any' && !prof.vibes.includes(o.atmosphere)) out.push(`it isn’t usually ${o.atmosphere}`);
+    const w = weatherClash(prof.indoor);
+    if (w) out.push(w);
   }
+  if (s.event) {
+    if (s.event.ongoing && o.slot === 'evening') out.push('it’s an exhibition, usually closed in the evening');
+    if (o.atmosphere !== 'any' && !vibesOfEvent(s.event).includes(o.atmosphere)) out.push(`it isn’t listed as ${o.atmosphere}`);
+    const w = weatherClash(s.event.indoor);
+    if (w) out.push(w);
+  }
+  if (s.community && !s.community.company.includes(o.company)) out.push(`it isn’t listed as suited to ${companyWord}`);
   if (cap !== Infinity) {
     if (!s.cost) out.push('its cost isn’t listed');
     else if (cap === 0 ? s.cost[1] > 0 : s.cost[0] > cap) out.push('it’s over your budget');
   }
   if (s.coords && milesBetween(HOME, s.coords) > o.radius) out.push(`it’s outside your ${o.radius}-mile radius`);
-  return out;
+  return { timing, other: out };
 }
 
 /** What the estimates leave out, said plainly. */
@@ -591,9 +620,11 @@ export function buildAdventure(inp: Inputs, o: AdventureOptions, rand: () => num
       if (!primary) warnings.push('The pick you planned around isn’t listed any more, so here’s another idea.');
       else {
         const why = anchorConflicts(primary, o, now, clock);
-        if (why.length) warnings.push(`Planned around your pick even though ${why.join(', ')}.`);
-        // Don't build a timetable around something that can't happen on this plan's clock.
-        anchorOffPlan = why.length > 0;
+        const all = [...why.timing, ...why.other];
+        if (all.length) warnings.push(`Planned around your pick even though ${all.join(', ')}.`);
+        // Don't build a timetable around something that can't happen on this plan's clock;
+        // budget, radius or preference mismatches still get a full plan.
+        anchorOffPlan = why.timing.length > 0;
       }
     }
     if (primary && primary.minutes > budgetMinutes) warnings.push(`Your pick runs about ${fmtHours(primary.minutes)} — longer than the ~${o.hours} hours you set.`);

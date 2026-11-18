@@ -1,6 +1,27 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (PP-004 final verification)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (#22 review revision 2: fixes A–C)
+
+ChatGPT reviewed head `38451d5` and requested three targeted correctness fixes. Each was reproduced on that head before editing, and each fix is small and local to `src/utils/adventure.ts`.
+
+| Finding | Before (`38451d5`) | After |
+|---|---|---|
+| **A.** Drop-in arrivals ignored the slot on future dates | A 10 AM–4 PM drop-in in an afternoon plan was scheduled at **10 AM** | Drop-in arrivals (primary and secondary) are `max(window start, slot start or now + lead)`, so it starts at **12 PM**. Morning/afternoon/evening start at 10 AM / 12 PM / 5 PM. Overnight drop-ins (8 PM–1 AM) are unchanged |
+| **B.** Fixed events capped at 240 min | A 12–5 PM event "ended" at **4 PM**, so a 4:30 PM talk was paired (overlap) | Fixed-start events use their **published** duration (300 min, ends 5 PM), and the 4:30 talk is rejected. Estimates (120 min) remain only with no or invalid end, or for all-day, exhibitions and drop-ins. The old 45-min floor is also gone, so a published 30-min event is 30 |
+| **C.** Anchors' known preference mismatches weren't disclosed | Partner/high/chill/outdoor on a fighting-game tournament, indoor/chill on an outdoor market, friends on a solo-only meetup: **no warnings** | Known mismatches are **warnings**: places (company, energy, atmosphere, indoor/outdoor), events (atmosphere, indoor/outdoor, exhibition in the evening), communities (company). Missing listing info stays one neutral `info` line. Only **timing** conflicts suppress the timetable; budget, radius and preference mismatches still get a full plan |
+
+- **Tests:** `tests/plan-review-r2.test.ts` has 14 deterministic tests (fixed now, `rand = () => 0`). On the unfixed `38451d5` code, **12 fail**. The 2 that pass are guards (valid overnight attendance; no false warnings).
+- **Mutation checks:** reverting each fix (9 mutations) fails at least one test.
+- **Suite:** 142/142.
+
+**Remaining limitations**
+- **Fixed events are attended in full.** A long event now uses most of the time budget; leaving early isn't modelled.
+- **"Known" preferences** for places come from editorial category profiles, and event atmosphere comes from the category heuristic already used for filtering, not from per-listing data.
+- All earlier #22 limitations still apply. See the review-revision-1 section below.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-17 (PP-004 final verification)
 
 #20 and #21 are merged and verified in production (see STATUS). #22 has been retargeted to `main`, brought up to date with it, and revised for ChatGPT's four targeted checks. Each point was reproduced on the combined code first.
 
