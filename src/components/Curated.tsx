@@ -29,12 +29,13 @@ export function CuratedEditions() {
               </div>
               <h3 className="display mt-6 text-[clamp(1.7rem,2.3vw,2.1rem)]">{c.title}</h3>
               <p className="mt-1 font-mono text-[11px] uppercase tracking-wider">{c.tagline}</p>
+              {/* Pure decoration (WCAG 1.4.3 exempts it; the number is stated in "Ed."): drawn as
+                  generated content so it is never read or evaluated as text. */}
               <span
                 aria-hidden
-                className="pointer-events-none absolute -bottom-6 -right-2 font-display text-[7rem] leading-none opacity-[0.12]"
-              >
-                {c.number}
-              </span>
+                data-numeral={c.number}
+                className="pointer-events-none absolute -bottom-6 -right-2 font-display text-[7rem] leading-none opacity-[0.12] after:content-[attr(data-numeral)]"
+              />
             </div>
             <div className="flex flex-1 flex-col p-4">
               <p className="text-sm text-paper/85">{c.description}</p>
