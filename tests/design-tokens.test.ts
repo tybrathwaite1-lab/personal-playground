@@ -57,7 +57,12 @@ for (const m of css.matchAll(/\.surface-([\w-]+)\s*\{([^}]*)\}/g)) if (m[2].incl
 
 test('every surface declares the full token set', () => {
   assert.deepEqual([...surfaces.keys()], ['ink', 'raised', 'hunter', 'editorial', 'cream', 'orange', 'mustard', 'pink', 'cobalt', 'olive', 'forest']);
-  for (const [name, v] of surfaces) assert.deepEqual([...v.keys()].sort(), ['accent', 'control', 'fg', 'fg-muted', 'focus', 'rule', 'surface'], name);
+  for (const [name, v] of surfaces) {
+    assert.deepEqual([...v.keys()].sort(), ['accent', 'control', 'duo-art', 'duo-wash', 'fg', 'fg-muted', 'focus', 'rule', 'surface'], name);
+    // Duotone blends follow the surface's lightness (light: accent shadows; dark: accent highlights).
+    const dark = lum(resolve(v.get('surface')!, v)) < 0.18;
+    assert.deepEqual([v.get('duo-art'), v.get('duo-wash')], dark ? ['screen', 'darken'] : ['multiply', 'lighten'], `${name} duotone blends`);
+  }
   // Every surface class also paints its background and text.
   const painted = /((?:\.surface-[\w-]+,\s*)+\.surface-[\w-]+)\s*\{\s*background-color: rgb\(var\(--surface\)\);\s*color: rgb\(var\(--fg\)\);/.exec(css);
   assert.ok(painted);
@@ -101,7 +106,7 @@ test('surface-aware controls (.ui-*) keep every state accessible on every surfac
 
 test(':root defaults are the Field Guide ink surface (application background unchanged)', () => {
   const ink = surfaces.get('ink')!;
-  for (const k of ['surface', 'fg', 'fg-muted', 'accent', 'focus', 'control', 'rule']) assert.equal(palette.get(k), ink.get(k), `--${k}`);
+  for (const k of ['surface', 'fg', 'fg-muted', 'accent', 'focus', 'control', 'rule', 'duo-art', 'duo-wash']) assert.equal(palette.get(k), ink.get(k), `--${k}`);
   assert.deepEqual(P('ink'), [0x14, 0x16, 0x14], 'app background stays #141614');
   assert.deepEqual(P('ink-2'), [0x21, 0x25, 0x20]);
   assert.deepEqual(P('hunter'), [0x28, 0x3b, 0x31]);

@@ -124,13 +124,23 @@
     height: 100%;
     object-fit: cover;
   }
-  /* Duotone: the artwork in grayscale, multiplied onto the surface accent. */
+  /* Duotone in the surface and its accent: the artwork in grayscale is blended onto the surface,
+     then the accent is washed over it. Blend modes come from the surface (tokens.css), so light
+     surfaces get accent shadows and dark surfaces get accent highlights. */
   .art-duotone {
-    background-color: rgb(var(--accent));
+    background-color: rgb(var(--surface));
   }
   .art-duotone :is(svg, img) {
-    filter: grayscale(1) contrast(1.15);
-    mix-blend-mode: multiply;
+    filter: grayscale(1) contrast(1.2);
+    mix-blend-mode: var(--duo-art);
+  }
+  .art-duotone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: rgb(var(--accent));
+    mix-blend-mode: var(--duo-wash);
   }
   /* Halftone: a dot screen over the artwork. */
   .art-halftone::after {

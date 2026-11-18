@@ -215,7 +215,9 @@ async function bundle() {
     caveatFiles: caveatAll,
     caveatLatinBold: caveat,
     entryFiles: entries,
-    entryReferencesCaveat: /caveat/i.test(entryText),
+    // Loading means an @font-face URL to a Caveat file; the `font-hand` utility naming the
+    // family is fine (the browser fetches nothing until a font-face for it is declared).
+    entryReferencesCaveat: /caveat-[\w-]+\.(?:woff2?|ttf|otf)/i.test(entryText),
     entryContainsStyleGuide: /Skip to style guide/.test(entryText),
     styleGuideChunks: guide,
   };
@@ -238,7 +240,7 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
   for (const m of r.reducedMotion) L.push(`- ${m.pass ? '✅' : '❌'} ${m.width}px: "${m.status}", stamp animation-duration ${m.animationDuration} ([${m.file}](${m.file}))`);
   L.push('', '## Fonts and bundle', '');
   L.push(`- ${r.home.pass ? '✅' : '❌'} The app shell (#/) requests no Caveat files (${r.home.requests} requests, loaded: ${r.home.loaded})`);
-  L.push(`- ${r.bundle.entryReferencesCaveat ? '❌' : '✅'} App entry files (${r.bundle.entryFiles.join(', ')}) don't reference Caveat`);
+  L.push(`- ${r.bundle.entryReferencesCaveat ? '❌' : '✅'} App entry files (${r.bundle.entryFiles.join(', ')}) declare no Caveat font files`);
   L.push(`- ${r.bundle.entryContainsStyleGuide ? '❌' : '✅'} The style guide is a separate chunk: ${r.bundle.styleGuideChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ')}`);
   L.push(`- Caveat Bold, Latin: ${r.bundle.caveatLatinBold.map((c) => `${c.file} ${c.bytes} B`).join(', ')} (budget ${FONT_BUDGET} B; WOFF2 is already compressed)`);
   L.push(`- All Caveat files in the build: ${r.bundle.caveatFiles.join(', ')}`);

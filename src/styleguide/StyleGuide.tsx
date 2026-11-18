@@ -82,7 +82,7 @@ function Compositions() {
 
 function CoverComposition() {
   return (
-    <Surface tone="editorial" as="article" aria-labelledby="sg-cover-title" className="overflow-hidden px-5 pb-10 pt-6 md:px-10 md:pb-14">
+    <Surface tone="editorial" as="article" aria-labelledby="sg-cover-title" className="overflow-hidden px-5 pb-16 pt-6 md:px-10 md:pb-16">
       <Grain />
       <div className="relative z-10 grid gap-8 md:grid-cols-[1.15fr_1fr] md:items-end">
         <div>
@@ -90,7 +90,7 @@ function CoverComposition() {
             <p className="ui-label">Sample edition · Vol. 03</p>
             <Stamp angle={-8}>Free this week</Stamp>
           </div>
-          <h3 id="sg-cover-title" className="mt-6 break-words font-display text-cover uppercase">
+          <h3 id="sg-cover-title" className="mt-6 font-display text-cover uppercase [overflow-wrap:anywhere]">
             Small wonders
           </h3>
           <p className="mt-4 max-w-measure text-body-editorial text-fg-muted">A week of things worth leaving the house for, and a few worth staying in for.</p>
@@ -107,7 +107,7 @@ function CoverComposition() {
           <Tape tone="mustard" angle={-6} className="-top-3 left-6" />
           <Tape tone="pink" angle={5} className="-top-2 right-8" />
           <Artwork art={<HarborSun />} alt="Sample illustration: a sun over a harbor with a small boat" treatment="cutout" credit={{ kind: 'illustration', by: 'Sample artwork' }} />
-          <Annotation arrow="left" angle={-6} className="absolute -bottom-10 right-0">
+          <Annotation arrow="left" angle={-6} className="absolute -bottom-11 right-0">
             start here
           </Annotation>
         </div>
@@ -282,7 +282,7 @@ function Typography() {
               <p className="font-mono text-small text-accent">{token}</p>
               <p className="text-small text-fg-muted">{note}</p>
             </div>
-            <div className="min-w-0 break-words">{sample}</div>
+            <div className="min-w-0 [overflow-wrap:anywhere]">{sample}</div>
           </div>
         ))}
         <div className="grid gap-2 py-5 md:grid-cols-[14rem_1fr] md:items-baseline">
@@ -465,13 +465,13 @@ function Resilience() {
   return (
     <Section id="sg-resilience" title="Long headlines" intro="Headlines wrap and break instead of overflowing; narrow columns stay readable.">
       <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-        <Surface tone="pink" className="p-4 md:p-6">
-          <h3 className="break-words font-display text-display uppercase [hyphens:auto]" lang="en">
+        <Surface tone="pink" className="min-w-0 p-4 md:p-6">
+          <h3 className="font-display text-display uppercase [hyphens:auto] [overflow-wrap:anywhere]" lang="en">
             An unreasonably long headline about the very best extraordinarily-complicated-to-pronounce neighborhood festivals
           </h3>
         </Surface>
-        <Surface tone="forest" className="p-4">
-          <h3 className="break-words font-display text-heading uppercase">Pneumonoultramicroscopicsilicovolcanoconiosis</h3>
+        <Surface tone="forest" className="min-w-0 p-4">
+          <h3 className="font-display text-heading uppercase [overflow-wrap:anywhere]">Pneumonoultramicroscopicsilicovolcanoconiosis</h3>
           <p className="mt-2 text-small text-fg-muted">An unbreakable word in a narrow column.</p>
         </Surface>
       </div>
