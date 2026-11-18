@@ -112,3 +112,14 @@ Context: Claude's read-only assessment of the approved creative direction (share
   - Document that the API token's scope covers the whole Cloudflare account.
   - Evaluate owner-triggered previews as a simpler first iteration.
   - Include the strict style-guide checks in eligibility where applicable.
+
+## 2026-11-18 — M1 maintenance: CI security and reproducibility
+- **Least privilege by default:** every workflow sets an explicit read-only default. Write scopes live only on the job that needs them (Pages deploy, the two results publishers), and those jobs run no npm, npx or tsx. `tests/workflow-security.test.ts` enforces this, including job-level overrides.
+- **No persisted checkout credentials; tokens only through step-level `env`:** never in `run:` text, URLs, action inputs, or job or workflow env.
+- **Write-enabled publication is separated from generation** by an artifact boundary wherever the job also runs third-party code (image scout, as the screenshot publisher already did).
+- **Action pins:** `.github/action-pins.json` is the trusted manifest. A pin changes only through a reviewed edit to it, after upstream verification; remote checks report and never update pins.
+- **Node 24 via `.nvmrc`** is the single source for CI and local setup.
+- **Dependency install scripts are denied by default** (`strict-allow-scripts`). Approving one requires a reviewed `allowScripts` entry with evidence it is needed.
+- **The production dependency audit is informational:** an unavailable audit is never treated as clean, and remediation is always a separate reviewed change.
+- **Pulse source access restrictions are respected:** a blocked source is reported and carried over until it expires, never worked around.
+

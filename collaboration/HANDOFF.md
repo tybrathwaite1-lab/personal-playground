@@ -1,6 +1,31 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (PR #29 closeout)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (M1: security and reproducibility)
+
+PR #30 is merged as `e3f9bda`. M1 is a separate maintenance PR with no application, UI, navigation, content or Sync changes.
+
+- **Deploy permissions:** the workflow default is `contents: read`. Only the `deploy` job holds `pages: write` and `id-token: write`, and it runs only `actions/deploy-pages`. The build job keeps `pages: read` for `configure-pages`; smoke inherits read-only.
+- **Checkout credentials:** every checkout sets `persist-credentials: false`. No workflow job pushes with checkout credentials.
+- **Image scout:**
+  - It is now two jobs. `generate` (read-only) runs npm and the scout and uploads an artifact. `publish` (`contents: write`) downloads it with no checkout and no npm, accepts only `.jpg`/`.webp`/`.json` regular files within 500 files and 50 MB, and pushes through an env-scoped git header.
+  - The required scout step and every publish step fail genuinely. Only the two labelled optional snapshot steps may fail softly.
+  - **Not run:** a real run needs a push to `image-scout`, which the owner hasn't authorized.
+  - **Caveat:** pushes to `image-scout` use the workflow file on that branch, so the hardening applies only once that branch includes this change.
+- **Action provenance:**
+  - `.github/action-pins.json` is the trusted manifest. `npm test` enforces it offline: every `uses:` must match an entry's action, SHA and tag exactly, and unused entries fail.
+  - `verify-action-pins.yml` (read-only; runs when `.github/**` changes, weekly, or on demand) resolves each tag anonymously upstream and checks the commit and its `action.yml` runtime. It reports mismatches and never updates the manifest.
+- **Node:** 24 everywhere. `.nvmrc` is the single source: every `setup-node` reads it. `engines` is `>=24 <25` in both package.json and the lockfile root. README updated.
+- **Install scripts:**
+  - `.npmrc` sets `strict-allow-scripts=true` (npm 11.19.1 in CI). `allowScripts` denies all three packages that have install scripts (esbuild, sharp, fsevents); none is approved.
+  - CI's negative probe shows that an unreviewed synthetic script fails the install without running, a denied one installs without running, and the approved control runs.
+  - The build, screenshots and `tests/native-deps.test.ts` (esbuild transform, sharp WebP/JPEG encode) pass with the scripts denied.
+- **Audit:** a non-blocking `npm audit --omit=dev` report in Check. It reports UNAVAILABLE rather than clean when the audit can't run, and never upgrades anything.
+- **Tests:** 208 → 217. New tests cover the permission policy (with 13 mutation cases), the manifest (7 mutation cases), Node alignment and native dependencies.
+- **SPAA:** HTTP 403 since about 19:19 UTC; listings carried over and marked stale. Reassess around 2026-11-20; no circumvention.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (PR #29 closeout)
 
 - **Accepted and merged:**
   - ChatGPT's final recommendation was APPROVED.
