@@ -15,6 +15,8 @@ import {
   type Slot,
   type Stop,
   type WeatherPref,
+  clockLabel,
+  planClock,
 } from '../utils/adventure';
 import { directionsLink, isSafeUrl, uid } from '../utils/helpers';
 import { nyDate } from '../utils/pulse';
@@ -35,6 +37,8 @@ function nextDates(now: number): { value: string; label: string }[] {
   return out;
 }
 
+const fmtMinutes = (m: number) => (m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} hr ${m % 60} min` : `${m / 60} hr`);
+
 function defaultSlot(now: number): Slot {
   const h = Number(new Date(now).toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false })) % 24;
   return h < 11 ? 'morning' : h < 16 ? 'afternoon' : 'evening';
@@ -46,7 +50,7 @@ function StopCard({ s, label, onSwap }: { s: Stop; label: string; onSwap?: () =>
       <div className="flex items-start justify-between gap-2">
         <p className="label text-rust">
           {label}
-          {s.time && ` · ${s.time}`}
+          {s.time && ` · ${s.window?.kind === 'drop-in' ? 'Drop in ' : s.window ? 'Starts ' : ''}${s.time}`}
         </p>
         {onSwap && (
           <button type="button" className="btn-ghost -mr-2 -mt-2" aria-label={`Swap out ${s.title}`} onClick={onSwap}>
@@ -104,6 +108,7 @@ export function AdventurePanel({ anchor }: { anchor?: string | null }) {
   const [familiarity, setFamiliarity] = useState<Familiarity>('mix');
   const [result, setResult] = useState<Adventure | null>(null);
   const [failed, setFailed] = useState(false);
+  const [slotOver, setSlotOver] = useState(false);
   const [saved, setSaved] = useState(false);
   const [currentAnchor, setCurrentAnchor] = useState<string | undefined>(anchor ?? undefined);
 
@@ -129,6 +134,7 @@ export function AdventurePanel({ anchor }: { anchor?: string | null }) {
     const a = buildAdventure({ places, events: pulse.data?.events ?? [], communities: COMMUNITIES, data }, o);
     setResult(a);
     setFailed(!a);
+    setSlotOver(!a && planClock(o, Date.now()).over);
     setSaved(false);
   };
 
@@ -282,20 +288,41 @@ export function AdventurePanel({ anchor }: { anchor?: string | null }) {
       <div className="pt-8">
         {failed && (
           <Empty>
-            <p className="display text-3xl text-paper">Nothing fits all of that.</p>
-            <p className="mt-2">Try a bigger radius, “Either” for weather, another time of day, or “A mix”.</p>
+            <p className="display text-3xl text-paper">{slotOver ? `Today’s ${slot} is already over.` : 'Nothing fits all of that.'}</p>
+            <p className="mt-2">
+              {slotOver
+                ? 'Pick a later part of today, or another day.'
+                : 'Try a bigger radius, “Either” for weather, another time of day, or “A mix”.'}
+            </p>
           </Empty>
         )}
         {result && (
           <article className="card animate-rise" aria-label="Your adventure">
-            <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-hunter/40 px-4 py-2">
-              <span className="label text-paper/80">{result.travel}</span>
-              <span className="label text-paper/80">
-                Est. ${result.cost.min}
-                {result.cost.max !== result.cost.min && `–$${result.cost.max}`} pp{result.cost.unknown && ' + unlisted costs'}
-                {result.food && ' + food'}
-              </span>
+            <header className="border-b border-line bg-hunter/40 px-4 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="label text-paper/80">{result.travel}</span>
+                <span className="label text-paper/80">
+                  Est. ${result.cost.min}
+                  {result.cost.max !== result.cost.min && `–$${result.cost.max}`} pp{result.cost.unknown && ' + unlisted costs'}
+                  {result.food && ' · food not included'}
+                </span>
+              </div>
+              <p className="label mt-1 text-paper/60">
+                {result.time.start !== undefined && result.time.end !== undefined && `${clockLabel(result.time.start)} – ${clockLabel(result.time.end)} · `}
+                About {fmtMinutes(result.time.total)} of your ~{result.time.budget / 60} hr
+                {result.time.travel > 0 && ` · incl. ~${result.time.travel} min between stops (rough)`}
+                {result.time.wait > 0 && ` · ${result.time.wait} min wait for the start time`}
+              </p>
             </header>
+            {result.warnings.length > 0 && (
+              <ul className="border-b border-line px-4 py-3 text-sm" aria-label="Heads up">
+                {result.warnings.map((n) => (
+                  <li key={n} className="border-l-2 border-rust pl-2 text-paper [&:not(:first-child)]:mt-1">
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            )}
             <StopCard s={result.primary} label="First" onSwap={() => generate()} />
             {result.food && (
               <div className="stripe flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 text-sm">
@@ -326,6 +353,13 @@ export function AdventurePanel({ anchor }: { anchor?: string | null }) {
               </a>
             </footer>
           </article>
+        )}
+        {result && (
+          <div className="mt-3 space-y-1 text-xs text-muted">
+            {[result.scope.note, ...result.info].map((n) => (
+              <p key={n}>{n}</p>
+            ))}
+          </div>
         )}
         {result && (
           <p className="mt-3 text-xs text-muted">

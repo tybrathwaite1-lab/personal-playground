@@ -1,6 +1,51 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (Sprint 01 close-out)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (#22 review revision 2: fixes A–C)
+
+ChatGPT reviewed head `38451d5` and requested three targeted correctness fixes. Each was reproduced on that head before editing, and each fix is small and local to `src/utils/adventure.ts`.
+
+| Finding | Before (`38451d5`) | After |
+|---|---|---|
+| **A.** Drop-in arrivals ignored the slot on future dates | A 10 AM–4 PM drop-in in an afternoon plan was scheduled at **10 AM** | Drop-in arrivals (primary and secondary) are `max(window start, slot start or now + lead)`, so it starts at **12 PM**. Morning/afternoon/evening start at 10 AM / 12 PM / 5 PM. Overnight drop-ins (8 PM–1 AM) are unchanged |
+| **B.** Fixed events capped at 240 min | A 12–5 PM event "ended" at **4 PM**, so a 4:30 PM talk was paired (overlap) | Fixed-start events use their **published** duration (300 min, ends 5 PM), and the 4:30 talk is rejected. Estimates (120 min) remain only with no or invalid end, or for all-day, exhibitions and drop-ins. The old 45-min floor is also gone, so a published 30-min event is 30 |
+| **C.** Anchors' known preference mismatches weren't disclosed | Partner/high/chill/outdoor on a fighting-game tournament, indoor/chill on an outdoor market, friends on a solo-only meetup: **no warnings** | Known mismatches are **warnings**: places (company, energy, atmosphere, indoor/outdoor), events (atmosphere, indoor/outdoor, exhibition in the evening), communities (company). Missing listing info stays one neutral `info` line. Only **timing** conflicts suppress the timetable; budget, radius and preference mismatches still get a full plan |
+
+- **Tests:** `tests/plan-review-r2.test.ts` has 14 deterministic tests (fixed now, `rand = () => 0`). On the unfixed `38451d5` code, **12 fail**. The 2 that pass are guards (valid overnight attendance; no false warnings).
+- **Mutation checks:** reverting each fix (9 mutations) fails at least one test.
+- **Suite:** 142/142.
+
+**Remaining limitations**
+- **Fixed events are attended in full.** A long event now uses most of the time budget; leaving early isn't modelled.
+- **"Known" preferences** for places come from editorial category profiles, and event atmosphere comes from the category heuristic already used for filtering, not from per-listing data.
+- All earlier #22 limitations still apply. See the review-revision-1 section below.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-17 (PP-004 final verification)
+
+#20 and #21 are merged and verified in production (see STATUS). #22 has been retargeted to `main`, brought up to date with it, and revised for ChatGPT's four targeted checks. Each point was reproduced on the combined code first.
+
+| Check | Reproduced on #22 + main | Resolution |
+|---|---|---|
+| 1. Overnight / calendar day | A 10 PM–2 AM listing from the previous night was offered for the next evening. A place was paired after an 11:30 PM show (50/50 runs). Overnight events showed only "11:00 PM" | Timed listings belong to the day they start. Windows are measured on the plan date's clock (past midnight ≥ 1440). Label reads "(ends next day)". Places start within the chosen part of the day and finish by midnight |
+| 2. Same day after start | At 8 PM the planner offered a 7 PM fixed-start talk, an 8:05 PM start, 28 morning options, and a 5–9 PM walk past its last useful entry | `planClock()`: nothing starts before now + 30 min. Fixed starts must be reachable. Drop-in windows can be joined late, with a shorter visit. A part of today that has passed offers nothing, and the UI says so. An impossible anchor gets a warning and no timetable |
+| 3. Estimate scope | Not disclosed | `result.scope` (all `false`) plus a note under every plan, e.g. *"Time counts the stops and getting between them — not getting to the first stop, getting home or the food stop. Cost is per-person admission only — no parking, gas or food."* |
+| 4. Company note | Read "Listings don't say their who it suits…", in the same list as conflicts | `warnings` (real conflicts, prominent) vs `info`: one neutral plan-level line, *"Not every listing says … so those preferences were only applied where it does."* |
+
+- **Tests:** `tests/plan-clock.test.ts` has 16 tests, including a 500-plan same-day property test that produces 320 plans (208 with two stops). Twelve targeted mutations are each caught.
+- **Existing tests:** updated for `warnings`/`info` and `time.start`/`time.end`. One PP-003 fixture moved to 3 PM, because a flexible stop can't start before the afternoon.
+- **CI:** [run 44203197141](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44203197141): lint clean, 128/128 tests, typecheck and build OK.
+
+**Remaining limitations**
+- Travel to the first stop isn't estimated; the 30-minute lead is a fixed allowance.
+- Place opening hours are unknown. Midnight is the hard stop for places.
+- The secondary stop always comes after the primary; the planner doesn't reorder.
+- A drop-in window assumes a 120-minute visit, and a late join needs at least 45 minutes left.
+- UI changes are verified by typecheck and build only.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-17 (Sprint 01 close-out)
 
 Sprint 01 engineering PRs #14, #16, #18 and docs #17 are merged and deployed. This close-out PR adds:
 - `tests/integration-sprint01.test.ts`: the #14 × #16 cross-PR tests (moved from `integration/sprint-01-review`, which can now be deleted), plus a test for the smoke check's rules.
