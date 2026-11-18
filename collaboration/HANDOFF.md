@@ -67,7 +67,7 @@ The merge commit's tree is identical to the approved head (`git diff 956dd4f 681
 - An optional React test harness for hooks and UI. This needs approval for a new dev dependency.
 - Planner refinements: reordering stops, estimating first-stop travel (note: this touches the owner's location, so privacy needs considering), and opening-hours data.
 - Maintenance:
-  - GitHub Actions warns that `actions/deploy-pages@v4` targets the deprecated Node 20.
+  - GitHub Actions warns that `actions/checkout@v4`, `actions/setup-node@v4` and `actions/deploy-pages@v4` target the deprecated Node 20 (currently forced onto Node 24).
   - Merged branches could be deleted: `integration/sprint-01-review`, `pp-00x-*`, `sprint-01/close-out` and the collaboration/editorial/research branches. That's the owner's call.
 
 Engineering has **not** started Sprint 02 work.
