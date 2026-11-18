@@ -51,8 +51,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Style guide screenshots and checks (report-only)
-        run: npx tsx scripts/visual/styleguide.ts --out styleguide-out --branch "$REF_NAME" --commit "$COMMIT_SHA"
+      - name: Style guide screenshots and browser checks (fails on any finding)
+        run: npx tsx scripts/visual/styleguide.ts --out styleguide-out --branch "$REF_NAME" --commit "$COMMIT_SHA" --strict
 
       - name: Summary
         if: always()

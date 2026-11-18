@@ -49,6 +49,14 @@ export interface Route {
   preview: PreviewName | null;
 }
 
+/**
+ * Route hashes start with `#/` (or are empty). A bare fragment such as `#main` is an in-page
+ * anchor (e.g. a skip link's default navigation), not a route, so it must not change the page.
+ */
+export function isRouteHash(hash: string): boolean {
+  return hash === '' || hash === '#' || hash.startsWith('#/');
+}
+
 export function parseHash(hash: string): Route {
   const clean = hash.replace(/^#\/?/, '');
   const [path, query = ''] = clean.split('?');
@@ -70,6 +78,8 @@ export function useRoute(): Route {
   const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
   useEffect(() => {
     const onHash = () => {
+      // In-page anchors keep the current route (and its scroll position).
+      if (!isRouteHash(window.location.hash)) return;
       setRoute(parseHash(window.location.hash));
       window.scrollTo({ top: 0 });
     };

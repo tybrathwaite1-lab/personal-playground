@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Annotation, Artwork, Grain, NEWSSTAND, FIELD_GUIDE, PaperEdge, Stamp, Surface, Tape, type SurfaceTone } from '../components/graphic';
+import { InPageLink } from '../components/InPageLink';
 import { HarborSun, Peaks, RecordNight } from './SampleArt';
 
 /**
@@ -10,9 +11,9 @@ import { HarborSun, Peaks, RecordNight } from './SampleArt';
 export default function StyleGuide() {
   return (
     <div className="surface-ink min-h-dvh">
-      <a href="#sg-main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:bg-fg focus:px-3 focus:py-2 focus:text-surface">
+      <InPageLink to="sg-main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:bg-fg focus:px-3 focus:py-2 focus:text-surface">
         Skip to style guide
-      </a>
+      </InPageLink>
       <header className="border-b border-rule">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-8">
           <p className="ui-label">Personal Playground · Sprint 02 preview</p>
@@ -85,19 +86,19 @@ function CoverComposition() {
     <Surface tone="editorial" as="article" aria-labelledby="sg-cover-title" className="overflow-hidden px-5 pb-16 pt-6 md:px-10 md:pb-16">
       <Grain />
       <div className="relative z-10 grid gap-8 md:grid-cols-[1.15fr_1fr] md:items-end">
-        <div>
+        <div className="cover-container min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="ui-label">Sample edition · Vol. 03</p>
             <Stamp angle={-8}>Free this week</Stamp>
           </div>
-          <h3 id="sg-cover-title" className="mt-6 font-display text-cover uppercase [overflow-wrap:anywhere]">
+          <h3 id="sg-cover-title" className="cover-headline mt-6 font-display uppercase">
             Small wonders
           </h3>
           <p className="mt-4 max-w-measure text-body-editorial text-fg-muted">A week of things worth leaving the house for, and a few worth staying in for.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="#sg-feature-title" className="ui-button-primary">
+            <InPageLink to="sg-feature-title" className="ui-button-primary">
               Open the edition
-            </a>
+            </InPageLink>
             <button type="button" className="ui-button">
               Save for later
             </button>
@@ -149,7 +150,7 @@ function FeatureComposition() {
               </div>
               <div>
                 <dt className="ui-label">Cost</dt>
-                <dd className="mt-1">Free to wander</dd>
+                <dd className="mt-1">Free to wander · bring cash</dd>
               </div>
             </dl>
           </div>
@@ -180,7 +181,7 @@ function ListingsComposition() {
               <p className="ui-label">{l.kicker}</p>
               {l.stamp && <Stamp angle={6}>{l.stamp}</Stamp>}
             </div>
-            {l.art === 'peaks' && <Artwork art={<Peaks />} alt="Sample illustration: mountains under a pale moon" treatment="halftone" className="mt-3" />}
+            {l.art === 'peaks' && <Artwork art={<Peaks />} alt="Sample illustration: mountains under a pale moon" treatment="halftone" credit={{ kind: 'illustration', by: 'Sample artwork' }} className="mt-3" />}
             {l.art === 'missing' && <Artwork alt="Tabletop night illustration" title="Tabletop" className="mt-3" />}
             <h4 className="mt-3 font-display text-[1.75rem] uppercase leading-none">{l.title}</h4>
             <p className="mt-2 text-small text-fg-muted">{l.meta}</p>
@@ -213,9 +214,9 @@ function ElsewhereComposition() {
           <Surface tone="forest" className="p-5">
             <p className="ui-label">Try it</p>
             <p className="mt-2 text-body">One hour, one station you&rsquo;ve never heard, no skipping.</p>
-            <a href="#sg-elsewhere-title" className="ui-link mt-3 inline-block text-small">
+            <InPageLink to="sg-elsewhere-title" className="ui-link mt-3 inline-block text-small">
               Why one hour?
-            </a>
+            </InPageLink>
           </Surface>
         </div>
       </Surface>
@@ -313,6 +314,24 @@ function Demo({ title, note, children }: { title: string; note: string; children
   );
 }
 
+/** A deliberately broken image, then a working replacement: the fallback must give way. */
+const BROKEN_SRC = 'data:image/png;base64,broken';
+// Inline sample art in the approved palette (mustard, cream, forest).
+const REPLACEMENT_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'><rect width='4' height='3' fill='rgb(244,198,50)'/><circle cx='2.6' cy='1.2' r='0.7' fill='rgb(241,227,198)'/><path d='M0 3 L1.4 1.6 L2.4 2.5 L4 1.8 V3 Z' fill='rgb(32,78,63)'/></svg>";
+const REPLACEMENT_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(REPLACEMENT_SVG)}`;
+function RecoveringArtwork() {
+  const [src, setSrc] = useState(BROKEN_SRC);
+  return (
+    <div data-demo="artwork-recovery">
+      <Artwork src={src} alt="Sample replacement artwork: hills under a pale sun" title="Image failed" ratio="16/9" credit={{ kind: 'illustration', by: 'Sample artwork' }} />
+      <button type="button" className="ui-button mt-3" onClick={() => setSrc(REPLACEMENT_SRC)} disabled={src === REPLACEMENT_SRC}>
+        Load a replacement
+      </button>
+    </div>
+  );
+}
+
 function Primitives() {
   return (
     <Section id="sg-primitives" title="Graphic primitives" intro="Decorative layers render through one aria-hidden, pointer-events-none wrapper, so they never carry essential text or block a control.">
@@ -365,9 +384,10 @@ function Primitives() {
             </Annotation>
           </Surface>
         </Demo>
-        <Demo title="Missing artwork" note="A quiet typographic fallback with a stable size.">
-          <Surface tone="pink" className="p-4">
+        <Demo title="Missing artwork" note="A quiet typographic fallback with a stable size; a failed image recovers when replaced.">
+          <Surface tone="pink" className="space-y-4 p-4">
             <Artwork alt="Sample illustration that has not been delivered" title="Coming soon" />
+            <RecoveringArtwork />
           </Surface>
         </Demo>
       </div>
@@ -423,9 +443,9 @@ function Controls() {
             <div className="flex flex-wrap items-center gap-3">
               <span className="ui-button focus-preview">Focus ring</span>
               <span className="ui-chip focus-preview">Chip</span>
-              <a href="#sg-controls" className="ui-link text-small">
+              <InPageLink to="sg-controls" className="ui-link text-small">
                 A text link
-              </a>
+              </InPageLink>
             </div>
           </Surface>
         ))}

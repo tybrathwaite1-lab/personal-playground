@@ -20,7 +20,8 @@ register(
 );
 
 const g = await import('../src/components/graphic/index.ts');
-const { parseHash, ROUTES, PREVIEWS } = await import('../src/hooks/useRoute.ts');
+const { parseHash, isRouteHash, ROUTES, PREVIEWS } = await import('../src/hooks/useRoute.ts');
+const { InPageLink } = await import('../src/components/InPageLink.tsx');
 const { default: StyleGuide } = await import('../src/styleguide/StyleGuide.tsx');
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -45,6 +46,18 @@ test('#/styleguide is a hidden preview: not a route, not in navigation, everythi
   assert.equal(ROUTES.length, 12);
   assert.equal((ROUTES as string[]).includes('styleguide'), false, 'not part of the standard route set');
   assert.equal(/styleguide/i.test(read('src/components/Layout.tsx')), false, 'never linked from navigation');
+});
+
+test('in-page anchors never replace the route', () => {
+  for (const hsh of ['', '#', '#/', '#/discover', '#/styleguide', '#/styleguide?x=1']) assert.equal(isRouteHash(hsh), true, hsh);
+  for (const hsh of ['#main', '#sg-main', '#sg-feature-title']) assert.equal(isRouteHash(hsh), false, hsh);
+  assert.match(read('src/hooks/useRoute.ts'), /if \(!isRouteHash\(window\.location\.hash\)\) return;/);
+  const link = html(h(InPageLink, { to: 'sg-main', className: 'x' }, 'Skip'));
+  assert.match(link, /^<a href="#sg-main" data-in-page-link="sg-main" class="x">Skip<\/a>$/);
+  // The style guide uses no plain in-page anchors (they would replace the route).
+  const sg = read('src/styleguide/StyleGuide.tsx');
+  assert.equal(/<a href="#(?!\/)/.test(sg), false);
+  assert.ok((sg.match(/<InPageLink to="/g) ?? []).length >= 4);
 });
 
 test('the style guide and the handwritten face are code-split away from the app shell', () => {
@@ -112,7 +125,22 @@ test('artwork: explicit provenance, never a photo by default, and a stable fallb
   assert.match(missing, /Artwork to come/);
   assert.match(missing, /aspect-ratio:4 \/ 3/, 'fixed size: no layout shift');
   assert.equal(missing.includes('Photo ·'), false, 'no credit for artwork that is not there');
-  for (const t of ['duotone', 'halftone'] as const) assert.match(html(h(g.Artwork, { art, alt: 'x', treatment: t })), new RegExp(`art-${t}`));
+  for (const t of ['duotone', 'halftone'] as const) assert.match(html(h(g.Artwork, { art, alt: 'x', treatment: t, credit: { kind: 'illustration', by: 'Y' } })), new RegExp(`art-${t}`));
+  // Displayed artwork must be credited: uncredited or blank-credited artwork is not shown.
+  for (const credit of [undefined, { kind: 'illustration', by: '  ' }, { kind: 'stock', by: 'Z' }]) {
+    for (const media of [{ art }, { src: 'a.jpg' }]) {
+      const m = html(h(g.Artwork, { ...media, alt: 'Uncredited', credit } as never));
+      assert.match(m, /data-artwork="missing"/, JSON.stringify({ credit, media: Object.keys(media) }));
+      assert.equal(/<img|role="img" aria-label="Uncredited"/.test(m), false);
+    }
+  }
+  assert.equal(g.canDisplay({ art, credit: { kind: 'photo', by: 'P' } }), true);
+  assert.equal(g.canDisplay({ src: 'a.jpg' }), false);
+  // Images get a fresh element per src, so a replacement after a failure is loaded anew.
+  assert.match(read('src/components/graphic/Artwork.tsx'), /<img key=\{src\}/);
+  assert.match(read('src/components/graphic/Artwork.tsx'), /const failed = Boolean\(src\) && failedSrc === src;/);
+  // The compile-time check exists (tsc fails if credit ever becomes optional).
+  assert.match(read('src/components/graphic/Artwork.typecheck.ts'), /@ts-expect-error displayed inline artwork must be credited/);
   assert.match(html(h(g.Artwork, { art, alt: 'x', treatment: 'cutout', credit: { kind: 'illustration', by: 'Y' } })), /^<figure class="surface-cream art-cutout/);
 });
 
@@ -140,6 +168,18 @@ test('the style guide renders every demonstration with sound structure', () => {
   assert.match(m, /Reduced motion is/);
   // Sample copy only: no edition content is published here.
   assert.equal(/issue\s*0?9/i.test(m), false);
+});
+
+test('annotations never carry unique essential information', () => {
+  const m = html(h(StyleGuide));
+  // font-hand only appears inside <Annotation>, which is always decorative (tested above).
+  const notes = [...m.matchAll(/<span class="font-hand[^"]*">([^<]+)<\/span>/g)].map((x) => x[1]);
+  assert.ok(notes.length >= 5, notes.join(', '));
+  // Purely expressive notes may stand alone; anything practical must also be in the real text.
+  const EXPRESSIVE = new Set(['start here', 'look here', 'not essential', 'worth the detour']);
+  const visibleText = m.replace(/<span class="font-hand[^"]*">[^<]+<\/span>/g, '').replace(/<[^>]+>/g, ' ');
+  for (const n of notes) if (!EXPRESSIVE.has(n)) assert.ok(visibleText.toLowerCase().includes(n.toLowerCase()), `annotation "${n}" must repeat information found in the text`);
+  assert.ok(notes.includes('bring cash'));
 });
 
 test('new components use semantic, surface-aware tokens (no fixed Field Guide color utilities)', () => {

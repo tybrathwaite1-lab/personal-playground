@@ -95,8 +95,13 @@ test('surface-aware controls (.ui-*) keep every state accessible on every surfac
       ['hover text', contrast(fg, over(fg, 0.1, bg)), 4.5],
       // Hover strengthens the boundary to fg (the control token alone can dip below 3:1 on the wash).
       ['hover boundary', contrast(fg, over(fg, 0.1, bg)), 3],
-      // Pressed chip: surface text on fg.
+      // Pressed chip: surface text on fg, at rest and on hover (fg at 90%); its fill against the
+      // surface, and the focus ring around it (drawn with a 2px gap on the surface).
       ['pressed chip text', contrast(bg, fg), 4.5],
+      ['pressed chip hover text', contrast(bg, over(fg, 0.9, bg)), 4.5],
+      ['pressed chip fill vs surface', contrast(fg, bg), 3],
+      ['pressed chip hover fill vs surface', contrast(over(fg, 0.9, bg), bg), 3],
+      ['focus ring vs surface', contrast(resolve(v.get('focus')!, v), bg), 3],
       // Placeholder text uses fg-muted on the surface.
       ['placeholder', contrast(resolve(v.get('fg-muted')!, v), bg), 4.5],
     ];

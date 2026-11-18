@@ -96,7 +96,7 @@
     @apply inline-flex min-h-[44px] items-center gap-1.5 border border-control px-3 text-sm text-fg transition-colors hover:border-fg hover:bg-fg/10;
   }
   .ui-chip[aria-pressed='true'] {
-    @apply border-fg bg-fg text-surface;
+    @apply border-fg bg-fg text-surface hover:bg-fg/90;
   }
   .ui-input {
     @apply w-full border border-control bg-surface px-3 py-2.5 text-base text-fg placeholder:text-fg-muted focus:border-fg;
@@ -161,6 +161,21 @@
   /* Missing artwork: a quiet hatch in the surface's own rule color. */
   .art-missing {
     background-image: repeating-linear-gradient(-45deg, transparent 0 10px, rgb(var(--rule)) 10px 11px);
+  }
+  /* Cover headline: sized from the width of its own column (container query units), so the
+     longest word always fits on one line at any width; viewport units are the fallback. The
+     rem floor and ceiling keep it zoom-aware and within the cover treatment's range. */
+  .cover-container {
+    container-type: inline-size;
+  }
+  .cover-headline {
+    font-size: clamp(3rem, 11vw, 10rem);
+    line-height: 0.85;
+  }
+  @supports (width: 1cqi) {
+    .cover-headline {
+      font-size: clamp(3rem, 25cqi, 10rem);
+    }
   }
   /* Static focus preview (the same ring :focus-visible draws), for documentation only. */
   .focus-preview {

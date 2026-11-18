@@ -33,6 +33,12 @@ const opt = (n: string) => {
 const OUT = join(ROOT, opt('out') ?? 'styleguide-out');
 const DIST = join(ROOT, opt('dist') ?? 'dist');
 
+interface Check {
+  name: string;
+  pass: boolean;
+  detail: string;
+}
+
 interface WidthResult {
   width: number;
   files: string[];
@@ -42,6 +48,10 @@ interface WidthResult {
   axe: { id: string; impact: string | null; nodes: number; targets: string[] }[];
   keyboard: KeyCheck[];
   focus: { name: string; pass: boolean; detail: string }[];
+  /** Activated in the browser: skip link, internal links, stray fragments, artwork recovery. */
+  navigation: Check[];
+  /** Measured in the browser: rendered colors of control states (hover, pressed, focus). */
+  states: Check[];
   decor: { total: number; exposed: number };
   fonts: { caveatLoaded: boolean; caveatRequests: { url: string; bytes: number }[] };
 }
@@ -149,7 +159,9 @@ async function capture(browser: Browser, origin: string, width: number, blocked:
     const form = el.locator('xpath=ancestor::*[@data-surface][1]');
     await shot(`focus-${label}`, (path) => form.screenshot({ path, type: 'jpeg', quality: 80 }));
   }
+  const states = await controlStates(page);
   await ctx.close();
+  const navigation = await navigationChecks(browser, origin, width, blocked);
   return {
     width,
     files,
@@ -159,9 +171,220 @@ async function capture(browser: Browser, origin: string, width: number, blocked:
     axe,
     keyboard,
     focus,
+    navigation,
+    states,
     decor,
     fonts: { caveatLoaded, caveatRequests: fontRequests },
   };
+}
+
+/** Where the page is: route hash, whether the style guide is rendered, and what has focus. */
+async function where(page: Page) {
+  return page.evaluate(() => ({
+    hash: location.hash,
+    guide: document.querySelector('h1')?.textContent === 'Style guide',
+    focused: document.activeElement?.id ?? '',
+    title: document.title,
+  }));
+}
+
+/**
+ * Activate (not just focus) the skip link and every internal link, by keyboard and pointer, and
+ * check the route, the page, focus and scroll; then a stray fragment, the app's own skip link,
+ * and the failed-image recovery.
+ */
+async function navigationChecks(browser: Browser, origin: string, width: number, blocked: Set<string>): Promise<Check[]> {
+  const checks: Check[] = [];
+  const ctx = await newContext(browser, origin, width, 'reduce', blocked);
+  const { page } = await open(ctx, origin, '#/styleguide');
+
+  // Skip link: Tab to it, press Enter.
+  await page.keyboard.press('Tab');
+  const first = await page.evaluate(() => (document.activeElement as HTMLAnchorElement | null)?.dataset.inPageLink ?? '');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(200);
+  let w = await where(page);
+  checks.push({
+    name: 'Skip link (keyboard Enter) moves focus to the content and keeps the route',
+    pass: first === 'sg-main' && w.hash === '#/styleguide' && w.guide && w.focused === 'sg-main',
+    detail: `first stop ${first || 'none'} → hash ${w.hash}, style guide ${w.guide ? 'shown' : 'GONE'}, focus #${w.focused}`,
+  });
+
+  // Every internal link: clicked, and the first one also by keyboard.
+  const links = [...new Set(await page.$$eval('a[data-in-page-link]:not([data-in-page-link="sg-main"])', (as) => as.map((a) => (a as HTMLElement).dataset.inPageLink!)))];
+  for (const [i, to] of links.entries()) {
+    for (const how of i === 0 ? (['click', 'Enter'] as const) : (['click'] as const)) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const link = page.locator(`a[data-in-page-link="${to}"]`).first();
+      if (how === 'click') await link.click();
+      else {
+        await link.focus();
+        await page.keyboard.press('Enter');
+      }
+      await page.waitForTimeout(200);
+      w = await where(page);
+      const top = await page.evaluate((id) => document.getElementById(id)?.getBoundingClientRect().top ?? NaN, to);
+      checks.push({
+        name: `Internal link to #${to} (${how})`,
+        pass: w.hash === '#/styleguide' && w.guide && w.focused === to && top >= -2 && top < (WIDTHS[width] ?? 800),
+        detail: `hash ${w.hash}, style guide ${w.guide ? 'shown' : 'GONE'}, focus #${w.focused}, target top ${Math.round(top)}px`,
+      });
+    }
+  }
+  if (links.length < 3) checks.push({ name: 'Internal links found', pass: false, detail: `${links.length}` });
+
+  // A stray bare fragment (e.g. a link's default navigation) must not replace the route.
+  await page.evaluate(() => {
+    location.hash = '#sg-controls';
+  });
+  await page.waitForTimeout(200);
+  w = await where(page);
+  checks.push({ name: 'A bare #fragment keeps the style guide', pass: w.guide, detail: `hash ${w.hash}, style guide ${w.guide ? 'shown' : 'GONE'}` });
+
+  // Failed image → replacement recovers.
+  await page.evaluate(() => {
+    location.hash = '#/styleguide';
+  });
+  await page.waitForTimeout(200);
+  const demo = page.locator('[data-demo="artwork-recovery"]');
+  await demo.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  const before = await demo.evaluate((d) => ({ missing: Boolean(d.querySelector('[data-artwork="missing"]')), img: Boolean(d.querySelector('img')) }));
+  await demo.getByRole('button', { name: 'Load a replacement' }).click();
+  await page.waitForFunction(() => {
+    const img = document.querySelector('[data-demo="artwork-recovery"] img') as HTMLImageElement | null;
+    return Boolean(img && img.complete && img.naturalWidth > 0);
+  }, undefined, { timeout: 5000 }).catch(() => undefined);
+  const after = await demo.evaluate((d) => {
+    const img = d.querySelector('img') as HTMLImageElement | null;
+    return { missing: Boolean(d.querySelector('[data-artwork="missing"]')), loaded: Boolean(img && img.complete && img.naturalWidth > 0), credit: d.querySelector('figcaption')?.textContent ?? '' };
+  });
+  checks.push({
+    name: 'A failed image shows the fallback, then recovers when the source is replaced',
+    pass: before.missing && !before.img && !after.missing && after.loaded && /Illustration · /.test(after.credit),
+    detail: `before: ${before.missing ? 'fallback' : 'no fallback'}; after: ${after.loaded ? 'image loaded' : 'NOT loaded'}, ${after.missing ? 'fallback still shown' : 'fallback gone'}, caption "${after.credit}"`,
+  });
+  await ctx.close();
+
+  // The app's own skip link keeps the current page (same router guard).
+  const app = await newContext(browser, origin, width, 'reduce', blocked);
+  const { page: p2 } = await open(app, origin, '#/discover');
+  await p2.keyboard.press('Tab');
+  await p2.keyboard.press('Enter');
+  await p2.waitForTimeout(200);
+  const a = await p2.evaluate(() => ({ title: document.title, h1: document.querySelector('main h1')?.textContent ?? '', hash: location.hash }));
+  checks.push({ name: 'App skip link (#main) keeps the current page', pass: /^Discover/.test(a.title) && /discovery engine/i.test(a.h1), detail: `hash ${a.hash}, title "${a.title}", h1 "${a.h1}"` });
+  await app.close();
+  return checks;
+}
+
+/**
+ * Rendered colors of control states, measured in the browser: hovered and pressed chips,
+ * primary buttons, and focus rings, composited over their surface.
+ */
+async function controlStates(page: Page): Promise<Check[]> {
+  const checks: Check[] = [];
+  const forms = await page.$$eval('form[data-surface]', (fs) => fs.map((f) => f.getAttribute('data-surface')!));
+  const measure = (selector: string) =>
+    page.locator(selector).evaluate((el) => {
+      const parse = (c: string) => (c.match(/[\d.]+/g) ?? ['0', '0', '0', '1']).map(Number) as number[];
+      const surfaceEl = el.closest('[data-surface]')!;
+      const bgS = parse(getComputedStyle(surfaceEl).backgroundColor);
+      const s = getComputedStyle(el);
+      const bg = parse(s.backgroundColor);
+      const a = bg.length > 3 ? bg[3] : 1;
+      const fill = [0, 1, 2].map((i) => bg[i] * a + bgS[i] * (1 - a));
+      const lum = (c: number[]) => {
+        const [r, g, b] = c.slice(0, 3).map((x) => {
+          const v = x / 255;
+          return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const cr = (x: number[], y: number[]) => {
+        const [h, l] = [lum(x), lum(y)].sort((p, q) => q - p);
+        return (h + 0.05) / (l + 0.05);
+      };
+      const text = parse(s.color);
+      const ring = parse(s.outlineColor);
+      return {
+        text: cr(text, fill),
+        fillVsSurface: cr(fill, bgS),
+        ring: s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2 ? cr(ring, bgS) : 0,
+      };
+    });
+  for (const t of forms) {
+    const scope = `form[data-surface="${t}"]`;
+    const pressed = `${scope} .ui-chip[aria-pressed="true"]`;
+    const plain = `${scope} .ui-chip[aria-pressed="false"]`;
+    const primary = `${scope} .ui-button-primary`;
+    await page.mouse.move(0, 0);
+    const pressedRest = await measure(pressed);
+    await page.locator(pressed).hover();
+    await page.waitForTimeout(250);
+    const pressedHover = await measure(pressed);
+    await page.locator(plain).first().hover();
+    await page.waitForTimeout(250);
+    const plainHover = await measure(`${plain} >> nth=0`);
+    await page.locator(primary).hover();
+    await page.waitForTimeout(250);
+    const primaryHover = await measure(primary);
+    await page.mouse.move(0, 0);
+    await page.keyboard.press('Shift');
+    await page.locator(pressed).focus();
+    await page.waitForTimeout(250);
+    const pressedFocus = await measure(pressed);
+    const f = (n: number) => n.toFixed(2);
+    checks.push(
+      { name: `${t}: pressed chip text (rest / hover)`, pass: pressedRest.text >= 4.5 && pressedHover.text >= 4.5, detail: `${f(pressedRest.text)} / ${f(pressedHover.text)}:1` },
+      { name: `${t}: pressed chip fill vs surface (rest / hover)`, pass: pressedRest.fillVsSurface >= 3 && pressedHover.fillVsSurface >= 3, detail: `${f(pressedRest.fillVsSurface)} / ${f(pressedHover.fillVsSurface)}:1` },
+      { name: `${t}: pressed chip focus ring vs surface`, pass: pressedFocus.ring >= 3 && pressedFocus.text >= 4.5, detail: `ring ${f(pressedFocus.ring)}:1, text ${f(pressedFocus.text)}:1` },
+      { name: `${t}: chip hover text`, pass: plainHover.text >= 4.5, detail: `${f(plainHover.text)}:1` },
+      { name: `${t}: primary button hover text`, pass: primaryHover.text >= 4.5, detail: `${f(primaryHover.text)}:1` },
+    );
+  }
+  if (forms.length < 4) checks.push({ name: 'Control surfaces found', pass: false, detail: `${forms.length}` });
+  return checks;
+}
+
+/** The cover headline at narrow, intermediate and wide widths: words never break, ≤ 2 lines. */
+async function coverChecks(browser: Browser, origin: string, blocked: Set<string>) {
+  const out: { width: number; file: string; fontSize: string; lines: number; brokenWords: string[]; overflow: boolean; pass: boolean }[] = [];
+  await mkdir(join(OUT, 'cover'), { recursive: true });
+  for (const width of [320, 390, 768, 1024, 1280, 1440]) {
+    const ctx = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce', serviceWorkers: 'block' });
+    await ctx.route('**/*', (route) => {
+      const url = new URL(route.request().url());
+      if (url.origin === origin) return route.continue();
+      blocked.add(url.host);
+      return route.abort('blockedbyclient');
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${origin}${BASE}#/styleguide`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await hideBodyGrain(page);
+    const r = await page.evaluate(() => {
+      const h = document.getElementById('sg-cover-title')!;
+      const node = h.firstChild as Text;
+      const words: string[] = [];
+      const tops = new Set<number>();
+      const text = node.textContent ?? '';
+      for (const m of text.matchAll(/\S+/g)) {
+        const range = document.createRange();
+        range.setStart(node, m.index!);
+        range.setEnd(node, m.index! + m[0].length);
+        const rects = [...range.getClientRects()].filter((x) => x.width > 0);
+        if (new Set(rects.map((x) => Math.round(x.top))).size > 1) words.push(m[0]);
+        rects.forEach((x) => tops.add(Math.round(x.top)));
+      }
+      return { fontSize: getComputedStyle(h).fontSize, lines: tops.size, brokenWords: words, overflow: h.scrollWidth > h.clientWidth + 1 };
+    });
+    const file = `cover/${width}.jpg`;
+    await page.locator('[aria-labelledby="sg-cover-title"]').screenshot({ path: join(OUT, file), type: 'jpeg', quality: 75 });
+    out.push({ width, file, ...r, pass: r.brokenWords.length === 0 && !r.overflow && r.lines <= 2 });
+    await ctx.close();
+  }
+  return out;
 }
 
 async function reducedMotion(browser: Browser, origin: string, width: number, blocked: Set<string>) {
@@ -234,8 +457,15 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
     L.push(`- Decorative layers: ${w.decor.total}, exposed to assistive tech or pointer: ${w.decor.exposed}`);
     L.push(`- Caveat loaded on the style guide: ${w.fonts.caveatLoaded ? 'yes' : 'no'} (${w.fonts.caveatRequests.map((f) => `${f.url} ${f.bytes} B`).join(', ') || 'no request'})`);
     for (const k of [...w.keyboard, ...w.focus]) L.push(`- ${k.pass ? '✅' : '❌'} ${k.name}: ${k.detail}`);
+    L.push('', '**Activated in the browser**', '');
+    for (const k of w.navigation) L.push(`- ${k.pass ? '✅' : '❌'} ${k.name}: ${k.detail}`);
+    L.push('', '**Control states, measured**', '');
+    for (const k of w.states) L.push(`- ${k.pass ? '✅' : '❌'} ${k.name}: ${k.detail}`);
     L.push('', `Screenshots: ${w.files.map((f) => `[${f}](${f})`).join(' · ')}`, '');
   }
+  L.push('## Cover headline', '');
+  for (const c of r.cover) L.push(`- ${c.pass ? '✅' : '❌'} ${c.width}px: ${c.fontSize}, ${c.lines} line(s), ${c.brokenWords.length ? `BROKEN: ${c.brokenWords.join(', ')}` : 'no broken words'}${c.overflow ? ', OVERFLOW' : ''} ([${c.file}](${c.file}))`);
+  L.push('');
   L.push('## Reduced motion', '');
   for (const m of r.reducedMotion) L.push(`- ${m.pass ? '✅' : '❌'} ${m.width}px: "${m.status}", stamp animation-duration ${m.animationDuration} ([${m.file}](${m.file}))`);
   L.push('', '## Fonts and bundle', '');
@@ -261,6 +491,7 @@ async function run() {
     const motion = [];
     for (const w of Object.keys(WIDTHS).map(Number)) motion.push(await reducedMotion(browser, origin, w, blocked));
     const home = await homeLoadsNoCaveat(browser, origin, blocked);
+    const cover = await coverChecks(browser, origin, blocked);
     const b = await bundle();
     const fontOk = b.caveatLatinBold.length === 1 && b.caveatLatinBold.every((c) => c.bytes <= FONT_BUDGET);
     const findings =
@@ -272,15 +503,16 @@ async function run() {
           w.pageErrors.length +
           w.decor.exposed +
           (w.fonts.caveatLoaded ? 0 : 1) +
-          [...w.keyboard, ...w.focus].filter((k) => !k.pass).length,
+          [...w.keyboard, ...w.focus, ...w.navigation, ...w.states].filter((k) => !k.pass).length,
         0,
       ) +
       motion.filter((m) => !m.pass).length +
+      cover.filter((c) => !c.pass).length +
       (home.pass ? 0 : 1) +
       (b.entryReferencesCaveat ? 1 : 0) +
       (b.entryContainsStyleGuide ? 1 : 0) +
       (fontOk ? 0 : 1);
-    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, home, bundle: b, blockedHosts: [...blocked].sort() };
+    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, home, bundle: b, blockedHosts: [...blocked].sort() };
   } finally {
     await browser.close();
     server.close();
