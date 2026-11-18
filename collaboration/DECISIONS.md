@@ -98,3 +98,17 @@ Context: Claude's read-only assessment of the approved creative direction (share
 - **Caveat Bold** (`@fontsource/caveat` 5.3.0, OFL-1.1) is the single handwritten face: decorative only, Latin 700, loaded only with the `Annotation` component.
 - **Artwork credits are always explicit** (illustration, AI-assisted illustration, or photo). AI-assisted artwork is never presented as a photograph.
 - **Preview routes** (e.g. `#/styleguide`) live outside `ROUTES` and navigation, and are code-split. Their screenshots come from a separate read-only evidence workflow, so the standard screenshot matrix and the publisher's security policy stay unchanged.
+
+## 2026-11-18 — PR 2 accepted; browser-based PR previews (direction only)
+- **PR #29 accepted and shipped:** ChatGPT approved it, the owner accepted `2115aca` with zero manual defects, and it was merged as `b8b39bc` and verified in production.
+- **Manual acceptance without a local toolchain:** use a GitHub Codespace on the exact PR commit. Confirm the commit with `git rev-parse HEAD`, run the Vite development server (no service worker in development builds), keep the forwarded port **Private**, and never connect Sync.
+- **Browser-based PR previews:** a gated Cloudflare Pages upload with Cloudflare Access is **approved in principle, with revisions**, and **deferred**. No infrastructure, secrets, accounts or workflows yet. Requirements before implementation:
+  - Verify Access protects the immutable deployment addresses, branch aliases and the root `pages.dev` domain.
+  - Reject `_worker.js`, Functions, deployment configuration files, archive traversal and symlinks in uploaded output.
+  - Run Wrangler only from a trusted, pinned environment.
+  - Reconcile the push-based Check and Visual workflows with preview eligibility, and handle races in workflow completion order.
+  - Verify exact-commit artifact provenance and current PR eligibility before publishing.
+  - Disable Sync in the underlying implementation, and test that no Sync requests occur.
+  - Document that the API token's scope covers the whole Cloudflare account.
+  - Evaluate owner-triggered previews as a simpler first iteration.
+  - Include the strict style-guide checks in eligibility where applicable.

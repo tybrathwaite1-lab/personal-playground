@@ -1,6 +1,31 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 2: graphic primitives and the style guide)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (PR #29 closeout)
+
+- **Accepted and merged:**
+  - ChatGPT's final recommendation was APPROVED.
+  - The owner completed manual acceptance against `2115aca` with zero defects: desktop, in-page navigation, 200% and 400% zoom, keyboard, artwork recovery, macOS Safari 9/9, iPhone Safari (physical device) 9/9, reduced motion 5/5, and Home/Discover/Pulse regressions 9/9.
+  - Acceptance used a private-port GitHub Codespace running the Vite development server, so no service worker was installed and Sync was never connected.
+- **Pre-merge check:** the PR head was still `2115aca`, and Check (44397305587), Visual (44397305389) and Style guide (44397305352) were all green.
+- **Merge:** merge commit `b8b39bc` (same strategy as #26–#28). Its tree is identical to `2115aca` (`git diff` is empty).
+- **Production:**
+  - Deploy run 44410662810 passed its build (208/208 tests), deploy and smoke jobs. The smoke check found deployed commit `b8b39bc` and bundle `index-BCRZKX9R.js`.
+  - Visual check, the style-guide evidence run and the screenshot publisher (44412005691) also passed on `main`.
+- **Post-deploy browser smoke test (live site, desktop Chrome):**
+  - Home, Discover, Pulse and `#/styleguide` render with no script errors and no horizontal overflow.
+  - The skip link is the new `InPageLink`; Pulse's "Sources" link is present.
+  - The style-guide chunk and the Caveat font load only when `#/styleguide` is visited.
+  - The production service worker (`pp-v3`) is active, controls the page and serves the new build.
+  - No stored app or Sync data was read.
+- **Observations (not regressions):**
+  - The Pulse source SPAA returned HTTP 403 during the deploy build; its listings were carried over (6/7 sources).
+  - The `pp-v3` cache keeps hashed assets from earlier builds until `VERSION` is bumped. This is existing behavior.
+- **Evidence branch:** `evidence/pr-2-styleguide` can now be deleted (Claude can't delete branches).
+- **Preview infrastructure:** approved in principle with revisions (see DECISIONS). Deferred, nothing built.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 2: graphic primitives and the style guide)
 
 - **PR #28** (tokens and typography): approved at `301479e`, merged as `c2a5974`.
 - **PR 2 (this):**
