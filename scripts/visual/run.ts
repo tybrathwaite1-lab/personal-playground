@@ -93,6 +93,7 @@ interface Shot {
   route: string;
   width: number;
   file: string;
+  fold: string;
   overflowPx: number;
   offenders: string[];
   axe?: AxeViolation[];
@@ -117,6 +118,16 @@ export async function measureOverflow(page: Page): Promise<{ overflowPx: number;
       }
     }
     return { overflowPx, offenders };
+  });
+}
+
+/** Hide position:fixed elements and the body grain pseudo-element (full-page screenshots only). */
+async function hideFixedOverlays(page: Page): Promise<void> {
+  await page.addStyleTag({ content: 'body::before { display: none !important; }' });
+  await page.evaluate(() => {
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
+      if (getComputedStyle(el).position === 'fixed') el.style.visibility = 'hidden';
+    }
   });
 }
 
@@ -183,13 +194,14 @@ function markdown(r: Report): string {
   lines.push(`# Visual check: ${r.branch ?? 'local'} @ ${r.commit?.slice(0, 7) ?? 'working tree'}`, '');
   lines.push(`Frozen time ${r.frozenTime} (New York) · synthetic Pulse and weather fixtures · ${r.shots.length} screenshots · generated ${r.generatedAt}`, '');
   lines.push(`**${bad.length ? `${bad.length} screenshot(s) with findings` : 'No findings'}** · overflow: ${r.shots.filter((s) => s.overflowPx > 1).length} · page errors: ${r.shots.filter((s) => s.pageErrors.length).length} · serious/critical accessibility issues: ${r.axeSummary.length} rule(s)${r.axeAvailable ? '' : ' (axe not run)'}`, '');
+  lines.push('Thumbnails are full-page shots with fixed overlays (bottom navigation, film grain) hidden; **fold** links show the first screen exactly as rendered, fixed navigation included.', '');
   lines.push(`| Route | ${r.widths.map((w) => `${w}px`).join(' | ')} |`, `|---|${r.widths.map(() => '---').join('|')}|`);
   for (const route of r.routes) {
     const cells = r.widths.map((w) => {
       const s = r.shots.find((x) => x.route === route && x.width === w);
       if (!s) return '—';
       const mark = s.ok ? '' : ' ⚠️';
-      return `[<img src="${s.file}" width="120" alt="${route} at ${w}px">](${s.file})${mark}`;
+      return `[<img src="${s.file}" width="120" alt="${route} at ${w}px">](${s.file}) [fold](${s.fold})${mark}`;
     });
     lines.push(`| \`#/${route === 'home' ? '' : route}\` | ${cells.join(' | ')} |`);
   }
@@ -251,12 +263,19 @@ async function main() {
       const ctx = await newContext(browser, origin, width, blocked);
       for (const route of routes) {
         const { page, errors } = await openRoute(ctx, origin, route);
-        const file = `${width}/${route}.jpg`;
-        await page.screenshot({ path: join(out, file), fullPage: true, type: 'jpeg', quality: 70 });
+        // Checks run on the untouched page.
         const { overflowPx, offenders } = await measureOverflow(page);
         const axeResult = axe && AXE_WIDTHS.includes(width) ? await axe(page) : undefined;
+        // "Fold": exactly what the screen shows, fixed navigation included.
+        const fold = `${width}/${route}-fold.jpg`;
+        await page.screenshot({ path: join(out, fold), type: 'jpeg', quality: 70 });
+        // Full page: fixed overlays (bottom nav, grain) would otherwise be painted where the screen
+        // ended and cover content, so they're hidden for this shot only.
+        await hideFixedOverlays(page);
+        const file = `${width}/${route}.jpg`;
+        await page.screenshot({ path: join(out, file), fullPage: true, type: 'jpeg', quality: 70 });
         const ok = overflowPx <= 1 && !errors.length && !(axeResult && axeResult.length);
-        shots.push({ route, width, file, overflowPx, offenders, axe: axeResult, pageErrors: errors, ok });
+        shots.push({ route, width, file, fold, overflowPx, offenders, axe: axeResult, pageErrors: errors, ok });
         console.log(`${ok ? '✓' : '⚠'} ${String(width).padStart(4)}px #/${route}${overflowPx > 1 ? ` overflow ${overflowPx}px` : ''}${errors.length ? ` errors ${errors.length}` : ''}${axeResult?.length ? ` axe ${axeResult.map((a) => a.id).join(',')}` : ''}`);
         await page.close();
       }
