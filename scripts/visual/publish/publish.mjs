@@ -44,6 +44,7 @@ import {
   checkRun,
   eligibility,
   folderFor,
+  matrixGaps,
   metaJson,
   parseMeta,
   renderIndex,
@@ -299,6 +300,9 @@ export async function main() {
   const art = selectArtifact(await api(`${apiBase}/repos/${repo}/actions/runs/${runId}/artifacts?per_page=100`, token), { runId, headSha });
   const zip = await download(`${apiBase}/repos/${repo}/actions/artifacts/${art.id}/zip`, token);
   const { files, report } = validateContents(readZip(zip, ZIP_LIMITS), { headSha, headBranch });
+  // Only a complete standard run is published; partial diagnostic runs stay artifact-only.
+  const gaps = matrixGaps(report);
+  if (gaps.length) return notPublished('partial', `${label} is not a complete standard capture (${gaps.join('; ')}). Its artifact remains downloadable from the run.`);
 
   const work = mkdtempSync(join(tmpdir(), 'visual-results-'));
   try {
@@ -319,7 +323,13 @@ export async function main() {
         /* reserved or unusable names have no folder */
       }
     }
-    const keep = [...existing.values()].filter((f) => f.meta.folder !== folder && (live.has(f.meta.folder) || f.meta.folder === folderFor(defaultBranch)));
+    const keep = [...existing.values()].filter((f) => {
+      if (f.meta.folder === folder || !(live.has(f.meta.folder) || f.meta.folder === folderFor(defaultBranch))) return false;
+      // Valid but no longer a complete standard run (e.g. the standard route set changed): dropped, not carried.
+      const g = matrixGaps(f.report);
+      if (g.length) summary(`Dropped \`${f.meta.folder}\`: no longer a complete standard capture (${g.join('; ')}).`);
+      return g.length === 0;
+    });
     const now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
     const meta = { branch: headBranch, folder, sha: headSha, runId, publishedAt: now };
     /** @type {string[]} */

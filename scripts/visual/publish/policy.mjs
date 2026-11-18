@@ -17,6 +17,22 @@ export const WIDTHS = [320, 390, 768, 1280, 1440];
 /** Widths at which the harness runs axe and the keyboard checks (scripts/visual/run.ts). */
 export const AXE_WIDTHS = [390, 1280];
 export const KEY_WIDTHS = [390, 1280];
+/**
+ * The standard capture matrix. Only a complete standard run is published; partial or
+ * non-standard diagnostic runs stay artifact-only. Kept in step with scripts/visual/run.ts and
+ * src/hooks/useRoute.ts by tests (a route change must update this list in the same PR).
+ */
+export const STANDARD_ROUTES = ['home', 'discover', 'plan', 'pulse', 'drop', 'interests', 'local', 'digital', 'rediscover', 'collection', 'notes', 'backup'];
+export const KEYBOARD_CHECKS = [
+  'Tab moves focus into the page',
+  'First stop is a skip link to existing content',
+  'Every stop is an interactive element',
+  'Focus keeps progressing (no repeats or traps)',
+  'Focused elements are scrolled into view',
+  'Focused elements show a focus indicator (outline or ring)',
+  'Shift+Tab returns to the previous stop',
+];
+export const STANDARD_STATES = ['states/menu-390.jpg', 'states/keyboard-focus-390.jpg', 'states/keyboard-focus-1280.jpg', 'states/unknown-route-1280.jpg'];
 export const LIMITS = {
   maxZipBytes: 80 * 1024 * 1024,
   maxEntries: 400,
@@ -331,6 +347,28 @@ export function parseReport(b, expected) {
 }
 
 /**
+ * Gaps between a (structurally valid) report and the standard capture matrix: every width,
+ * every route, the exact keyboard check set at each keyboard width, and every state record.
+ * Returns the reasons a run is not a complete standard run (empty = complete).
+ * @param {Report} r
+ */
+export function matrixGaps(r) {
+  const gaps = [];
+  const sameSet = (/** @type {unknown[]} */ a, /** @type {unknown[]} */ b) => a.length === b.length && new Set(a).size === a.length && b.every((x) => a.includes(x));
+  if (!sameSet(r.widths, WIDTHS)) gaps.push(`widths ${r.widths.join(',')} are not the standard ${WIDTHS.join(',')}`);
+  const missingRoutes = STANDARD_ROUTES.filter((x) => !r.routes.includes(x));
+  const extraRoutes = r.routes.filter((x) => !STANDARD_ROUTES.includes(x));
+  if (missingRoutes.length || extraRoutes.length) gaps.push(`routes differ from the standard set (missing: ${missingRoutes.join(',') || 'none'}; extra: ${extraRoutes.join(',') || 'none'})`);
+  for (const w of KEY_WIDTHS) {
+    const recs = r.keyboard.filter((k) => k.width === w);
+    if (recs.length !== 1 || !sameSet(recs[0].checks.map((c) => c.name), KEYBOARD_CHECKS)) gaps.push(`keyboard checks at ${w}px are not the complete standard set`);
+  }
+  if (r.keyboard.some((k) => !KEY_WIDTHS.includes(k.width))) gaps.push('unexpected keyboard widths');
+  if (!sameSet(r.states.map((x) => x.file), STANDARD_STATES)) gaps.push('state records are not the standard set');
+  return gaps;
+}
+
+/**
  * Validate every artifact file. The report must reference every screenshot and every
  * screenshot it references must be present (no orphans, no gaps). Returns the files to publish
  * (REPORT.md excluded: it is regenerated; report.json re-serialized from validated fields).
@@ -499,7 +537,7 @@ export function renderIndex(metas) {
     '# Visual check results',
     '',
     'Latest validated screenshot run per branch, published by the reviewed `visual-publish` workflow (default-branch code only).',
-    'Untrusted review material produced by branch code from synthetic fixtures and a frozen clock; no personal data. This branch is rewritten on every publish.',
+    'Untrusted review material produced by branch code. The harness uses synthetic fixtures, a frozen clock and no credentials; these are safeguards, not proof of what the pixels contain. This branch is rewritten on every publish.',
     '',
     '| Branch | Commit | Run | Report |',
     '|---|---|---|---|',

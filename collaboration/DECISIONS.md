@@ -54,3 +54,7 @@ Context: Claude's read-only assessment of the approved creative direction (share
 - **Fail closed on the results branch:** the existing `visual-results` content is re-validated on every publish and never checked out. Anything unexpected stops publishing, leaving the branch untouched. As a result, the **legacy `visual-results` branch must be deleted before activation** (it uses the old layout).
 - **Before activation, the owner applies the repository settings** in `collaboration/security/visual-publishing.md` (`main` ruleset, read-only default workflow permissions, fork-workflow approval, no Actions secrets) and **deletes the legacy branch**.
 - PR #26 stays separate from Sprint 02 work and is retargeted to `main` now that #25 has merged.
+
+## 2026-11-18 — Safe screenshot publisher, revision 3 (ChatGPT re-review of `19b4cfa`)
+- **Only complete standard captures are published:** all widths, the 12 app routes, the full keyboard check set and all state records. Partial or diagnostic runs stay artifact-only. **A change to the app's route list must update `STANDARD_ROUTES` in the same PR** (a test enforces this). Older published folders that no longer match are dropped rather than carried forward.
+- Synthetic fixtures and credential isolation are **safeguards, not proof** that published imagery contains no personal data. Screenshots remain untrusted review material.

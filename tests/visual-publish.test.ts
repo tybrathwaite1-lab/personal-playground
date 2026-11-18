@@ -12,6 +12,11 @@ import { ZipError, readZip, safeEntryName } from '../scripts/visual/publish/zip.
 import {
   AXE_WIDTHS,
   KEY_WIDTHS,
+  KEYBOARD_CHECKS,
+  STANDARD_ROUTES,
+  STANDARD_STATES,
+  WIDTHS,
+  matrixGaps,
   LIMITS,
   PolicyError,
   ZIP_LIMITS,
@@ -36,18 +41,21 @@ const rejects = (fn: () => unknown, re: RegExp, label = String(re)) =>
   assert.throws(fn, (e: Error) => (e instanceof ZipError || e instanceof PolicyError) && re.test(e.message), label);
 const EXP = { headSha: SHA, headBranch: BRANCH };
 const jpg = fakeJpeg(390);
+const FILES = 5 * 12 * 2 + 4 + 2;
 
 // ─── Archive structure ────────────────────────────────────────────────
 test('a valid artifact (deflated, stored, directories) is read and verified', () => {
   const files = readZip(goodArtifact(), ZIP_LIMITS);
-  assert.deepEqual([...files.keys()].sort(), ['390/home-fold.jpg', '390/home.jpg', 'REPORT.md', 'report.json', 'states/menu-390.jpg']);
+  const expectedNames = artifactEntries().filter((e) => !e.name.endsWith('/')).map((e) => e.name).sort();
+  assert.equal(expectedNames.length, 5 * 12 * 2 + 4 + 2, 'standard matrix: 120 screenshots, 4 states, report.json, REPORT.md');
+  assert.deepEqual([...files.keys()].sort(), expectedNames);
 });
 
 test('zip64 archives and data descriptors (with and without signature, 4- and 8-byte) are supported', () => {
-  assert.equal(readZip(goodArtifact({ zip64: true }), ZIP_LIMITS).size, 5);
+  assert.equal(readZip(goodArtifact({ zip64: true }), ZIP_LIMITS).size, FILES);
   const streamed = artifactEntries().map((s, i) => ({ ...s, descriptor: i % 2 ? true : ('nosig' as const) }));
-  assert.equal(readZip(makeZip(streamed), ZIP_LIMITS).size, 5);
-  assert.equal(readZip(makeZip(streamed.map((s) => ({ ...s, descriptor: true })), { zip64: true }), ZIP_LIMITS).size, 5);
+  assert.equal(readZip(makeZip(streamed), ZIP_LIMITS).size, FILES);
+  assert.equal(readZip(makeZip(streamed.map((s) => ({ ...s, descriptor: true })), { zip64: true }), ZIP_LIMITS).size, FILES);
 });
 
 test('symlink entries are rejected', () => {
@@ -131,7 +139,7 @@ test('zip64 structure: locator disks, record placement and count agreement are e
   rejects(() => readZip(makeZip(e, { zip64: true, zip64TotalDisks: 2 }), ZIP_LIMITS), /multi-disk/);
   rejects(() => readZip(makeZip(e, { zip64: true, zip64Gap: Buffer.alloc(8) }), ZIP_LIMITS), /misplaced|bad zip64 record|truncated/);
   rejects(() => readZip(makeZip(e, { zip64: true, zip64CountMismatch: true }), ZIP_LIMITS), /disagrees|inconsistent/);
-  assert.equal(readZip(makeZip(e, { zip64: true, zip64Unsaturated: true }), ZIP_LIMITS).size, 5, 'zip64 records beside agreeing real values (Python) are accepted');
+  assert.equal(readZip(makeZip(e, { zip64: true, zip64Unsaturated: true }), ZIP_LIMITS).size, FILES, 'zip64 records beside agreeing real values (Python) are accepted');
   rejects(() => readZip(makeZip(e, { zip64: true, zip64Unsaturated: true, zip64Gap: Buffer.alloc(4) }), ZIP_LIMITS), /misplaced|bad zip64|truncated|missing zip64/);
   // A saturated size with no zip64 field to resolve it.
   const z = makeZip([{ name: '390/home.jpg', data: jpg }]);
@@ -139,6 +147,16 @@ test('zip64 structure: locator disks, record placement and count agreement are e
   const bad = Buffer.from(z);
   bad.writeUInt32LE(0xffffffff, cd + 24);
   rejects(() => readZip(bad, ZIP_LIMITS), /saturated size without zip64/);
+});
+
+test('directory entries must be empty: method, size, CRC and decoded content', () => {
+  assert.equal(readZip(makeZip([{ name: '390/', method: 8 }, { name: '390/home.jpg', data: jpg }]), ZIP_LIMITS).size, 1, 'deflated empty directory accepted');
+  rejects(() => readZip(makeZip([{ name: '390/', method: 12 }]), ZIP_LIMITS), /unsupported compression/);
+  rejects(() => readZip(makeZip([{ name: '390/', crc: 0x1234 }]), ZIP_LIMITS), /directory with data/);
+  rejects(() => readZip(makeZip([{ name: '390/', data: Buffer.from('hidden'), method: 0, size: 0, crc: 0 }]), ZIP_LIMITS), /directory with data/);
+  rejects(() => readZip(makeZip([{ name: '390/', data: Buffer.from('hidden payload'), method: 8, size: 0, crc: 0 }]), ZIP_LIMITS), /directory with data/);
+  // A tiny payload that fits the size bound: only decoding reveals it.
+  rejects(() => readZip(makeZip([{ name: '390/', data: Buffer.from('x'), method: 8, size: 0, crc: 0 }]), ZIP_LIMITS), /directory with data/);
 });
 
 test('malformed and truncated archives are rejected', () => {
@@ -237,6 +255,21 @@ test('report.json: missing or malformed required data is an error, never a silen
   ];
   for (const [label, patch, re] of cases) rejects(() => parseReport(sampleReport({}, patch), EXP), re, label);
   rejects(() => parseReport(sampleReport({ widths: [768] }, (j) => (j.shots[0].axe = [])), EXP), /unexpected accessibility results/);
+});
+
+test('standard capture matrix: only complete runs qualify for publication', () => {
+  const full = parseReport(sampleReport(), EXP);
+  assert.deepEqual(matrixGaps(full), []);
+  const gaps = (o: Parameters<typeof sampleReport>[0], patch?: (j: any) => void) => matrixGaps(parseReport(sampleReport(o, patch), EXP)).join('; ');
+  assert.match(gaps({ widths: [390, 1280] }), /widths 390,1280 are not the standard/);
+  assert.match(gaps({ widths: [390] }), /widths .*keyboard checks at 1280px/);
+  assert.match(gaps({ routes: ['home', 'plan'] }), /missing: discover,pulse/);
+  assert.match(gaps({ routes: [...STANDARD_ROUTES, 'explore'] }), /extra: explore/);
+  assert.match(gaps({}, (j) => j.keyboard[0].checks.pop()), /keyboard checks at 390px are not the complete standard set/);
+  assert.match(gaps({}, (j) => (j.keyboard[1].checks[6] = { ...j.keyboard[1].checks[0] })), /keyboard checks at 1280px/);
+  assert.match(gaps({}, (j) => (j.keyboard[0].checks[0].name = 'Something else')), /keyboard checks at 390px/);
+  assert.match(gaps({}, (j) => j.states.pop()), /state records are not the standard set/);
+  assert.match(gaps({}, (j) => j.states.push({ name: 'x', file: 'states/extra-390.jpg', ok: true })), /state records/);
 });
 
 test('validateContents: screenshots and report must match exactly; branch REPORT.md dropped; report re-serialized', () => {
@@ -444,6 +477,17 @@ test('policy constants match the screenshot harness (run.ts)', () => {
   assert.deepEqual(arr('AXE_WIDTHS'), AXE_WIDTHS);
   assert.deepEqual(arr('KEY_WIDTHS'), KEY_WIDTHS);
   assert.deepEqual(arr('DEFAULT_WIDTHS'), [320, 390, 768, 1280, 1440]);
+});
+
+test('standard matrix constants match the harness and the app routes', () => {
+  const run = read('scripts/visual/run.ts');
+  const names = [...run.matchAll(/\bname: '([^']+)'/g)].map((m) => m[1]).filter((n) => !['Open menu', 'Unknown route falls back to Home'].includes(n));
+  assert.deepEqual(names, KEYBOARD_CHECKS, 'keyboard check names, in order');
+  const routes = /export const ROUTES[^=]*= \[([^\]]*)\]/.exec(read('src/hooks/useRoute.ts'))![1].match(/'([a-z0-9-]+)'/g)!.map((x) => x.slice(1, -1));
+  assert.deepEqual(routes, STANDARD_ROUTES, 'a route change must update STANDARD_ROUTES in the same PR');
+  for (const t of ['`states/menu-${w}.jpg`', '`states/keyboard-focus-${w}.jpg`', '`states/unknown-route-${w}.jpg`']) assert.ok(run.includes(t), t);
+  assert.deepEqual(STANDARD_STATES, ['states/menu-390.jpg', ...KEY_WIDTHS.map((w) => `states/keyboard-focus-${w}.jpg`), 'states/unknown-route-1280.jpg']);
+  assert.ok(WIDTHS.includes(390) && WIDTHS.includes(1280));
 });
 
 test('capture workflow (branch code) has no write access, secrets or credentials', () => {

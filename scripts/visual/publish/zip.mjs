@@ -15,6 +15,7 @@
  *  - entries: encryption, unknown flag bits, unknown compression, symlinks and any
  *    non-regular type are rejected; names must be safe relative ASCII paths, unique and
  *    allowlisted;
+ *  - directory entries must be empty (stored or deflated, size 0, CRC 0, decoding to nothing);
  *  - every local header must agree with the central directory (name, method, flags, and
  *    CRC/sizes, which may only be deferred to a data descriptor when flag bit 3 is set; a
  *    descriptor must then be present and agree too);
@@ -256,7 +257,8 @@ function directory(buf, limits) {
 
     if (isDir) {
       if (!limits.isAllowedDir(name)) throw new ZipError(`unexpected directory: ${name}`);
-      if (size !== 0 || compressedSize > 2) throw new ZipError(`directory with data: ${name}`);
+      if (method !== 0 && method !== 8) throw new ZipError(`unsupported compression (${method}): ${name}`);
+      if (size !== 0 || crc !== 0 || (method === 0 && compressedSize !== 0) || (method === 8 && compressedSize > 16)) throw new ZipError(`directory with data: ${name}`);
     } else {
       if (!limits.isAllowedPath(name)) throw new ZipError(`file not allowed: ${name}`);
       if (method !== 0 && method !== 8) throw new ZipError(`unsupported compression (${method}): ${name}`);
@@ -350,7 +352,19 @@ export function readZip(buf, limits) {
   /** @type {Map<string, Buffer>} */
   const files = new Map();
   for (const { e, start } of ranges) {
-    if (e.isDir) continue;
+    if (e.isDir) {
+      // A deflated directory entry must decode to nothing (the CRC of no data is 0).
+      if (e.method === 8) {
+        let d;
+        try {
+          d = inflateRawSync(buf.subarray(start, start + e.compressedSize), { maxOutputLength: 1 });
+        } catch {
+          throw new ZipError(`directory with data: ${e.name}`);
+        }
+        if (d.length) throw new ZipError(`directory with data: ${e.name}`);
+      }
+      continue;
+    }
     const raw = buf.subarray(start, start + e.compressedSize);
     let data;
     try {

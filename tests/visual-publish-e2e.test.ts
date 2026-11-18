@@ -182,7 +182,9 @@ test('publishes a valid artifact: validated files, regenerated report, metadata,
   try {
     const r = await publish(w, 'feature/x', good('feature/x'));
     assert.equal(r.code, 0, r.out);
-    assert.deepEqual(tree(w), ['README.md', `${FX}/390/home-fold.jpg`, `${FX}/390/home.jpg`, `${FX}/REPORT.md`, `${FX}/meta.json`, `${FX}/report.json`, `${FX}/states/menu-390.jpg`]);
+    const shots = artifactEntries().filter((e) => e.name.endsWith('.jpg')).map((e) => `${FX}/${e.name}`);
+    assert.equal(shots.length, 124);
+    assert.deepEqual(tree(w), ['README.md', `${FX}/REPORT.md`, `${FX}/meta.json`, `${FX}/report.json`, ...shots].sort());
     const report = show(w, `${FX}/REPORT.md`);
     assert.match(report, /reviewed `visual-publish` workflow/);
     assert.match(report, new RegExp(`Commit \`${w.sha['feature/x']}\` · run \\[77\\]`), 'full SHA and run id recorded');
@@ -268,6 +270,35 @@ test('stale publication: a moved branch or an older run never replaces newer res
     assert.equal(JSON.parse(show(w, `${FX}/meta.json`)).runId, '90');
     // A re-run attempt of the same run may republish.
     assert.equal((await publish(w, 'feature/x', good('feature/x'), { runId: 90 })).code, 0);
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test('partial diagnostic runs stay artifact-only; carried folders that are no longer standard are dropped', async () => {
+  const w = makeWorld();
+  try {
+    assert.equal((await publish(w, 'main', good('main'), { runId: 70 })).code, 0);
+    const previous = resultsOid(w);
+    const partial = (sha: string, id: number): Mock => ({ ...good('feature/x')(sha, id), zip: goodArtifact({ sha, branch: 'feature/x', widths: [390, 1280], routes: ['home'] }) });
+    let r = await publish(w, 'feature/x', partial);
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.summary, /Not published: .*not a complete standard capture \(widths 390,1280 are not the standard.*missing: discover/);
+    assert.equal(resultsOid(w), previous, 'previous results intact');
+    // A structurally valid main folder whose report lacks a keyboard check is not carried forward.
+    const entries = entriesOf(w).map((e) => {
+      if (e.path !== `${FMAIN}/report.json`) return e;
+      const rep = JSON.parse(show(w, e.path));
+      rep.keyboard[0].checks.pop();
+      return { ...e, oid: '', data: JSON.stringify(rep) };
+    });
+    g(w.origin, 'tag', 'valid-results', 'visual-results');
+    craftResults(w, entries.map((e: { mode: string; oid: string; path: string; data?: string }) => (e.oid ? { mode: e.mode, oid: e.oid, path: e.path } : { mode: e.mode, path: e.path, data: e.data })));
+    r = await publish(w, 'feature/x', good('feature/x'));
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.summary, new RegExp(`Dropped \`${FMAIN}\`: no longer a complete standard capture`));
+    assert.equal(tree(w).some((p) => p.startsWith(`${FMAIN}/`)), false);
+    assert.ok(tree(w).some((p) => p.startsWith(`${FX}/`)));
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }

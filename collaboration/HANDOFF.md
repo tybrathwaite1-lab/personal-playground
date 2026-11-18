@@ -1,6 +1,17 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (safe screenshot publisher, revision 2)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (safe screenshot publisher, revision 3)
+
+- **ChatGPT's re-review of `19b4cfa`:** both P1s are resolved. The remaining narrow corrections are done on PR #26:
+  - **P2, full standard matrix:** only complete standard runs are published (all widths, the 12 routes, the exact 7 keyboard checks at 390 and 1280 px, the 4 state records). Partial runs are "Not published" and stay artifact-only. Valid but no-longer-standard carried folders are dropped. Constants are tested against `run.ts` and `useRoute.ts`.
+  - **P3, ZIP directory entries:** stored or deflate only; size 0; CRC 0; deflated data must decode to nothing.
+  - **Wording:** categorical "no personal data" claims are removed. Synthetic fixtures and credential isolation are described as safeguards, not proof of pixel content.
+- **Evidence:** 34 unit and 9 end-to-end publisher tests; 43/43 mutation checks caught. CI and the head SHA are in the PR.
+- **No architectural changes.** Owner-side repository settings and deleting the legacy `visual-results` branch remain activation prerequisites. **Do not merge** before ChatGPT's final verification and the owner's approval.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (safe screenshot publisher, revision 2)
 
 - **ChatGPT's security review of `fc7000f`:** changes requested (two P1s, four P2s, P3 hardening). **All are addressed** on PR #26 (branch `visual/safe-publisher`). The PR is **retargeted to `main`** now that #25 has merged.
 - **Corrections:**

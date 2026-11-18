@@ -7,6 +7,7 @@
  */
 import { deflateRawSync } from 'node:zlib';
 import { crc32 } from '../../scripts/visual/publish/zip.mjs';
+import { KEYBOARD_CHECKS, STANDARD_ROUTES, STANDARD_STATES } from '../../scripts/visual/publish/policy.mjs';
 
 export interface ZipEntrySpec {
   name: string;
@@ -189,8 +190,9 @@ export interface ArtifactOpts {
 
 /** A complete report.json object as the harness writes it (extra harness-only fields included). */
 export function reportObject(o: ArtifactOpts = {}): Record<string, any> {
-  const widths = o.widths ?? [390];
-  const routes = o.routes ?? ['home'];
+  // Default: the complete standard matrix (390 first, so shots[0] is home@390 with axe results).
+  const widths = o.widths ?? [390, 1280, 320, 768, 1440];
+  const routes = o.routes ?? [...STANDARD_ROUTES];
   return {
     branch: o.branch ?? BRANCH,
     commit: o.sha ?? SHA,
@@ -212,9 +214,9 @@ export function reportObject(o: ArtifactOpts = {}): Record<string, any> {
         ok: false,
       })),
     ),
-    states: [{ name: 'Contents menu open (390px)', file: 'states/menu-390.jpg', ok: true }],
+    states: STANDARD_STATES.map((file) => ({ name: `State ${file}`, file, ok: true })),
     axeSummary: [],
-    keyboard: widths.filter((w) => [390, 1280].includes(w)).map((width) => ({ width, route: 'home', checks: [{ name: 'Tab moves focus into the page', pass: true, detail: 'a "Skip"' }], sequence: ['a'] })),
+    keyboard: widths.filter((w) => [390, 1280].includes(w)).map((width) => ({ width, route: 'home', checks: KEYBOARD_CHECKS.map((name) => ({ name, pass: true, detail: 'a "Skip"' })), sequence: ['a'] })),
     blockedHosts: [],
   };
 }
@@ -236,7 +238,8 @@ export function artifactEntries(o: ArtifactOpts = {}): ZipEntrySpec[] {
       specs.push({ name: `${w}/${route}-fold.jpg`, data: fakeJpeg(w, 844), method: 0 });
     }
   }
-  specs.push({ name: 'states/' }, { name: 'states/menu-390.jpg', data: fakeJpeg(390, 844) });
+  specs.push({ name: 'states/' });
+  for (const st of r.states as { file: string }[]) specs.push({ name: st.file, data: fakeJpeg(Number(/-(\d+)\.jpg$/.exec(st.file)![1]), 844) });
   specs.push({ name: 'report.json', data: Buffer.from(JSON.stringify(r)) });
   specs.push({ name: 'REPORT.md', data: Buffer.from('# from the branch [phish](https://evil.example) <img src=x onerror=alert(1)>') });
   return specs;
