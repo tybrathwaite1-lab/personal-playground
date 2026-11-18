@@ -12,6 +12,12 @@
 - **Acceptance checklist (manual, still required):** 200% zoom and reflow; Safari (macOS and iOS); a real phone.
 - **Leftover temporary branch:** `tmp/pr-2-caveat-lockfile` resolved the Caveat lockfile. Please delete it, along with the evidence branch once review is done.
 - Home, navigation, data and app behavior are unchanged. No Issue 09 content and no Newsstand page.
+- **Revision 1** (ChatGPT review of `d6ec713`; creative direction approved):
+  - **In-page links keep the route:** the router ignores bare `#fragments`, and `InPageLink` moves focus without changing the URL. This also fixes the app's "Skip to content" link, which used to fall back to Home.
+  - **The cover headline** is sized to its column, with no broken words from 320 to 1440 px.
+  - **Displayed artwork must be credited** (type and runtime), and failed images recover.
+  - **Browser tests** activate the skip and internal links and measure rendered hover, pressed and focus colors. The style-guide workflow now runs in strict mode.
+  - **Methodology note:** of the 124 standard screenshots, **112 are byte-identical** (and pixel-identical) to `main`. The earlier "117" used a perceptual threshold (fewer than 0.1% of pixels differing by more than 24/255), which counted small capture-timing differences as identical.
 
 ---
 
