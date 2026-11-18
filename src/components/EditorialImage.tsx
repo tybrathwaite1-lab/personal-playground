@@ -72,7 +72,7 @@ function Fallback({ ratio, className, label }: { ratio: string; className: strin
       style={{ aspectRatio: ratio.replace('/', ' / ') }}
       role="presentation"
     >
-      <span className="font-jp text-xs tracking-[0.4em] text-muted/70" lang="ja" aria-hidden>
+      <span className="font-jp text-xs tracking-[0.4em] text-muted" lang="ja" aria-hidden>
         遊び場
       </span>
       <span className="sr-only">{label}</span>

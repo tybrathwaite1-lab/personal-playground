@@ -28,7 +28,7 @@ export function CuratedEditions() {
                 </span>
               </div>
               <h3 className="display mt-6 text-[clamp(1.7rem,2.3vw,2.1rem)]">{c.title}</h3>
-              <p className="mt-1 font-mono text-[11px] uppercase tracking-wider opacity-80">{c.tagline}</p>
+              <p className="mt-1 font-mono text-[11px] uppercase tracking-wider">{c.tagline}</p>
               <span
                 aria-hidden
                 className="pointer-events-none absolute -bottom-6 -right-2 font-display text-[7rem] leading-none opacity-[0.12]"

@@ -1,0 +1,148 @@
+/*
+ * Design tokens (Sprint 02, PR 1). Colors are RGB channel triplets so Tailwind opacity
+ * modifiers keep working: rgb(var(--fg) / 0.8).
+ *
+ * 1. Palette: raw colors. Never use these directly for text; pick a surface.
+ * 2. Surfaces: each `.surface-*` class sets a tested set of pairs:
+ *      --surface    background
+ *      --fg         body text            ≥ 4.5:1 on --surface
+ *      --fg-muted   secondary text       ≥ 4.5:1
+ *      --accent     accent text/labels   ≥ 4.5:1
+ *      --focus      focus indicator      ≥ 3:1 (WCAG 1.4.11, 2.4.7)
+ *      --rule       decorative hairlines (no contrast requirement; not a control boundary)
+ *    Every pair is checked by tests/design-tokens.test.ts. Children inherit the variables, so
+ *    `text-fg`, `text-accent`, `bg-surface`, `border-rule` and the focus ring adapt to the
+ *    nearest surface.
+ * 3. :root is the ink surface, so existing pages render as before.
+ *
+ * The Newsstand palette below is PROVISIONAL (engineering values that pass every pair) until
+ * ChatGPT's palette pairs are approved; only the values change when they arrive.
+ */
+
+:root {
+  /* Palette: the existing Field Guide colors. */
+  --pp-ink: 20 22 20; /* #141614 */
+  --pp-ink-2: 33 37 32; /* #212520 */
+  --pp-paper: 233 223 201; /* #E9DFC9 */
+  --pp-muted: 168 170 153; /* #A8AA99 */
+  --pp-hunter: 40 59 49; /* #283B31 */
+  --pp-line: 61 69 59; /* #3D453B */
+  /* Rust, adjusted from #B76940 (4.42:1 on ink, 3.78 on cards): now ≥ 4.5 on ink, cards and
+     hunter-tinted headers, and ink text on rust buttons is ≥ 4.5. */
+  --pp-rust: 212 126 71; /* #D47E47 */
+  --pp-rust-hover: 222 139 85; /* #DE8B55 */
+
+  /* Palette: Newsstand (provisional). */
+  --pp-cream: 243 235 216; /* #F3EBD8 */
+  --pp-orange: 232 120 58; /* #E8783A */
+  --pp-cobalt: 43 73 168; /* #2B49A8 */
+  --pp-mustard: 231 180 63; /* #E7B43F */
+  --pp-pink: 242 169 184; /* #F2A9B8 */
+  --pp-olive: 78 91 38; /* #4E5B26: darkened from the mock so cream body text passes */
+  --pp-forest: 31 59 44; /* #1F3B2C */
+  --pp-apricot: 235 165 126; /* #EBA57E: accent on dark greens */
+  --pp-gold: 246 201 91; /* #F6C95B: accent on cobalt and olive */
+
+  /* Default surface: ink (same as .surface-ink). */
+  --surface: var(--pp-ink);
+  --fg: var(--pp-paper);
+  --fg-muted: var(--pp-muted);
+  --accent: var(--pp-rust);
+  --focus: var(--pp-rust);
+  --rule: var(--pp-line);
+}
+
+/* ── Surfaces ─────────────────────────────────────────────────────────── */
+.surface-ink {
+  --surface: var(--pp-ink);
+  --fg: var(--pp-paper);
+  --fg-muted: var(--pp-muted);
+  --accent: var(--pp-rust);
+  --focus: var(--pp-rust);
+  --rule: var(--pp-line);
+}
+.surface-raised {
+  --surface: var(--pp-ink-2);
+  --fg: var(--pp-paper);
+  --fg-muted: var(--pp-muted);
+  --accent: var(--pp-rust);
+  --focus: var(--pp-rust);
+  --rule: var(--pp-line);
+}
+.surface-hunter {
+  --surface: var(--pp-hunter);
+  --fg: var(--pp-paper);
+  --fg-muted: 181 184 166; /* #B5B8A6 */
+  --accent: var(--pp-apricot);
+  --focus: var(--pp-paper);
+  --rule: 74 94 82; /* #4A5E52 */
+}
+.surface-cream {
+  --surface: var(--pp-paper);
+  --fg: var(--pp-ink);
+  --fg-muted: 77 80 70; /* #4D5046 */
+  --accent: 142 63 23; /* #8E3F17 */
+  --focus: var(--pp-ink);
+  --rule: 200 190 166; /* #C8BEA6 */
+}
+.surface-orange {
+  --surface: var(--pp-orange);
+  --fg: var(--pp-ink);
+  --fg-muted: 43 38 32; /* #2B2620 */
+  --accent: var(--pp-ink);
+  --focus: var(--pp-ink);
+  --rule: var(--pp-ink);
+}
+.surface-cobalt {
+  --surface: var(--pp-cobalt);
+  --fg: var(--pp-cream);
+  --fg-muted: 217 221 240; /* #D9DDF0 */
+  --accent: var(--pp-gold);
+  --focus: var(--pp-cream);
+  --rule: 90 116 196; /* #5A74C4 */
+}
+.surface-mustard {
+  --surface: var(--pp-mustard);
+  --fg: var(--pp-ink);
+  --fg-muted: 58 49 28; /* #3A311C */
+  --accent: 110 44 12; /* #6E2C0C */
+  --focus: var(--pp-ink);
+  --rule: var(--pp-ink);
+}
+.surface-pink {
+  --surface: var(--pp-pink);
+  --fg: var(--pp-ink);
+  --fg-muted: 63 35 41; /* #3F2329 */
+  --accent: 126 35 56; /* #7E2338 */
+  --focus: var(--pp-ink);
+  --rule: var(--pp-ink);
+}
+.surface-olive {
+  --surface: var(--pp-olive);
+  --fg: var(--pp-cream);
+  --fg-muted: 220 224 198; /* #DCE0C6 */
+  --accent: var(--pp-gold);
+  --focus: var(--pp-cream);
+  --rule: 112 125 70; /* #707D46 */
+}
+.surface-forest {
+  --surface: var(--pp-forest);
+  --fg: var(--pp-cream);
+  --fg-muted: 188 201 184; /* #BCC9B8 */
+  --accent: var(--pp-apricot);
+  --focus: var(--pp-cream);
+  --rule: 61 90 73; /* #3D5A49 */
+}
+.surface-ink,
+.surface-raised,
+.surface-hunter,
+.surface-cream,
+.surface-orange,
+.surface-cobalt,
+.surface-mustard,
+.surface-pink,
+.surface-olive,
+.surface-forest {
+  background-color: rgb(var(--surface));
+  color: rgb(var(--fg));
+}
