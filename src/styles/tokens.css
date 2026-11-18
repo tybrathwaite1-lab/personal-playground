@@ -11,8 +11,9 @@
  *      --focus      focus indicator                 ≥ 3:1 (WCAG 1.4.11, 2.4.7)
  *      --control    boundary of inputs/buttons/chips ≥ 3:1 (WCAG 1.4.11): identifies controls
  *      --rule       decorative hairlines only (no contrast requirement; never a control boundary)
- *      --duo-art / --duo-wash   blend modes for duotone artwork: light surfaces map shadows to
- *                   the accent (multiply, lighten); dark surfaces map highlights to it (screen, darken)
+ *      --duo-art    how duotone artwork sits on the surface: multiply on light surfaces (shadows
+ *                   deepen toward ink), screen on dark ones (highlights lift); the accent hue is
+ *                   then applied with a `color` blend, keeping the artwork's tonal range
  *    Every pair is checked by tests/design-tokens.test.ts. Children inherit the variables, so
  *    `text-fg`, `text-accent`, `bg-surface`, `border-control`, `border-rule` and the focus ring
  *    adapt to the nearest surface.
@@ -58,7 +59,6 @@
   --control: var(--pp-control);
   --rule: var(--pp-line);
   --duo-art: screen;
-  --duo-wash: darken;
 }
 
 /* ── Field Guide surfaces ─────────────────────────────────────────────── */
@@ -71,7 +71,6 @@
   --control: var(--pp-control);
   --rule: var(--pp-line);
   --duo-art: screen;
-  --duo-wash: darken;
 }
 .surface-raised {
   --surface: var(--pp-ink-2);
@@ -82,7 +81,6 @@
   --control: var(--pp-control);
   --rule: var(--pp-line);
   --duo-art: screen;
-  --duo-wash: darken;
 }
 .surface-hunter {
   --surface: var(--pp-hunter);
@@ -93,7 +91,6 @@
   --control: 181 184 166; /* #B5B8A6 */
   --rule: 74 94 82; /* #4A5E52 */
   --duo-art: screen;
-  --duo-wash: darken;
 }
 
 /* ── Newsstand surfaces (approved pairs) ──────────────────────────────── */
@@ -106,7 +103,6 @@
   --control: 196 200 183; /* = muted */
   --rule: 88 89 78; /* #58594E */
   --duo-art: screen;
-  --duo-wash: darken;
 }
 .surface-cream {
   --surface: var(--pp-ns-cream);
@@ -117,7 +113,6 @@
   --control: 83 89 76; /* = muted */
   --rule: 189 180 156; /* #BDB49C */
   --duo-art: multiply;
-  --duo-wash: lighten;
 }
 .surface-orange {
   --surface: var(--pp-ns-orange);
@@ -128,7 +123,6 @@
   --control: 53 35 27; /* = muted */
   --rule: 188 96 48; /* #BC6030 */
   --duo-art: multiply;
-  --duo-wash: lighten;
 }
 .surface-mustard {
   --surface: var(--pp-ns-mustard);
@@ -139,7 +133,6 @@
   --control: 81 80 43; /* = muted */
   --rule: 191 158 45; /* #BF9E2D */
   --duo-art: multiply;
-  --duo-wash: lighten;
 }
 .surface-pink {
   --surface: var(--pp-ns-pink);
@@ -150,7 +143,6 @@
   --control: 81 64 74; /* = muted */
   --rule: 183 128 141; /* #B7808D */
   --duo-art: multiply;
-  --duo-wash: lighten;
 }
 .surface-cobalt {
   --surface: var(--pp-ns-cobalt);
@@ -161,7 +153,6 @@
   --control: 220 230 255; /* = muted */
   --rule: 80 116 192; /* #5074C0 */
   --duo-art: screen;
-  --duo-wash: darken;
 }
 .surface-olive {
   --surface: var(--pp-ns-olive);
@@ -172,7 +163,6 @@
   --control: 57 65 38; /* = muted */
   --rule: 134 145 88; /* #869158 */
   --duo-art: multiply;
-  --duo-wash: lighten;
 }
 .surface-forest {
   --surface: var(--pp-ns-forest);
@@ -183,7 +173,6 @@
   --control: 197 216 199; /* = muted */
   --rule: 88 120 102; /* #587866 */
   --duo-art: screen;
-  --duo-wash: darken;
 }
 
 .surface-ink,

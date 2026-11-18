@@ -138,7 +138,7 @@ function FeatureComposition() {
             </blockquote>
           </div>
           <div className="relative">
-            <Artwork art={<RecordNight />} alt="Sample illustration: a record under a starry sky" treatment="duotone" ratio="3/4" credit={{ kind: 'ai-assisted', by: 'Sample credit format' }} />
+            <Artwork art={<RecordNight />} alt="Sample illustration: a record under a starry sky" ratio="3/4" credit={{ kind: 'ai-assisted', by: 'Sample credit format' }} />
             <Annotation arrow="down" angle={4} className="absolute -top-14 right-2 hidden md:inline-flex">
               bring cash
             </Annotation>
@@ -201,7 +201,8 @@ function ElsewhereComposition() {
     <div className="pt-4">
       <Surface tone="olive" as="article" aria-labelledby="sg-elsewhere-title" className="px-5 py-10 md:px-10">
         <PaperEdge side="top" seed={41} depth={12} />
-        <div className="grid gap-6 md:grid-cols-[2fr_1fr] md:items-center">
+        <div className="grid gap-6 md:grid-cols-[1fr_2fr_1fr] md:items-center">
+          <Artwork art={<Peaks />} alt="Sample illustration: mountains under a pale moon" treatment="duotone" ratio="1/1" credit={{ kind: 'illustration', by: 'Sample artwork' }} />
           <div>
             <p className="ui-label">Elsewhere · Sample copy</p>
             <h3 id="sg-elsewhere-title" className="mt-3 font-display text-display uppercase">

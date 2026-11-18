@@ -124,9 +124,9 @@
     height: 100%;
     object-fit: cover;
   }
-  /* Duotone in the surface and its accent: the artwork in grayscale is blended onto the surface,
-     then the accent is washed over it. Blend modes come from the surface (tokens.css), so light
-     surfaces get accent shadows and dark surfaces get accent highlights. */
+  /* Duotone in the surface and its accent: the artwork in grayscale is blended onto the surface
+     (multiply on light surfaces, screen on dark ones; see --duo-art in tokens.css), then tinted
+     with the accent's hue through a `color` blend, which keeps the tonal range intact. */
   .art-duotone {
     background-color: rgb(var(--surface));
   }
@@ -140,7 +140,7 @@
     inset: 0;
     pointer-events: none;
     background-color: rgb(var(--accent));
-    mix-blend-mode: var(--duo-wash);
+    mix-blend-mode: color;
   }
   /* Halftone: a dot screen over the artwork. */
   .art-halftone::after {
