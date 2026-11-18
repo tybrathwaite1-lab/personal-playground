@@ -127,10 +127,10 @@ Candidate leads from RSS feeds (`src/data/candidateFeeds.ts`) show only in the E
 
 ## Run it locally
 
-Requires Node 20+.
+Requires Node 22+ (CI uses Node 24). Dependencies are pinned by the committed `package-lock.json`.
 
 ```bash
-npm install
+npm ci             # exact versions from package-lock.json (use `npm install <pkg>` only to change dependencies)
 npm run dev        # http://localhost:5173  (predev builds drop.json)
 npm test           # unit tests
 npm run pulse      # optional: pull live events into public/data/pulse.json
@@ -140,7 +140,7 @@ npm run build
 
 ## Deploy
 
-`.github/workflows/deploy.yml` deploys `main` to GitHub Pages: on push, on manual run, and daily for fresh listings. `check.yml` runs tests, strict content validation, the link report and a full build on other branches. No secrets are required.
+`.github/workflows/deploy.yml` deploys `main` to GitHub Pages: on push, on manual run, and daily for fresh listings. `check.yml` runs tests, strict content validation, the link report and a full build on other branches. No secrets are required. Every workflow installs with `npm ci` from the lockfile and uses GitHub's own actions pinned to full commit SHAs (Node 24 runtime releases).
 
 ## Credentials & costs
 

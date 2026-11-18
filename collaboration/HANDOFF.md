@@ -1,6 +1,29 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (safe screenshot publisher, revision 3)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (Sprint 02 PR 0a: PP-011 reproducible builds)
+
+- **Sprint 02 is authorized** (owner, 2026-11-18). Sequence: PR 0a (this), then PR 1 (accessible design tokens and typography), then the approved plan. The thin Explore hub comes before the navigation switch, and the current homepage stays until the Newsstand preview is approved.
+- **PR #26 live verification** (ChatGPT, independently): merged at `c0f07b0dea130db90419bdce0422d6134d45281d`; publisher run [44343202178](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44343202178) succeeded. `visual-results` holds `README.md` and `main-0d6e4079e367/` for `main` @ `c0f07b0dea13` (Visual check run 44342556199). Claude confirmed the same from git.
+- **PR 0a (PP-011):**
+  - `package-lock.json` committed; it was resolved on GitHub's runner because Claude's environment has no registry access;
+  - every workflow uses `npm ci` on Node 24;
+  - all actions upgraded off the removed Node 20 runtime and pinned to full commit SHAs;
+  - a regression test guards all of this.
+  - Details and limitations are in the PR.
+- **Publisher live refusal checks** (2026-11-18). Real runs on this branch, with no writes to production results. `visual-results` stayed at `d63ad5243de9` throughout:
+  | Scenario | Trigger | Publisher run | Outcome |
+  |---|---|---|---|
+  | Stale run (branch moved on) | Visual check 44357898826 @ `32cdafb` completed; `83685e7` was pushed seconds later | [44358639064](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44358639064) | ✅ "Not published: … the branch has moved on or was deleted since this run" |
+  | Harness changed on a branch | Visual check 44358646980 @ `83685e7` (this PR changes `visual.yml`) | [44359267912](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44359267912) | ✅ "Not published: … changes the screenshot harness (.github/workflows/visual.yml)" |
+
+  Both ran trusted code `c0f07b0` (the pinned workflow commit).
+  - **Not exercised live:**
+    - **A tampered `visual-results`.** Doing it live would mean writing to production results. It stays covered by the 11 tampered-results end-to-end cases.
+    - **A re-run of an older run.** The proxy doesn't allow Claude to trigger re-runs. The owner can do it from the Actions UI; the expected outcome is "Not published (newer results)" or "branch has moved on".
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (safe screenshot publisher, revision 3)
 
 - **ChatGPT's re-review of `19b4cfa`:** both P1s are resolved. The remaining narrow corrections are done on PR #26:
   - **P2, full standard matrix:** only complete standard runs are published (all widths, the 12 routes, the exact 7 keyboard checks at 390 and 1280 px, the 4 state records). Partial runs are "Not published" and stay artifact-only. Valid but no-longer-standard carried folders are dropped. Constants are tested against `run.ts` and `useRoute.ts`.
