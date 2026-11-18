@@ -1,0 +1,58 @@
+name: Publish visual results
+
+# Publishes validated screenshots from a completed "Visual check" run to the `visual-results`
+# branch, so the owner, ChatGPT and Claude can all review visual work through git.
+#
+# Security model (see collaboration/HANDOFF.md, "Safe screenshot publishing"):
+#  - `workflow_run` workflows always run the DEFAULT BRANCH's definition, so branch code can
+#    never change this job until it has been reviewed and merged.
+#  - The job clones the default branch with plain git and runs a zero-dependency Node script
+#    from it (scripts/visual/publish/publish.mjs). No third-party actions, no npm install, and
+#    no code from the triggering branch or its artifact is ever executed.
+#  - The artifact is untrusted data: provenance, file types, paths, sizes, counts, symlinks,
+#    traversal, compression ratios, CRCs and content are validated before anything is written.
+#  - Least privilege: the job can read Actions artifacts and write repository contents; the
+#    token is used for the final push to `visual-results` only.
+
+on:
+  workflow_run:
+    workflows: [Visual check]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: visual-results-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Successful push runs from this repository only (never forks or pull_request runs).
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read # read the triggering run and download its artifact
+      contents: write # push to visual-results
+    env:
+      REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Clone the default branch (trusted code only)
+        run: |
+          git clone --quiet --depth=1 --no-tags --branch "$DEFAULT_BRANCH" "https://github.com/$REPO.git" trusted
+          git -C trusted log -1 --format='Trusted code: %H %s'
+
+      - name: Validate and publish
+        working-directory: trusted
+        env:
+          GH_TOKEN: ${{ github.token }} # this step only
+        run: |
+          node --version
+          node scripts/visual/publish/publish.mjs

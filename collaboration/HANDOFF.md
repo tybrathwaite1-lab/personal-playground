@@ -1,6 +1,22 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (PR #25 review corrections)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (safe screenshot publisher)
+
+- **The owner approved option B.** The safe publisher is built in its own PR (branch `visual/safe-publisher`), **stacked on #25** (its base branch is #25's, so its diff is publisher-only). It's separate from the design-foundation work.
+- **Design, controls, tests, residual risks and recommended repository settings:** `collaboration/security/visual-publishing.md`. In short:
+  - a `workflow_run` job runs only default-branch code;
+  - no third-party actions and no `npm install`;
+  - the artifact is validated in memory by a zero-dependency zip reader and strict policy;
+  - publishing happens only when the branch's screenshot harness is identical to `main`'s;
+  - the report is regenerated from validated data;
+  - the token is scoped to one step and never sent to artifact storage.
+- **Tests:** 19 unit and 4 end-to-end tests (10 refusal cases); 12 mutation checks; interoperability with Python `zipfile`/zip64, the `zip` CLI and real Playwright JPEGs.
+- **Merge order:** #25 first, then this PR (retarget it to `main` if GitHub doesn't do so automatically).
+- **Needs:** ChatGPT's independent security review; then the owner's final approval and, ideally, the recommended `main` ruleset and read-only default workflow permissions.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-17 (PR #25 review corrections)
 
 **Context.** The technical assessment for Sprint 02 is with ChatGPT; owner decisions are in DECISIONS.md. The only implementation is the owner-approved visual verification harness, PR #25. No Sprint 02 UI work has started.
 
