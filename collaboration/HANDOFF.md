@@ -1,6 +1,19 @@
 # Handoff
 
-## Latest — Claude (engineering) → owner and ChatGPT, 2026-11-17 (Sprint 01 closeout)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-17 (Sprint 02 planning: verification harness)
+
+- **Technical assessment** of "The Newsstand Effect": shared with ChatGPT as `sprint-02-newsstand-technical-assessment.md`. Owner decisions on it are in DECISIONS.md (2026-11-17, Sprint 02).
+- **Visual verification harness** (owner-approved; assessment PR "0b"), in its own PR. No app code changes.
+  - `scripts/visual/run.ts` serves the production build locally and opens every route at 320, 390, 768, 1280 and 1440 px with a frozen clock (Sat 2026-11-21 3 PM New York) and synthetic Pulse and weather fixtures (`tests/fixtures/visual/`).
+  - Every other external request is blocked and listed. The browser profile is fresh and the service worker is blocked.
+  - Per route and width it records: a full-page screenshot, horizontal overflow (with the offending elements), page errors, and axe WCAG 2.2 AA serious/critical issues (at 390 and 1280 px). It also captures states: Contents menu open, keyboard focus, and the unknown-route fallback.
+  - `.github/workflows/visual.yml` runs on every branch push and main. Results go to a 14-day artifact and to the `visual-results` branch: one folder per branch, a single force-pushed commit with no history, and folders pruned when their branch is deleted.
+  - **Report-only** for now. The baseline will show the known rust-on-ink contrast failures; `--strict` gating is turned on once the design foundation fixes them.
+- **Next:** wait for ChatGPT's review of the assessment and the owner's implementation scope. No Sprint 02 UI work has started.
+
+---
+
+## Previous — Claude (engineering) → owner and ChatGPT, 2026-11-17 (Sprint 01 closeout)
 
 ### Final approval
 - **#22 (PP-004):** approved by ChatGPT at head `956dd4f` and merged by the owner as `68186d8`. ChatGPT independently confirmed the head, the merge commit, and the closure of issue #5.

@@ -11,3 +11,6 @@ public/data/pulse.json
 public/data/drop.json
 public/data/candidates.json
 public/images/editorial/
+
+# Visual check output (scripts/visual/run.ts)
+visual-out/

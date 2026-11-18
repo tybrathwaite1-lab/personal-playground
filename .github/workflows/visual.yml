@@ -1,0 +1,91 @@
+name: Visual check
+
+# Browser screenshots, layout-overflow and accessibility checks for every route at
+# 320–1440 px, against a production build with synthetic fixtures and a frozen clock
+# (scripts/visual/run.ts). Results go to the `visual-results` branch, one folder per
+# branch, so the owner, ChatGPT and Claude can all read them through GitHub, and to a
+# 14-day Actions artifact. Report-only for now: findings don't fail the run.
+
+on:
+  push:
+    branches-ignore:
+      - image-scout
+      - image-scout-results
+      - visual-results
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Cache editorial images
+        uses: actions/cache@v4
+        with:
+          path: public/images/editorial
+          key: images-${{ hashFiles('src/data/images.ts', 'scripts/images/fetch.ts') }}
+          restore-keys: images-
+
+      - name: Fetch and optimize editorial images
+        run: npx tsx scripts/images/fetch.ts
+        continue-on-error: true # pages fall back to typographic placeholders
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium for Playwright
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Screenshots and checks
+        run: npm run visual -- --out visual-out --branch "${{ github.ref_name }}" --commit "${{ github.sha }}"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f visual-out/REPORT.md ]; then
+            sed -n '1,6p' visual-out/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Full report: https://github.com/${{ github.repository }}/blob/visual-results/$(echo '${{ github.ref_name }}' | tr '/' '-')/REPORT.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-${{ github.sha }}
+          path: visual-out
+          retention-days: 14
+
+  publish:
+    needs: capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # only this job writes, and only to the visual-results branch
+    concurrency:
+      group: visual-results-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: visual-${{ github.sha }}
+          path: visual-out
+
+      - name: Publish to the visual-results branch
+        run: bash scripts/visual/publish.sh visual-out "${{ github.ref_name }}" "${{ github.sha }}"

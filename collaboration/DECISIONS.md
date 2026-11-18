@@ -19,3 +19,13 @@
 - **Production verified at `68186d8`**, by the post-deploy smoke check and `version.json`.
 - **Accepted limitations:** the limitations listed in HANDOFF.md ("Sprint 01 closeout") were accepted with these approvals. None are blocking; each stays a candidate for future work.
 - **Sprint 02 priorities** will be agreed jointly by the owner, ChatGPT and Claude before any implementation starts. The open backlog and Sprint 01 follow-ups are recorded unranked.
+
+## 2026-11-17 — Sprint 02 "The Newsstand Effect": owner decisions on the technical assessment
+Context: Claude's read-only assessment of the approved creative direction (shared with ChatGPT for independent review). Implementation scope beyond item 1 still follows ChatGPT's review.
+1. **Visual verification harness approved.** Browser screenshots plus layout and accessibility checks in CI. Dev-only `playwright-core` and `@axe-core/playwright`. Results are published to a dedicated `visual-results` branch, which needs `contents: write` in that workflow's publish job only. Built as its own PR; merge remains the owner's call.
+2. **Fonts:** add one handwriting/annotation face; keep Anton for display (skewed with CSS where needed).
+3. **Primary navigation:** Home, Explore, Plan, Pulse, Collection. Everything else stays reachable through the Contents menu, and no existing route is removed. Explore is a thin hub over Discover, Local and Digital. **No search in Sprint 02.**
+4. **Japanese labels:** removed from navigation and section names; rare, relevant editorial use allowed.
+5. **Rollout:** the new homepage ships first at a preview route and replaces Home only after the owner's real-device review (PP-010).
+6. **Illustrations:** ChatGPT directs the art. AI-assisted illustration is acceptable for artwork only, never for anything presented as a real photograph. It's credited as such (e.g. "Illustration (AI-assisted)") and checked for resemblance to existing characters, logos or game sprites. Real places use real, licensed or owner-supplied photos (EXIF/GPS stripped).
+7. **Practical pages** (Plan, Collection, Settings and the rest of the Toolkit) stay on the restrained dark ink surface.
