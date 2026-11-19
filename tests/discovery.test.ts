@@ -7,6 +7,7 @@ import { SEED_INTERESTS as I } from '../src/data/interests.ts';
 import { CURATED as C } from '../src/data/curated.ts';
 import * as D from '../src/utils/discovery.ts';
 import { FILTER_GROUPS } from '../src/utils/labels.ts';
+import { forEachSeed } from './helpers/seeded.ts';
 
 const unique = (a: string[]) => new Set(a).size === a.length;
 
@@ -35,18 +36,20 @@ test('every single filter option has at least one match', () => {
 
 test('picks never repeat until the pool is exhausted', () => {
   const cand = D.filterExperiences(X, { ...D.DEFAULT_FILTERS, mood: 'relax' });
-  let seen: string[] = [];
-  let last: string | null = null;
-  const got = new Set<string>();
-  for (let i = 0; i < cand.length; i++) {
-    const r = D.pickExperience(cand, seen, last);
-    seen = r.seen;
-    last = r.pick!.id;
-    assert.ok(!got.has(last), 'repeated before cycle');
-    got.add(last);
-  }
-  const r2 = D.pickExperience(cand, seen, last);
-  assert.ok(r2.cycled && r2.pick!.id !== last);
+  forEachSeed((rand) => {
+    let seen: string[] = [];
+    let last: string | null = null;
+    const got = new Set<string>();
+    for (let i = 0; i < cand.length; i++) {
+      const r = D.pickExperience(cand, seen, last, rand);
+      seen = r.seen;
+      last = r.pick!.id;
+      assert.ok(!got.has(last), 'repeated before cycle');
+      got.add(last);
+    }
+    const r2 = D.pickExperience(cand, seen, last, rand);
+    assert.ok(r2.cycled && r2.pick!.id !== last);
+  });
 });
 
 test('relaxation suggestions never silently drop filters', () => {

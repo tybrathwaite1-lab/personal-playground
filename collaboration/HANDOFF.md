@@ -1,6 +1,38 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-7: blocking lint)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-3: deterministic planner tests)
+
+Baseline: `main` at `f499a5b` (M2-7 closed). Test-only change: no production code, dependencies or workflows touched.
+
+- **Audit:**
+  - **Randomness:** the planner tests passed `Math.random` 33 times (adventure, budget-timing, plan-clock, proximity), and `plan.test.ts` and `discovery.test.ts` relied on the `rand = Math.random` default of `buildPlan` and `pickExperience`. Results changed from run to run, and a failure couldn't be reproduced.
+  - **Time:** every planner test already passed a fixed "now", and the 14 logic test files passed in four time zones (M2 audit), so there were no time dependencies.
+  - **Flakes:** none in CI history (25 local repeats were also clean). Remaining `Math.random` uses in tests are only in non-planner code (`visual-publish-e2e` temp file names).
+- **Mechanism** (`tests/helpers/seeded.ts`):
+  - `seeded(seed)` is a mulberry32 generator, with the same contract as `Math.random`.
+  - `SEEDS` holds 40 fixed, distinct, frozen seeds.
+  - `forEachSeed(fn)` runs a check once per seed.
+  - `iterationSeed(i)` gives each iteration of the long property loops (300/500/600) its own fixed seed, so their coverage isn't reduced to 40 combinations.
+  - `withSeed` rethrows any failure as `seed N (reproduce with seeded(N)): …` or `iteration i, seed N …`, keeping the original assertion as `cause`.
+- **Coverage, equivalent or better:**
+  - Each `runs()` check still runs 40 times, now on fixed seeds.
+  - The property loops keep their iteration counts.
+  - Single-shot planner assertions that used one random draw now hold for all 40 seeds; all pass.
+  - The `buildPlan` option matrix runs all 54 combinations × 40 seeds (previously ×1).
+  - `pickExperience` cycling runs × 40 seeds.
+  - `tests/seeded.test.ts` shows the seeds take both sides of the planner's 0.65 timed/flexible split and produce ≥10 distinct primary picks.
+- **Reproducibility:** the same seed gives identical sequences (first values pinned), and plans for all 40 seeds are byte-identical within a process and in a fresh Node process.
+- **Regression evidence:**
+  - **Real mutation, local and reverted:** `pairCostOk` ignoring the budget when the first stop is a place. It is caught identically on 3/3 runs: `iteration 56, seed 1345258770 (reproduce with seeded(1345258770)): cost 50 > 25`. The old randomised tests also caught it (8/8), but with no seed to reproduce.
+  - **In-suite:** a planner that breaks the budget only for rare draws fails with its seed.
+- **Known limitations:**
+  - Fixed seeds explore the same paths on every run. A bug reachable only through draws none of the seeds produce stays hidden, where `Math.random` might eventually hit it.
+  - Seeded sequences depend on the order of `rand()` calls in the planner. A legitimate planner change can move which choices each seed makes; assertions are behavioural, so that is a change of coverage, not a false failure.
+  - Production still uses `Math.random`; only tests are seeded.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-7: blocking lint)
 
 Baseline: `main` at `4571b5b` (M2-2 closed after independent post-merge verification). No new rules, no ESLint upgrade, no dependencies.
 

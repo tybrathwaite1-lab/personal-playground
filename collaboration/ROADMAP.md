@@ -20,7 +20,7 @@ Shipped: PR 0a (#27, PP-011), PR 1 (#28 tokens and typography), PR 2 (#29 graphi
 
 Maintenance milestones:
 - **M1 Security and reproducibility: closed** (#31, #32; baseline `483ae64`).
-- **M2 Test harness: in progress.** M2-1 (test integrity, #34) and M2-2 (workflow security tests, #35) are done. M2-7 (blocking lint) is in review. Still to come: M2-3 (seeded randomness), M2-4 (safety-critical utilities), M2-5 (Pulse ingest), M2-6 (browser harness).
+- **M2 Test harness: in progress.** M2-1 (test integrity, #34), M2-2 (workflow security tests, #35) and M2-7 (blocking lint, #36) are done. M2-3 (deterministic planner tests) is in review. Still to come: M2-4 (safety-critical utilities), M2-5 (Pulse ingest), M2-6 (browser harness).
 
 ## Sprint 01 backlog carried forward (status as of 2026-11-19)
 Candidates, unranked:

@@ -10,6 +10,7 @@ import { buildAdventure, describeTravel, eventStop, placeStop, proximity, travel
 import { EMPTY_DATA } from '../src/utils/storage.ts';
 import type { Place } from '../src/types/index.ts';
 import type { PulseEvent } from '../src/types/pulse.ts';
+import { forEachSeed } from './helpers/seeded.ts';
 
 const NOW = Date.parse('2026-11-17T19:00:00Z');
 const opts: AdventureOptions = {
@@ -73,10 +74,10 @@ test('unverified distances get a per-transport allowance, never zero minutes', (
 test('walking: pinned venues farther than the walking hop are not paired', () => {
   const far = event({ id: 'src:far', title: 'Far Thing', categories: ['Markets'], geo: { lat: 27.8300, lon: -82.6400 } }); // ~4.4 mi north, still St. Pete
   const near = place({ id: 'near', coords: { lat: 27.7700, lon: -82.6380, source: 'synthetic', verifiedOn: '2026-11-17' } });
-  for (let i = 0; i < 40; i++) {
-    const a = buildAdventure({ places: [near], events: [far], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:near' }, Math.random, NOW)!;
+  forEachSeed((rand) => {
+    const a = buildAdventure({ places: [near], events: [far], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:near' }, rand, NOW)!;
     assert.equal(a.secondary, undefined, 'a 4-mile pair must not be offered on foot');
-  }
+  });
 });
 
 test('verified-close pairs are preferred over unverified same-city ones', () => {
@@ -85,16 +86,18 @@ test('verified-close pairs are preferred over unverified same-city ones', () => 
   const at3 = { start: '2026-11-21T15:00:00-05:00', end: '2026-11-21T16:00:00-05:00' };
   const pinned = event({ id: 'src:pinned', title: 'Pinned', categories: ['Markets'], geo: { lat: 27.7720, lon: -82.6390 }, ...at3 });
   const unpinned = event({ id: 'src:unpinned', title: 'Unpinned', categories: ['Music'], ...at3 });
-  for (let i = 0; i < 40; i++) {
-    const a = buildAdventure({ places: [anchor], events: [pinned, unpinned], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:anchor' }, Math.random, NOW)!;
+  forEachSeed((rand) => {
+    const a = buildAdventure({ places: [anchor], events: [pinned, unpinned], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:anchor' }, rand, NOW)!;
     assert.equal(a.secondary?.key, 'event:src:pinned');
     assert.equal(a.proximity.kind, 'venue');
-  }
+  });
 });
 
 test('home distance says whether it is measured from the venue or the city center', () => {
-  const a = buildAdventure({ places: [place({})], events: [], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:p1' }, Math.random, NOW)!;
-  assert.equal(a.homeBasis, 'city');
+  forEachSeed((rand) => {
+    const a = buildAdventure({ places: [place({})], events: [], communities: [], data: structuredClone(EMPTY_DATA) }, { ...opts, anchor: 'place:p1' }, rand, NOW)!;
+    assert.equal(a.homeBasis, 'city');
+  });
 });
 
 test('ICS GEO: parsed when well-formed, rejected when malformed', () => {
