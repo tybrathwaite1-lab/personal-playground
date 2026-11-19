@@ -1,6 +1,48 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-3: deterministic planner tests)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-4: safety-critical utility tests)
+
+Baseline: `main` at `6bfbf0d` (M2-3 closed). Test-only change: no production code, dependencies or workflows. The new tests make no network requests (`fetch` is mocked) and use only synthetic credentials.
+
+- **Safe URLs** (`tests/url-safety.test.ts`):
+  - `isSafeUrl` accepts only absolute http(s) URLs, including IDN, credentials, ports and surrounding whitespace. It rejects `javascript:`/`vbscript:`/`data:`/`file:`/`blob:`/`about:`/`mailto:`/`tel:` and other schemes, including case, whitespace, tab/newline and NUL obfuscation; relative, protocol-relative, hash, query and malformed values; and non-string runtime values (coerced exactly as React renders them).
+  - A TypeScript-AST scan classifies all JSX `href`s in `src/` as constant, trusted builder (`href()`, `directionsLink`, `mapsLink`, literal `https://host/` templates), guarded by `isSafeUrl` (`&&`, `?:`, or `.filter(isSafeUrl).map`), or reviewed. Any new unguarded href fails; stale exceptions also fail.
+- **GitHub sync** (`tests/github-sync-utils.test.ts`):
+  - `readRemote`/`writeRemote` are tested against mocked responses: wrapped base64 and Unicode round trips, 404 meaning "no file yet", 401/403 auth, 404 on write, 409/422 conflicts and stale sha, 5xx, network failure, empty/oversize/invalid content, and foreign files.
+  - Also covered: request shape (contents API URL, token only in the Authorization header, `no-store`, sha sent or omitted).
+  - Configuration: `loadConfig`, `saveConfig` and `parseRepo` with missing, malformed, invalid and unavailable storage; `sameConfig`.
+- **Local storage** (`tests/local-storage.test.ts`): personal data, seen history and sync metadata, each with no value, corrupted values, partly valid data, unavailable storage, throwing reads and quota-failing writes (the last good value survives).
+- **Regression evidence:** seven local mutations were each caught, then reverted:
+  - `isSafeUrl` allowing `javascript:`;
+  - 409/422 no longer conflicts;
+  - 404 not "no file";
+  - base64 corruption;
+  - write dropping the expected sha;
+  - `loadData` throwing on corrupt storage;
+  - the `PlaceCard` guard removed.
+- **Defects found (production unchanged; fixes proposed for a separate, approved change):**
+  1. **Unsafe URLs from personal data.** `FieldNotes` (`n.url`), `Digital` (`w.url`, `random.url`) and `Plan` (`e.links[0].url`) render URLs from personal data without `isSafeUrl`. Input forms validate new entries, but backup import and sync go through `normalizeData`, which doesn't validate URLs. React 18 renders `javascript:` hrefs (it only warns), so a crafted backup file, or a compromised private sync repo, could run script in the app's origin when the link is clicked. That origin is where the sync token lives.
+     - **Impact:** needs the user to import a malicious file, or an attacker with write access to their private repo, and then a click.
+     - **Fix:** guard those four hrefs with `isSafeUrl`, as the other components do. Optionally also drop unsafe URLs in `normalizeData`. M2-6 should add a browser test.
+     - The tests record these as reviewed `DEFECT` entries and pin the current behaviour.
+  2. **Raw errors on malformed responses.** `readRemote`/`writeRemote` parse response bodies outside their error handling, so a malformed 200 (e.g. a proxy's HTML page) surfaces as a raw `SyntaxError`/`TypeError`, not a typed `SyncError`. On write, the file was saved but the round reports failure; the next sync reconciles.
+     - **Impact:** a confusing message only. Nothing is lost and privacy checks are unaffected.
+     - **Fix:** wrap both parses and map to a `format` error.
+  3. **`parseRepo` ignores leading text** (it isn't anchored), so `gitlab.example/o/r` reads as `o/r`. `verifyRepo` still requires a private repo the token can write.
+     - **Impact:** minor.
+     - **Fix:** anchor it to a `github.com` URL or a bare `owner/repo`.
+- **Noted, not defects:**
+  - `loadConfig` checks presence, not types.
+  - A failed `saveConfig` is silent, so sync stays connected for that session only.
+  - The empty-data fallback shares `EMPTY_DATA`'s arrays. That's safe while updates stay immutable; it's pinned.
+- **Known limitations:**
+  - The href scan is source-level. It trusts named builders and the `REVIEWED` list, and doesn't follow data flow (e.g. `Collection`'s `linkFor`).
+  - Real clicking and React DOM behaviour belong in M2-6.
+  - The `react-dom/server` characterization requires the installed React 18; it will flag a React upgrade.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-3: deterministic planner tests)
 
 Baseline: `main` at `f499a5b` (M2-7 closed). Test-only change: no production code, dependencies or workflows touched.
 
