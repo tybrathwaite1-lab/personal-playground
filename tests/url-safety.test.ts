@@ -99,36 +99,67 @@ const REVIEWED: Record<string, string> = {
   'src/pages/Plan.tsx: e.links[0].url': 'DEFECT: custom experiences (backup import, sync) rendered without isSafeUrl',
 };
 
-const isSafeCallOn = (n: ts.Node, text: string, sf: ts.SourceFile): boolean => {
-  let found = false;
-  const visit = (x: ts.Node) => {
-    if (found) return;
-    if (ts.isCallExpression(x) && ts.isIdentifier(x.expression) && x.expression.text === 'isSafeUrl' && x.arguments[0]?.getText(sf) === text) found = true;
-    else ts.forEachChild(x, visit);
-  };
-  visit(n);
-  return found;
-};
+/**
+ * Does `cond` being truthy guarantee that isSafeUrl(<text>) returned true? A deliberately small,
+ * conservative reading of boolean structure (no control- or data-flow analysis):
+ *  - `isSafeUrl(text)` itself (the exact rendered expression, as written) → yes;
+ *  - `a && b` → yes if either side guarantees it (both must be truthy);
+ *  - `a || b` → only if both sides guarantee it;
+ *  - parentheses are looked through;
+ *  - anything else — negation, comparisons, a call that merely contains isSafeUrl, a different
+ *    argument, a variable holding the result — → no.
+ */
+function guarantees(cond: ts.Expression, text: string, sf: ts.SourceFile): boolean {
+  if (ts.isParenthesizedExpression(cond)) return guarantees(cond.expression, text, sf);
+  if (ts.isCallExpression(cond)) return ts.isIdentifier(cond.expression) && cond.expression.text === 'isSafeUrl' && cond.arguments.length === 1 && cond.arguments[0].getText(sf) === text;
+  if (ts.isBinaryExpression(cond)) {
+    if (cond.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) return guarantees(cond.left, text, sf) || guarantees(cond.right, text, sf);
+    if (cond.operatorToken.kind === ts.SyntaxKind.BarBarToken) return guarantees(cond.left, text, sf) && guarantees(cond.right, text, sf);
+  }
+  return false;
+}
 
-/** Is `node` (an href expression) rendered only when isSafeUrl(<same expression>) is true? */
+/** The value a filter predicate returns: an expression body, or a block that is exactly `return <expr>;`. */
+function predicateResult(f: ts.ArrowFunction | ts.FunctionExpression): ts.Expression | undefined {
+  if (!ts.isBlock(f.body)) return f.body;
+  const [only, ...rest] = f.body.statements;
+  return !rest.length && only && ts.isReturnStatement(only) ? only.expression : undefined;
+}
+
+const rootName = (text: string) => /^[A-Za-z_$][\w$]*/.exec(text)?.[0];
+const declaresParam = (fn: ts.SignatureDeclaration, name: string | undefined, sf: ts.SourceFile) => !!name && fn.parameters.some((p) => new RegExp(`\\b${name}\\b`).test(p.name.getText(sf)));
+
+/**
+ * Is `node` (an href expression) rendered only when isSafeUrl(<the same expression>) returned
+ * true? Recognised, and only these:
+ *  - `<guard> && …<a href={x}>…` with the href inside the right operand;
+ *  - `<guard> ? …<a href={x}>… : …` with the href inside the true branch;
+ *  - `list.filter((l) => <guard on l.url>).map((l) => …<a href={l.url}>…)`;
+ * where <guard> satisfies `guarantees()`. Walking outward stops at a function whose parameters
+ * rebind the href's root name (a guard outside it is about a different value).
+ */
 function guarded(node: ts.Expression, sf: ts.SourceFile): boolean {
   const text = node.getText(sf);
+  const root = rootName(text);
   for (let cur: ts.Node = node; cur.parent; cur = cur.parent) {
     const p = cur.parent;
-    // isSafeUrl(x) && <a href={x}>  /  isSafeUrl(x) ? <a href={x}> : …
-    if (ts.isBinaryExpression(p) && p.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken && p.right === cur && isSafeCallOn(p.left, text, sf)) return true;
-    if (ts.isConditionalExpression(p) && p.whenTrue === cur && isSafeCallOn(p.condition, text, sf)) return true;
-    // list.filter((l) => isSafeUrl(l.url)).map((l) => <a href={l.url}>)
-    if (ts.isArrowFunction(cur) && ts.isCallExpression(p) && ts.isPropertyAccessExpression(p.expression) && p.expression.name.text === 'map') {
-      const src = p.expression.expression;
-      if (ts.isCallExpression(src) && ts.isPropertyAccessExpression(src.expression) && src.expression.name.text === 'filter') {
-        const f = src.arguments[0];
-        const mapParam = cur.parameters[0]?.name.getText(sf);
-        if (f && (ts.isArrowFunction(f) || ts.isFunctionExpression(f))) {
-          const fParam = f.parameters[0]?.name.getText(sf);
-          if (mapParam && fParam && isSafeCallOn(f.body, text.replace(new RegExp(`^${mapParam}\\b`), fParam), sf)) return true;
+    if (ts.isBinaryExpression(p) && p.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken && p.right === cur && guarantees(p.left, text, sf)) return true;
+    if (ts.isConditionalExpression(p) && p.whenTrue === cur && guarantees(p.condition, text, sf)) return true;
+    if ((ts.isArrowFunction(cur) || ts.isFunctionExpression(cur)) && declaresParam(cur, root, sf)) {
+      // list.filter((l) => <guard>).map((l) => <a href={l.url}>): the only way through a rebinding.
+      if (ts.isCallExpression(p) && p.arguments[0] === cur && ts.isPropertyAccessExpression(p.expression) && p.expression.name.text === 'map') {
+        const src = p.expression.expression;
+        if (ts.isCallExpression(src) && ts.isPropertyAccessExpression(src.expression) && src.expression.name.text === 'filter') {
+          const f = src.arguments[0];
+          const mapParam = cur.parameters[0]?.name;
+          if (f && (ts.isArrowFunction(f) || ts.isFunctionExpression(f)) && mapParam && ts.isIdentifier(mapParam) && f.parameters[0] && ts.isIdentifier(f.parameters[0].name) && mapParam.text === root) {
+            const result = predicateResult(f);
+            const renamed = text.replace(new RegExp(`^${root}\\b`), f.parameters[0].name.text);
+            if (result && guarantees(result, renamed, sf)) return true;
+          }
         }
       }
+      return false;
     }
   }
   return false;
@@ -206,6 +237,32 @@ test('mutation: removing an isSafeUrl guard, or adding an unguarded data href, i
   assert.equal(check('const A = ({ e }) => <>{e.links.filter((l) => isSafeUrl(l.url)).map((l) => <a href={l.url}>x</a>)}</>;'), true);
   assert.equal(check('const A = ({ e }) => <>{e.links.filter((l) => l.url).map((l) => <a href={l.url}>x</a>)}</>;'), false, 'filter without isSafeUrl');
   assert.equal(check('const A = ({ e }) => <>{e.links.map((l) => <a href={l.url}>x</a>)}</>;'), false, 'no filter');
+  // Positive predicates that are still accepted.
+  assert.equal(check('const A = ({ p, ok }) => <>{ok && isSafeUrl(p.url) && <a href={p.url}>x</a>}</>;'), true, 'conjunction with another condition');
+  assert.equal(check('const A = ({ p }) => <>{(isSafeUrl(p.url)) && <div><a href={p.url}>x</a></div>}</>;'), true, 'parentheses, nested JSX');
+  assert.equal(check('const A = ({ e }) => <>{e.links.filter((l) => { return isSafeUrl(l.url); }).map((l) => <a href={l.url}>x</a>)}</>;'), true, 'block-bodied filter');
+  assert.equal(check('const A = ({ e }) => <>{e.links.filter((l) => l.visible && isSafeUrl(l.url)).map((l) => <a href={l.url}>x</a>)}</>;'), true, 'filter conjunction');
+  // False positives the previous recursive search accepted; each is now rejected.
+  const rejected: [string, string][] = [
+    ['negated guard', 'const A = ({ p }) => <>{!isSafeUrl(p.url) && <a href={p.url}>x</a>}</>;'],
+    ['negated in a conditional', 'const A = ({ p }) => (!isSafeUrl(p.url) ? <a href={p.url}>x</a> : null);'],
+    ['OR bypass', 'const A = ({ p }) => <>{(isSafeUrl(p.url) || p.trusted) && <a href={p.url}>x</a>}</>;'],
+    ['OR with a constant', 'const A = ({ p }) => <>{(isSafeUrl(p.url) || true) && <a href={p.url}>x</a>}</>;'],
+    ['compared to false', 'const A = ({ p }) => <>{isSafeUrl(p.url) === false && <a href={p.url}>x</a>}</>;'],
+    ['nested inside an unrelated call', 'const A = ({ p }) => <>{log(isSafeUrl(p.url)) && <a href={p.url}>x</a>}</>;'],
+    ['nested inside an array', 'const A = ({ p }) => <>{[isSafeUrl(p.url)].length && <a href={p.url}>x</a>}</>;'],
+    ['result stored in a variable', 'const A = ({ p }) => { const ok = isSafeUrl(p.url); return <>{ok && <a href={p.url}>x</a>}</>; };'],
+    ['guard in the false branch only', 'const A = ({ p }) => (isSafeUrl(p.url) ? null : <a href={p.url}>x</a>);'],
+    ['guard on an outer value shadowed by a parameter', 'const A = ({ l, list }) => <>{isSafeUrl(l.url) && list.map((l) => <a href={l.url}>x</a>)}</>;'],
+    ['negated filter predicate', 'const A = ({ e }) => <>{e.links.filter((l) => !isSafeUrl(l.url)).map((l) => <a href={l.url}>x</a>)}</>;'],
+    ['OR filter predicate', 'const A = ({ e }) => <>{e.links.filter((l) => isSafeUrl(l.url) || l.trusted).map((l) => <a href={l.url}>x</a>)}</>;'],
+    ['filter that ignores the check', 'const A = ({ e }) => <>{e.links.filter((l) => { isSafeUrl(l.url); return true; }).map((l) => <a href={l.url}>x</a>)}</>;'],
+    ['filter checking a different field', 'const A = ({ e }) => <>{e.links.filter((l) => isSafeUrl(l.label)).map((l) => <a href={l.url}>x</a>)}</>;'],
+    ['filter by a named function', 'const A = ({ e }) => <>{e.links.filter(safe).map((l) => <a href={l.url}>x</a>)}</>;'],
+    ['map parameter renamed away from the filtered one', 'const A = ({ e, l }) => <>{e.links.filter((m) => isSafeUrl(m.url)).map((k) => <a href={l.url}>x</a>)}</>;'],
+  ];
+  const accepted = rejected.filter(([, src]) => check(src) !== false).map(([name]) => name);
+  assert.deepEqual(accepted, [], `accepted as guarded: ${accepted.join('; ')}`);
 });
 
 test('characterization (DEFECT): imported data keeps unsafe URLs, and React 18 renders them as-is', async () => {

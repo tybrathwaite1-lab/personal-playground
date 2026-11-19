@@ -6,12 +6,16 @@ Baseline: `main` at `6bfbf0d` (M2-3 closed). Test-only change: no production cod
 
 - **Safe URLs** (`tests/url-safety.test.ts`):
   - `isSafeUrl` accepts only absolute http(s) URLs, including IDN, credentials, ports and surrounding whitespace. It rejects `javascript:`/`vbscript:`/`data:`/`file:`/`blob:`/`about:`/`mailto:`/`tel:` and other schemes, including case, whitespace, tab/newline and NUL obfuscation; relative, protocol-relative, hash, query and malformed values; and non-string runtime values (coerced exactly as React renders them).
-  - A TypeScript-AST scan classifies all JSX `href`s in `src/` as constant, trusted builder (`href()`, `directionsLink`, `mapsLink`, literal `https://host/` templates), guarded by `isSafeUrl` (`&&`, `?:`, or `.filter(isSafeUrl).map`), or reviewed. Any new unguarded href fails; stale exceptions also fail.
+  - A TypeScript-AST scan classifies every JSX `href` in `src/` as a constant, a trusted builder (`href()`, `directionsLink`, `mapsLink`, literal `#…` or `https://host/` templates), guarded, or reviewed. Any new unguarded href fails, and so do stale review entries.
+  - **"Guarded" means the scanner sees a positive `isSafeUrl` predicate on the exact rendered expression (as written)** in one of three patterns: `guard && …href…`, `guard ? …href… : …` (true branch only), or `list.filter((l) => guard).map((l) => …href…)` with an expression body or a single `return`.
+  - A guard is: `isSafeUrl(x)` itself; `a && b` where either side is a guard; `a || b` only if both sides are guards; or a parenthesised guard. Rejected: negation, comparisons, an `isSafeUrl` call nested in another expression, a stored result, a different argument, named filter functions, and outer guards across a function whose parameters rebind the href's root name.
+  - Revision 1 tightened this. The first version accepted any `isSafeUrl(x)` found anywhere in a condition; 12 of the 16 bypass fixtures now in the test were accepted by it.
+  - **What the scan does not do:** it doesn't follow data flow (e.g. `Collection`'s `linkFor` is reviewed by hand), doesn't model reassignment of the guarded value, and trusts the named builders and the `REVIEWED` list.
 - **GitHub sync** (`tests/github-sync-utils.test.ts`):
   - `readRemote`/`writeRemote` are tested against mocked responses: wrapped base64 and Unicode round trips, 404 meaning "no file yet", 401/403 auth, 404 on write, 409/422 conflicts and stale sha, 5xx, network failure, empty/oversize/invalid content, and foreign files.
   - Also covered: request shape (contents API URL, token only in the Authorization header, `no-store`, sha sent or omitted).
   - Configuration: `loadConfig`, `saveConfig` and `parseRepo` with missing, malformed, invalid and unavailable storage; `sameConfig`.
-- **Local storage** (`tests/local-storage.test.ts`): personal data, seen history and sync metadata, each with no value, corrupted values, partly valid data, unavailable storage, throwing reads and quota-failing writes (the last good value survives).
+- **Local storage** (`tests/local-storage.test.ts`): personal data, seen history and sync metadata, each with no value, corrupted values, partly valid data, unavailable storage and throwing reads. With quota-failing writes, all three previous values survive unchanged; the in-memory storage lets `removeItem` succeed while `setItem` fails, as browsers do, so a "clear then write" regression in any of the three save functions is caught.
 - **Regression evidence:** seven local mutations were each caught, then reverted:
   - `isSafeUrl` allowing `javascript:`;
   - 409/422 no longer conflicts;
@@ -23,20 +27,25 @@ Baseline: `main` at `6bfbf0d` (M2-3 closed). Test-only change: no production cod
 - **Defects found (production unchanged; fixes proposed for a separate, approved change):**
   1. **Unsafe URLs from personal data.** `FieldNotes` (`n.url`), `Digital` (`w.url`, `random.url`) and `Plan` (`e.links[0].url`) render URLs from personal data without `isSafeUrl`. Input forms validate new entries, but backup import and sync go through `normalizeData`, which doesn't validate URLs. React 18 renders `javascript:` hrefs (it only warns), so a crafted backup file, or a compromised private sync repo, could run script in the app's origin when the link is clicked. That origin is where the sync token lives.
      - **Impact:** needs the user to import a malicious file, or an attacker with write access to their private repo, and then a click.
-     - **Fix:** guard those four hrefs with `isSafeUrl`, as the other components do. Optionally also drop unsafe URLs in `normalizeData`. M2-6 should add a browser test.
+     - **Disposition (review):** confirmed. A narrowly scoped security follow-up comes next, after #38 is merged and verified and subject to owner approval, and before M2-5. It will:
+       - guard all four rendering boundaries;
+       - keep valid links and readable personal content;
+       - not silently delete imported records;
+       - replace the four `DEFECT` exceptions with regression protection.
+
+       Actual browser verification is part of M2-6.
      - The tests record these as reviewed `DEFECT` entries and pin the current behaviour.
   2. **Raw errors on malformed responses.** `readRemote`/`writeRemote` parse response bodies outside their error handling, so a malformed 200 (e.g. a proxy's HTML page) surfaces as a raw `SyntaxError`/`TypeError`, not a typed `SyncError`. On write, the file was saved but the round reports failure; the next sync reconciles.
      - **Impact:** a confusing message only. Nothing is lost and privacy checks are unaffected.
-     - **Fix:** wrap both parses and map to a `format` error.
+     - **Fix:** wrap both parses and map to a `format` error. Tracked separately; not fixed in M2-4.
   3. **`parseRepo` ignores leading text** (it isn't anchored), so `gitlab.example/o/r` reads as `o/r`. `verifyRepo` still requires a private repo the token can write.
      - **Impact:** minor.
-     - **Fix:** anchor it to a `github.com` URL or a bare `owner/repo`.
+     - **Fix:** anchor it to a `github.com` URL or a bare `owner/repo`. Tracked separately; not fixed in M2-4.
 - **Noted, not defects:**
   - `loadConfig` checks presence, not types.
   - A failed `saveConfig` is silent, so sync stays connected for that session only.
   - The empty-data fallback shares `EMPTY_DATA`'s arrays. That's safe while updates stay immutable; it's pinned.
 - **Known limitations:**
-  - The href scan is source-level. It trusts named builders and the `REVIEWED` list, and doesn't follow data flow (e.g. `Collection`'s `linkFor`).
   - Real clicking and React DOM behaviour belong in M2-6.
   - The `react-dom/server` characterization requires the installed React 18; it will flag a React upgrade.
 

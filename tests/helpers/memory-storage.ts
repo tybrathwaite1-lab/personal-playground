@@ -1,7 +1,7 @@
 /**
  * A minimal in-memory `localStorage` for tests, with switches for the failure modes browsers
  * really have: storage unavailable (access throws, e.g. blocked site data), reads that throw,
- * and writes that throw (quota exceeded, private mode). Installed on globalThis and restored
+ * and writes that throw (quota exceeded: setItem fails, removeItem still works). Installed on globalThis and restored
  * after each use, so tests never touch a real browser profile.
  */
 export class MemoryStorage {
@@ -23,7 +23,7 @@ export class MemoryStorage {
     this.data.set(k, String(v));
   }
   removeItem(k: string) {
-    if (this.failWrites) throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    // Removing never exceeds a quota, so it succeeds even while writes fail (as in browsers).
     this.data.delete(k);
   }
   clear() {

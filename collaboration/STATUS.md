@@ -17,6 +17,7 @@
   - **M2-7 (blocking lint) is closed:** PR #36 merged, `main` at `f499a5b`, post-merge checks passed.
   - **M2-3 (deterministic planner tests) is closed:** PR #37 merged, `main` at `6bfbf0d`, post-merge checks passed.
   - **M2-4 (safety-critical utility tests) is in review.** It found one defect (personal-data URLs rendered without `isSafeUrl`) and two minor ones; see HANDOFF.
+  - **Next, subject to owner approval:** a security fix guarding those four rendering boundaries, ahead of M2-5. Malformed GitHub responses and loose repo parsing are tracked separately.
   - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.

@@ -69,10 +69,15 @@ test('storage unavailable (blocked site data): reads give defaults, writes repor
   });
 });
 
-test('reads that throw give defaults; writes that throw (quota) leave the previous value intact', async () => {
+test('reads that throw give defaults; writes that throw (quota) leave every previous value intact', async () => {
   const s = new MemoryStorage();
+  const seen = { relax: ['exp-a', 'exp-b'] };
+  const meta = { stamps: { 'favorites:exp-1': 5 }, tombs: { 'saved:gone': 6 } };
   await withStorage(s, () => {
-    saveData(sample());
+    // Previous good values for all three stores.
+    assert.equal(saveData(sample()), true);
+    saveSeen(seen);
+    saveMeta(meta);
     s.failReads = true;
     assert.deepEqual(loadData(), EMPTY_DATA);
     assert.deepEqual(loadSeen(), {});
@@ -80,10 +85,13 @@ test('reads that throw give defaults; writes that throw (quota) leave the previo
     s.failReads = false;
     s.failWrites = true;
     assert.equal(saveData({ ...sample(), favorites: ['changed'] }), false);
-    assert.doesNotThrow(() => saveSeen({ x: ['y'] }));
-    assert.doesNotThrow(() => saveMeta({ stamps: { k: 1 }, tombs: {} }));
+    assert.doesNotThrow(() => saveSeen({ relax: ['changed'] }));
+    assert.doesNotThrow(() => saveMeta({ stamps: { changed: 1 }, tombs: {} }));
     s.failWrites = false;
-    assert.deepEqual(loadData().favorites, ['exp-1'], 'the last good save is still there');
+    // The last good saves are all still there, unchanged.
+    assert.deepEqual(loadData(), sample());
+    assert.deepEqual(loadSeen(), seen);
+    assert.deepEqual(loadMeta(), meta);
   });
 });
 
