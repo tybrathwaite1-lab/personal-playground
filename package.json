@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test": "tsx --tsconfig tsconfig.app.json --test tests/*.test.ts",
+    "test": "tsx --tsconfig tsconfig.app.json scripts/test/run.ts",
     "content": "tsx scripts/drop/build.ts --strict",
     "links": "tsx scripts/drop/check-links.ts",
     "pulse": "tsx scripts/pulse/ingest.ts",

@@ -132,7 +132,7 @@ Requires Node 24 (`.nvmrc`; CI reads the same file, and `nvm use` picks it up) w
 ```bash
 npm ci             # exact versions from package-lock.json (use `npm install <pkg>` only to change dependencies)
 npm run dev        # http://localhost:5173  (predev builds drop.json)
-npm test           # unit tests
+npm test           # every tests/**/*.test.ts; fails on skipped/focused/TODO tests or files that ran none
 npm run pulse      # optional: pull live events into public/data/pulse.json
 npm run images     # optional: fetch editorial photos
 npm run build

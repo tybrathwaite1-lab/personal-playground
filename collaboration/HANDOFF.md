@@ -1,6 +1,19 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 closed; M2 test harness audit)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-1: eliminate false-positive tests)
+
+- **`npm test` now runs `scripts/test/run.ts`.** It runs every `tests/**/*.test.ts` file (nested included) through the `node:test` API, then fails unless the run is trustworthy:
+  - every discovered file reported at least one real top-level test;
+  - no misnamed or misplaced test-like file exists (e.g. `*.spec.ts`, `*.test.tsx`, or a test-named file inside `helpers/` or `fixtures/`), and there are no symlinks;
+  - nothing is focused, skipped or TODO, checked both in the source (TypeScript parse, so comments and strings don't count) and at run time;
+  - nothing failed or was cancelled.
+- **Fixed false positive:** `tests/image-scout-publish.test.ts:75` compared `indexOf` results for a marker #32 had removed, so it read −1 and always passed. It's replaced by `tests/helpers/order.ts` → `assertInOrder()`, which fails on a missing or reordered marker and now covers all ten validation phases. Mutation tests show a missing marker, staging moved before the content checks, a limit moved out of the metadata loop, and an unchecked enumeration each fail.
+- **Tests:** `tests/test-integrity.test.ts` covers discovery, source detection, run verification, and the real runner end to end on synthetic trees: a skip, a runtime skip, a TODO, `.only`, an empty file, a load failure, a misnamed file and a failing test.
+- **Known limitation:** a run with explicit file arguments (`npm test -- tests/x.test.ts`) skips the completeness check and says so.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 closed; M2 test harness audit)
 
 - **M1 is closed** after ChatGPT's independent post-merge verification. PRs #31 and #32 are merged; `main` is `483ae64`.
 - **Checks on `483ae64`:** all passed.
