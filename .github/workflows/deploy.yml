@@ -72,7 +72,9 @@ jobs:
           BASE_PATH: /${{ github.event.repository.name }}/
 
       - name: Stamp build (lets the smoke check confirm which commit is live)
-        run: echo "{\"commit\":\"${{ github.sha }}\",\"builtAt\":\"$(date -u +%FT%TZ)\"}" > dist/version.json
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: printf '{"commit":"%s","builtAt":"%s"}\n' "$COMMIT_SHA" "$(date -u +%FT%TZ)" > dist/version.json
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
@@ -109,4 +111,7 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci --no-audit --no-fund
       - name: Production smoke check
-        run: npx tsx scripts/smoke/prod.ts "${{ needs.deploy.outputs.page_url }}" --expect-commit "${{ github.sha }}"
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: npx tsx scripts/smoke/prod.ts "$PAGE_URL" --expect-commit "$COMMIT_SHA"
