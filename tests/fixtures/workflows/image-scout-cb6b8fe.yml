@@ -1,0 +1,34 @@
+name: Image scout (maintainer tool)
+
+# Push to the image-scout branch to search Wikimedia Commons for candidate photos.
+# Results (contact sheets + metadata) are committed to the image-scout-results branch.
+on:
+  push:
+    branches: [image-scout]
+
+permissions:
+  contents: write
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npx tsx scripts/images/scout.ts
+      - name: Snapshot live Pulse data for local testing
+        run: npx tsx scripts/pulse/ingest.ts --out scout/pulse.json && npx tsx scripts/drop/candidates.ts && cp public/data/candidates.json scout/ || true
+      - name: Snapshot editorial images for local previews
+        run: npx tsx scripts/images/fetch.ts && mkdir -p scout/editorial && cp public/images/editorial/*-600.webp scout/editorial/ || true
+      - name: Publish results to image-scout-results
+        run: |
+          cd scout
+          git init -q -b image-scout-results
+          git config user.name "image-scout"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Scout results ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" image-scout-results

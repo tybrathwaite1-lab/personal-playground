@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import yaml from 'js-yaml';
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const workflows = readdirSync(new URL('../.github/workflows/', import.meta.url)).filter((f) => f.endsWith('.yml'));
@@ -33,14 +34,27 @@ test('package-lock.json matches package.json and resolves only from the registry
 type Pin = { action: string; tag: string; sha: string; runtime: string; verified: string };
 const MANIFEST = JSON.parse(read('.github/action-pins.json')) as { pins: Pin[] };
 
-/** Every `uses:` reference in a workflow file's text, with its "# vX.Y.Z" release comment. */
+type WorkflowDoc = { jobs: Record<string, { uses?: string; steps?: { uses?: string; with?: Record<string, unknown> }[] }> };
+
+/**
+ * Every action reference in a workflow, taken from its parsed structure (job-level reusable
+ * workflows and step `uses:`), paired with the "# vX.Y.Z" release comment on its source line.
+ * YAML parsing drops comments, so the comment is looked up in the text; the reference itself
+ * must come from the structure, so references the text scan can't see (flow style, odd
+ * spacing) are still checked.
+ */
 function usesRefs(file: string, text: string) {
-  const refs: { file: string; ref: string; comment: string }[] = [];
+  const doc = yaml.load(text) as WorkflowDoc;
+  const structural = Object.values(doc.jobs).flatMap((j) => [j.uses, ...(j.steps ?? []).map((st) => st.uses)]).filter((u): u is string => typeof u === 'string');
+  const comments = new Map<string, string[]>();
   for (const line of text.split('\n')) {
     const m = /^\s*(?:-\s*)?uses:\s*(\S+)(.*)$/.exec(line);
-    if (m) refs.push({ file, ref: m[1], comment: m[2] });
+    if (m) comments.set(m[1], [...(comments.get(m[1]) ?? []), m[2]]);
   }
-  return refs;
+  return structural.map((ref) => {
+    const list = comments.get(ref) ?? [];
+    return { file, ref, comment: list.shift() ?? '' };
+  });
 }
 
 /** Problems with workflow action references against the trusted manifest (empty = all good). */
@@ -99,6 +113,20 @@ test('mutation evidence: the manifest check rejects unpinned, moved, mislabelled
   }
 });
 
+test('action references come from the parsed workflow, so unusual YAML syntax cannot hide one', () => {
+  const hidden = ['jobs:', '  x:', '    runs-on: ubuntu-latest', '    steps:', '      - {name: sneaky, uses: evil/action@main}', `      - uses:   actions/checkout@${'1'.repeat(40)}   # v7.0.1`].join('\n');
+  const refs = usesRefs('hidden.yml', hidden);
+  assert.deepEqual(refs.map((r) => r.ref), ['evil/action@main', `actions/checkout@${'1'.repeat(40)}`]);
+  const v = pinProblems(refs, MANIFEST.pins);
+  assert.ok(v.some((m) => /evil\/action@main is not in the trusted manifest/.test(m)), JSON.stringify(v));
+  assert.ok(v.some((m) => /actions\/checkout@1{40} does not match the trusted SHA/.test(m)), JSON.stringify(v));
+  // The pre-M1 image-scout workflow (still on the image-scout branch) fails the manifest check.
+  const old = usesRefs('image-scout-cb6b8fe.yml', read('tests/fixtures/workflows/image-scout-cb6b8fe.yml'));
+  const ov = pinProblems(old, MANIFEST.pins);
+  assert.ok(ov.some((m) => /actions\/checkout@v4 does not match the trusted SHA/.test(m)), JSON.stringify(ov));
+  assert.ok(ov.some((m) => /actions\/setup-node@v4 does not match the trusted SHA/.test(m)), JSON.stringify(ov));
+});
+
 test('Node version is aligned: .nvmrc, engines, lockfile, CI and docs', () => {
   const nvmrc = read('.nvmrc').trim();
   assert.equal(nvmrc, '24');
@@ -108,11 +136,14 @@ test('Node version is aligned: .nvmrc, engines, lockfile, CI and docs', () => {
   assert.deepEqual(lock.packages[''].engines, pkg.engines, 'lockfile root engines match package.json');
   let setups = 0;
   for (const f of workflows) {
-    const text = read(`.github/workflows/${f}`);
-    assert.ok(!/node-version:/.test(text), `${f}: use node-version-file: .nvmrc, not a literal version`);
-    const n = (text.match(/uses: actions\/setup-node@/g) ?? []).length;
-    assert.equal((text.match(/node-version-file: \.nvmrc/g) ?? []).length, n, `${f}: every setup-node reads .nvmrc`);
-    setups += n;
+    const doc = yaml.load(read(`.github/workflows/${f}`)) as WorkflowDoc;
+    for (const [job, j] of Object.entries(doc.jobs))
+      for (const st of j.steps ?? [])
+        if (st.uses?.startsWith('actions/setup-node@')) {
+          setups++;
+          assert.equal(st.with?.['node-version-file'], '.nvmrc', `${f} › ${job}: setup-node reads .nvmrc`);
+          assert.equal(st.with?.['node-version'], undefined, `${f} › ${job}: no literal node-version`);
+        }
   }
   assert.ok(setups >= 7);
   assert.match(read('README.md'), /Requires Node 24 \(`\.nvmrc`/);

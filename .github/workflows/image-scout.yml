@@ -7,8 +7,9 @@ name: Image scout (maintainer tool)
 #  - generate (read-only token): installs dependencies, runs the scout and the optional
 #    snapshots. Third-party npm code and external downloads only ever run here.
 #  - publish (contents: write): no checkout, no npm, no repository code. It downloads the
-#    generate job's artifact, checks it is plain result files within fixed limits, and
-#    force-pushes one parentless commit to image-scout-results. The token reaches git
+#    generate job's artifact outside the workspace, validates every entry (fail closed), copies
+#    only the allowed files into a new empty directory, and force-pushes one parentless commit
+#    of that directory to image-scout-results. The token reaches git
 #    only through an environment-scoped header, never a URL or command argument.
 on:
   push:
@@ -69,38 +70,64 @@ jobs:
     permissions:
       contents: write # push to image-scout-results
     steps:
+      # The artifact was produced by a job that ran third-party code, so its contents are
+      # untrusted. It is extracted outside the workspace and never used as a git directory.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: image-scout-results
-          path: scout
+          path: ${{ runner.temp }}/scout-artifact
 
-      - name: Check the results are plain files within limits
+      # Validate every entry first (fail closed), then copy only the allowed files, as fresh
+      # 0644 regular files, into a new empty publishing directory.
+      - name: Validate results and stage a clean publishing directory
+        env:
+          SRC: ${{ runner.temp }}/scout-artifact
+          OUT: ${{ runner.temp }}/scout-publish
         run: |
           set -euo pipefail
-          cd scout
-          if [ -n "$(find . -mindepth 1 ! -type f ! -type d -print -quit)" ]; then
-            echo "::error::results contain something other than regular files and directories"; exit 1
-          fi
-          bad=$(find . -type f | awk '!/^\.\/(editorial\/)?[A-Za-z0-9._-]+\.(jpg|webp|json)$/')
-          if [ -n "$bad" ]; then
-            echo "::error::unexpected result paths:"; echo "$bad"; exit 1
-          fi
-          test -f results.json || { echo "::error::results.json is missing"; exit 1; }
-          count=$(find . -type f | wc -l)
-          bytes=$(find . -type f -printf '%s\n' | awk '{s+=$1} END {print s+0}')
-          echo "Results: $count files, $bytes bytes"
-          [ "$count" -le 500 ] || { echo "::error::too many files ($count)"; exit 1; }
-          [ "$bytes" -le 52428800 ] || { echo "::error::results too large ($bytes bytes)"; exit 1; }
+          fail() { echo "::error::$1"; exit 1; }
+          name_ok='^\./(editorial/)?[A-Za-z0-9][A-Za-z0-9_-]*(\.[A-Za-z0-9_-]+)*\.(jpg|webp|json)$'
+          [ -d "$SRC" ] && [ ! -L "$SRC" ] || fail "artifact directory missing"
+          cd "$SRC"
+          files=()
+          bytes=0
+          while IFS= read -r -d '' p; do
+            if [ -L "$p" ]; then fail "symlink in results: ${p@Q}"
+            elif [ -d "$p" ]; then [ "$p" = ./editorial ] || fail "unexpected directory: ${p@Q}"
+            elif [ -f "$p" ]; then
+              [[ "$p" =~ $name_ok ]] || fail "unexpected file name: ${p@Q}"
+              magic=$(head -c 12 -- "$p" | od -An -tx1 | tr -d ' \n')
+              case "$p" in
+                *.jpg) [[ "$magic" == ffd8ff* ]] || fail "not a JPEG: ${p@Q}" ;;
+                *.webp) [[ "$magic" == 52494646????????57454250 ]] || fail "not a WebP: ${p@Q}" ;;
+                *.json) node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' -- "$p" 2>/dev/null || fail "invalid JSON: ${p@Q}" ;;
+              esac
+              files+=("$p")
+              bytes=$(( bytes + $(stat -c %s -- "$p") ))
+            else fail "special file in results: ${p@Q}"
+            fi
+          done < <(find . -mindepth 1 -print0)
+          [ -f ./results.json ] || fail "results.json is missing"
+          [ "${#files[@]}" -le 500 ] || fail "too many files (${#files[@]})"
+          [ "$bytes" -le 52428800 ] || fail "results too large ($bytes bytes)"
+          rm -rf -- "$OUT"
+          mkdir -m 0755 -- "$OUT"
+          for p in "${files[@]}"; do install -D -m 0644 -- "$p" "$OUT/${p#./}"; done
+          echo "Staged ${#files[@]} files ($bytes bytes) in a clean publishing directory"
 
       - name: Publish results to image-scout-results
-        working-directory: scout
+        working-directory: ${{ runner.temp }}/scout-publish
         env:
           GH_TOKEN: ${{ github.token }} # this step only; reaches git via an env-scoped header
           REPO: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          [ ! -e .git ] || { echo "::error::publishing directory already has .git"; exit 1; }
+          # Ignore system and global git config, and never run hooks.
+          export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
           git init -q -b image-scout-results
+          git config core.hooksPath /dev/null
           git config user.name "image-scout"
           git config user.email "actions@users.noreply.github.com"
           git add -A

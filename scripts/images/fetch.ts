@@ -8,7 +8,7 @@
  * https://meta.wikimedia.org/wiki/User-Agent_policy
  */
 import { existsSync, mkdirSync } from 'node:fs';
-import sharp from 'sharp';
+import { writeEditorialVariants } from './process.ts';
 import { IMAGES } from '../../src/data/images.ts';
 
 const OUT = 'public/images/editorial';
@@ -37,9 +37,7 @@ for (const img of IMAGES) {
   }
   try {
     const buf = await download(img.download);
-    const base = sharp(buf, { limitInputPixels: 300_000_000 }).rotate();
-    await base.clone().resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 72 }).toFile(big);
-    await base.clone().resize({ width: 600, withoutEnlargement: true }).webp({ quality: 70 }).toFile(small);
+    await writeEditorialVariants(buf, big, small);
     ok++;
     console.log(`✓ ${img.id}`);
   } catch (e) {

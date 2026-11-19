@@ -1,6 +1,34 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (M1: security and reproducibility)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 security closeout)
+
+- **Post-merge verification of M1 (`6efcd88`):** all passed.
+  - Deploy run 44435684651: build 217/217, deploy, and smoke with `--expect-commit 6efcd88`.
+  - The bundle is still `index-BCRZKX9R.js`, so the app is byte-identical to before M1.
+  - Visual check 44435684597 (60 shots, 0 findings), Style guide 44435684591 (strict, 0 findings), Verify action pins 44435684508, and the publisher run 44436542218 (→ `visual-results/main-0d6e4079e367`).
+- **Image scout trust boundary:**
+  - The artifact is now extracted to `$RUNNER_TEMP/scout-artifact`. Every entry is validated before anything is copied, and validation fails closed:
+    - no symlinks or special files;
+    - the only directory allowed is `editorial`;
+    - file names must start with a letter or digit and end in `.jpg`, `.webp` or `.json`;
+    - JPEG and WebP signatures and JSON syntax are checked;
+    - `results.json` is required, with at most 500 files and 50 MB.
+  - Allowed files are copied as fresh 0644 files into a new `$RUNNER_TEMP/scout-publish`. Git runs only there, with system/global config ignored and hooks disabled.
+  - `tests/image-scout-publish.test.ts` runs the workflow's own validation step against 23 malicious or edge-case artifacts.
+  - The merged M1 version rejected `.git/config` and symlinks but accepted an empty `.git` directory, dot-files, leading-dash names, non-image content, invalid JSON and empty nested directories. No exploit path was found, but those gaps are now closed.
+- **The `image-scout` branch (`cb6b8fe`):**
+  - It has 0 commits of its own and is 96 commits behind main, so it is simply old main.
+  - It still carries the pre-M1 privileged workflow: `contents: write` for the whole workflow, unpinned `@v4` actions, `npm install` with a write token, and the token in the push URL.
+  - Its only differing content is `briefs.txt` containing `skip=skip`.
+  - **Recommended:** the owner deletes the branch and recreates it from `main` when a scout run is next wanted. Nothing has been pushed, triggered or overwritten.
+- **Structural tests:**
+  - Action references and setup-node checks now come from the parsed YAML; the text is used only for release comments.
+  - The pre-M1 image-scout workflow is kept as a fixture and must fail both the permission policy and the manifest.
+- **Editorial images:** processing is extracted unchanged into `scripts/images/process.ts`. `tests/editorial-images.test.ts` runs it on synthetic images every run (dimensions, EXIF rotation, no enlargement, stripped metadata, byte-identical repeat runs, corrupt input).
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (M1: security and reproducibility)
 
 PR #30 is merged as `e3f9bda`. M1 is a separate maintenance PR with no application, UI, navigation, content or Sync changes.
 
