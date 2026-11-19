@@ -26,9 +26,8 @@ jobs:
       - name: Production dependency audit (report only)
         run: node scripts/security/audit-report.mjs
         continue-on-error: true
-      - name: Lint
+      - name: Lint (blocking; warnings fail too)
         run: npm run lint
-        continue-on-error: true
       - run: npm test
       - name: Validate Weekly Drop editions (strict)
         run: npm run content

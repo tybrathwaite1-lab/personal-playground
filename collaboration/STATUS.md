@@ -13,7 +13,8 @@
   - The hardened image-scout workflow has not run for real; that waits for owner authorization.
 - **M2 test harness (in progress):** the plan is approved; the order is M2-1 → M2-2 → M2-7 → M2-3 → M2-4 → M2-5 → M2-6.
   - **M2-1 (test integrity) is closed:** PR #34 merged, `main` at `168f514`, post-merge checks passed.
-  - **M2-2 (workflow security tests) is in review.**
+  - **M2-2 (workflow security tests) is closed:** PR #35 merged, `main` at `4571b5b`, post-merge checks passed.
+  - **M2-7 (blocking lint) is in review.**
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
