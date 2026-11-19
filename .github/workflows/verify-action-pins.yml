@@ -1,0 +1,33 @@
+name: Verify action pins
+
+# Remote provenance evidence for .github/action-pins.json: each release tag must still resolve,
+# upstream, to the pinned commit, and that commit's action.yml must use the recorded runtime.
+# Read-only: anonymous git reads of public repositories, no token use, nothing is modified.
+# Routine CI doesn't depend on it: the offline manifest test in `npm test` enforces the pins;
+# this runs only when workflows or the manifest change, weekly, or on demand.
+on:
+  push:
+    branches-ignore: [image-scout, image-scout-results, visual-results]
+    paths:
+      - '.github/**'
+      - 'scripts/security/verify-action-pins.mjs'
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Resolve every pinned release upstream
+        run: node scripts/security/verify-action-pins.mjs
