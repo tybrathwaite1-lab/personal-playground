@@ -1,4 +1,4 @@
-# Status — 2026-11-18 (Sprint 02 "The Newsstand Effect" in progress; PR 2 shipped)
+# Status — 2026-11-19 (Sprint 02 "The Newsstand Effect" in progress; M1 closed; M2 test harness in planning)
 
 **Sprint 02, "The Newsstand Effect", is in progress** (authorized by the owner on 2026-11-18). Sprint 01 "Make discovery dependable" is complete; production was verified at `68186d8`.
 
@@ -7,7 +7,11 @@
 - **Done:** PR 1 / #28 (accessible design tokens and typography with the approved Newsstand palette), merged at `c2a5974`.
 - **Done:** PR 2 / #29 (graphic primitives, surface-aware controls, hidden `#/styleguide`, Caveat Bold accent). Owner-accepted at `2115aca` (zero manual defects), merged at `b8b39bc`, verified in production.
 - **Done:** M1 security and reproducibility maintenance (#31), merged at `6efcd88` and verified in production (app byte-identical).
-- **In review:** M1 closeout (image scout artifact boundary, structural workflow tests, editorial image processing test). Owner decision pending on the stale `image-scout` branch (`cb6b8fe`), which still carries the pre-M1 workflow.
+- **Done:** M1 closeout (#32): image scout artifact boundary, structural workflow tests, editorial image test.
+- **M1 is closed** (ChatGPT's independent post-merge verification). Baseline `main` is `483ae64`: deploy, smoke (`--expect-commit`), visual, strict style guide, action pins and the publisher all passed; 230/230 tests.
+  - The owner deleted the legacy `image-scout` branch (`cb6b8fe`); no image-scout run followed. `image-scout-results` is preserved at `71efe69`.
+  - The hardened image-scout workflow has not run for real; that waits for owner authorization.
+- **In planning:** M2 test harness. Audit and plan are with ChatGPT and the owner; no implementation yet.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
@@ -22,10 +26,12 @@
 | PP-003 Venue proximity | #4 closed | Publisher venue coordinates when plausible, precision per stop, straight-line labels, no unverified "easy walk" | [#21](https://github.com/tybrathwaite1-lab/personal-playground/pull/21) · `7265213` |
 | PP-004 Outing budget and timing | #5 closed | Combined budget, no overlaps, plan clock (overnight, same-day), drop-in vs fixed, scope disclosure, warnings vs neutral info | [#22](https://github.com/tybrathwaite1-lab/personal-playground/pull/22) · `68186d8` |
 
-**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** at Sprint 01 close (`68186d8`). **Current count on main: 208** (all passing, at `b8b39bc`). Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
+**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** at Sprint 01 close (`68186d8`). **Current count on main: 230** (all passing, at `483ae64`). Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
 
 ## Production (verified)
-Latest: deploy of main `b8b39bc` (PR #29, [run 44410662810](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44410662810)):
+Latest: deploy of main `483ae64` (PR #32, run 44438959858): build ✅ (230/230), deploy ✅, smoke ✅ (`--expect-commit 483ae64`; bundle `index-BCRZKX9R.js`, unchanged since PR #29). Pulse 6/7 sources (SPAA 403, carried over).
+
+Earlier: deploy of main `b8b39bc` (PR #29, [run 44410662810](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44410662810)):
 - **Branch protection:** the active "Protect main" ruleset (#27562180) requires a pull request and the `check` CI job, blocks deletion and non-fast-forward updates, and has no bypass actors. `check` passed on the accepted commit `2115aca`. ChatGPT inspected the ruleset on 2026-11-18.
 - **Jobs:** build ✅ (208/208 tests), deploy ✅, smoke ✅ (`--expect-commit b8b39bc` passed; bundle `index-BCRZKX9R.js`).
 - **Pulse:** 128 events, 6/7 sources (SPAA HTTP 403, listings carried over).
