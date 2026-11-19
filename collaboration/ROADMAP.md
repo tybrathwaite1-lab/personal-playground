@@ -15,10 +15,17 @@ Engineering items PP-001–PP-004 and PP-008 (elevated) are merged and verified 
 
 Engineering acceptance criteria are in AUDIT.md. Split work into small PRs. Research deliverable: source inventory with official URL, category, coverage, access/permission, freshness, cost, verification date and ingestion feasibility. Do not treat candidates as approved feeds. Review any proposed public content before publishing. Owner uses app naturally; feedback is optional, not homework.
 
-## Next: Sprint 02 (priorities to be agreed jointly; nothing started)
+## Sprint 02 — The Newsstand Effect (in progress, authorized 2026-11-18)
+Shipped: PR 0a (#27, PP-011), PR 1 (#28 tokens and typography), PR 2 (#29 graphic primitives and hidden style guide). Next design step (thin Explore hub) awaits authorization. Browser-based PR previews: approved in principle, deferred.
+
+Maintenance milestones:
+- **M1 Security and reproducibility: closed** (#31, #32; baseline `483ae64`).
+- **M2 Test harness: planning.** Audit and plan with ChatGPT and the owner; no implementation yet.
+
+## Sprint 01 backlog carried forward (status as of 2026-11-19)
 Candidates, unranked:
-- **Open issues:** PP-005 (sources), PP-006 (strict editorial validation), PP-007 (recurring calendars), PP-009 (remaining editorial checks), PP-010 (real-device mobile/offline/sync and UI review), PP-011 (reproducible builds).
-- **Sprint 01 follow-ups:** cited venue coordinates, non-event listing exclusion, tombstone expiry, React test harness (new dependency), planner refinements, Actions Node 20 deprecation, branch cleanup.
+- **Open issues:** PP-005 (sources), PP-006 (strict editorial validation), PP-007 (recurring calendars), PP-009 (remaining editorial checks), PP-010 (real-device mobile/offline/sync and UI review). PP-011 (reproducible builds) is done (#27, follow-ups in M1).
+- **Sprint 01 follow-ups:** cited venue coordinates, non-event listing exclusion, tombstone expiry, React test harness (new dependency; now part of M2 planning), planner refinements, branch cleanup. Actions Node 20 deprecation is done (#27, M1).
 
 Details are in HANDOFF.md. The standing principles still apply: prioritize confirmed security and data-integrity defects; no new backend or direct AI orchestration without a demonstrated need.
 

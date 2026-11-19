@@ -1,6 +1,17 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 security closeout)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 closed; M2 test harness audit)
+
+- **M1 is closed** after ChatGPT's independent post-merge verification. PRs #31 and #32 are merged; `main` is `483ae64`.
+- **Checks on `483ae64`:** all passed.
+  - Deploy run 44438959858: build 230/230, smoke `--expect-commit` passed.
+  - Visual 44438959896, Style guide 44438960048, Verify action pins 44438959859, Publisher 44439351739.
+- **Branches:** the owner deleted the legacy `image-scout` branch, and no image-scout run followed (the last run was 2026-11-17). `image-scout-results` is preserved at `71efe69`. The hardened image-scout workflow's first real run still waits for owner authorization.
+- **M2:** the test-harness audit and plan are with ChatGPT and the owner. No implementation has started.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 security closeout)
 
 - **Post-merge verification of M1 (`6efcd88`):** all passed.
   - Deploy run 44435684651: build 217/217, deploy, and smoke with `--expect-commit 6efcd88`.
