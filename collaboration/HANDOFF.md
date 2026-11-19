@@ -1,28 +1,41 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-2: workflow security tests)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-2: workflow security tests, revision 1)
 
 Baseline: `main` at `168f514` (M2-1 closed). This is test tooling plus three small workflow edits that move interpolated values into env.
 
-- **Privileged execution policy** (`PRIVILEGED_POLICY` in `tests/workflow-security.test.ts`). Every job with a write scope must have a reviewed entry:
-  - a **fingerprint** of the job definition and each step (sha256 of the parsed YAML), so any change to privileged execution fails until the new fingerprint is reviewed and recorded;
-  - a closed **command allowlist** (deploy: none; image-scout publish: 20 coreutils/find/git/node commands; visual-publish: `git`, `node`);
-  - the allowed first arguments for `node` (`-e`; `--version` or the reviewed publisher script).
-- **How commands are found:** `tests/helpers/shell.ts` finds every command a script runs: through quotes, `$(…)` and backticks, `sh`/`bash -c` code, wrappers (`env`, `exec`, `timeout`, `xargs`, `nice`, `sudo`, …), loops and `case` (patterns skipped), and function definitions.
-- **Also reported, in any privileged job:**
-  - package code: `npm`, `npx`, `yarn`, `pnpm`, `bun`, `bunx`, `corepack`, `tsx`, `ts-node`, `deno`, `volta`, or any `node_modules` path;
-  - computed command names;
-  - `eval`, `source` and `.`;
-  - heredocs.
-- **No `${{ … }}` in `run:` scripts**, in any job of any `.yml`/`.yaml` workflow, except exact `(file, job, step, expression)` exceptions. There are none today.
-  - Moved into env and quoted: `check.yml` smoke URL; `deploy.yml` build stamp (now `printf`); `deploy.yml` smoke `page_url` and commit.
-- **Untrusted values:** an env value that uses any expression outside a short, exact list of fixed-format contexts (commit SHAs, run IDs, repository and owner names, `runner.temp`, the token) is untrusted. So are `GITHUB_HEAD_REF`, `GITHUB_BASE_REF`, `GITHUB_REF` and `GITHUB_REF_NAME`. Untrusted variables must be expanded inside double quotes (including inside `$(…)`), and never inside `eval` or `sh -c` code. `needs.*.outputs` are not trusted.
-- **Evidence:** 17 privileged-execution mutations and 11 interpolation/quoting mutations are rejected. Positive cases stay accepted, including a check that each allowlist matches exactly the commands used; that check found `stat` was no longer needed. The exception-matching and `.yaml` tests and the shell reader's unit tests also pass. Disabling the `sh -c` recursion or the quoting rule makes the suite fail.
-- **Known limitations:** the shell reader is not a full bash parser.
-  - Heredoc bodies aren't analysed; they're reported in privileged jobs.
-  - Commands built from data that the reader can't see (e.g. read from a file and run indirectly) are only caught through the fingerprint review.
-  - Quoting is checked for word splitting and globbing, not for meaning: a quoted untrusted value passed as an option to a program (e.g. `git checkout "$REF"` with a value starting with `-`) needs the program's own `--` handling.
-  - Expressions in `with:` inputs are only checked for tokens. Actions that execute inputs as code, such as `github-script`, are excluded by the trusted action manifest rather than by this rule.
+- **Privileged execution policy** (`PRIVILEGED_POLICY` in `tests/workflow-security.test.ts`). Every job with a write scope needs a reviewed entry with:
+  - **a fingerprint** (sha256 of the parsed YAML) covering:
+    - the inherited workflow settings (`on`, `env`, `defaults`, `permissions`);
+    - the job definition without its steps;
+    - every step;
+  - **a closed command allowlist;**
+  - **the allowed first arguments for `node`.**
+- **Fingerprint boundary:** anything in those three parts changes the fingerprint. Not covered: other workflow files, repository or organization settings, the values of variables and secrets, runner images, and the content of pinned actions (pinned separately in `.github/action-pins.json`).
+- **Named rules for privileged jobs,** in addition to the fingerprint:
+  - execution-control variables (`NODE_OPTIONS`, `BASH_ENV`, `ENV`, `LD_PRELOAD`, `PATH`, `GIT_SSH_COMMAND`, …) may not be set in workflow, job or step env;
+  - a shell other than `bash` (workflow defaults, job defaults or step `shell:`) is rejected.
+- **How commands are found:** `tests/helpers/shell.ts` finds commands through quotes, `$(…)` and backticks, `sh`/`bash -c` code, wrappers (`env`, `exec`, `timeout`, `xargs`, `nice`, `sudo`, …), loops and `case`, and function definitions. Reported in privileged jobs: package code (npm/npx/yarn/pnpm/bun/bunx/corepack/tsx/ts-node/deno/volta, any `node_modules` path), computed command names, `eval`/`source`/`.`, and heredocs.
+- **No `${{ … }}` in `run:` scripts** of any `.yml`/`.yaml` workflow, except exact `(file, job, step, expression)` exceptions; none exist today.
+  - Expressions are read across line breaks and may contain `}` in string literals.
+  - The token rules use the same reader.
+- **Untrusted values:** an env value that uses any expression outside a short, exact list of fixed-format contexts is untrusted, and so are `GITHUB_HEAD_REF`, `GITHUB_BASE_REF`, `GITHUB_REF` and `GITHUB_REF_NAME`. Untrusted variables:
+  - must be expanded inside double quotes (including inside `$(…)`);
+  - must never appear inside `eval` or `sh -c` code;
+  - must never form any part of a command name, even quoted or through wrappers such as `env`, `exec`, `timeout` and `xargs`, in **any** job.
+- **Revision 1 evidence:** 23 new cases, each confirmed not rejected by the previous policy before the fix:
+  - inherited settings: 9 cases;
+  - multiline expressions: 5 cases, of which only the multi-line *expression body* was a real gap (`\s*` around the body already absorbed line breaks);
+  - untrusted command names: 9 cases.
+
+  All 28 earlier mutations still fail, and the real workflows and legitimate patterns stay accepted. These are also accepted: a multiline trusted expression; exact exceptions written over several lines; quoted untrusted arguments; and a trusted variable as a command path.
+- **Known limitations:** the shell reader is not a bash parser.
+  - **Data flow isn't tracked inside scripts.** An untrusted value copied to another variable (`b="$REF"; "$b"`), written to a file, or passed through `$GITHUB_ENV`/`$GITHUB_OUTPUT` to a later step is not followed. Such a computed command name is caught only in privileged jobs, where every computed command name is rejected.
+  - Heredoc bodies are not analysed; they are reported in privileged jobs.
+  - Expressions containing `}}` inside a string literal are split early.
+  - Quoting prevents word splitting and globbing, not option injection: a quoted value starting with `-` needs the receiving program's `--`.
+  - Expressions in `with:` inputs are only checked for tokens. Actions that execute inputs as code are excluded by the trusted action manifest.
+  - Unprivileged jobs may set `NODE_OPTIONS` and similar variables; only privileged jobs are restricted.
 
 ---
 

@@ -25,9 +25,9 @@ import yaml from 'js-yaml';
 import { createHash } from 'node:crypto';
 import { commands, expansions } from './helpers/shell.ts';
 
-type Steps = { uses?: string; run?: string; with?: Record<string, unknown>; env?: Record<string, unknown>; 'continue-on-error'?: unknown; name?: string; 'working-directory'?: string }[];
+type Steps = { uses?: string; run?: string; shell?: string; with?: Record<string, unknown>; env?: Record<string, unknown>; 'continue-on-error'?: unknown; name?: string; 'working-directory'?: string }[];
 type Job = { permissions?: unknown; steps?: Steps; env?: Record<string, unknown>; needs?: unknown; if?: unknown };
-type Workflow = { permissions?: unknown; env?: Record<string, unknown>; jobs: Record<string, Job> };
+type Workflow = { permissions?: unknown; env?: Record<string, unknown>; defaults?: unknown; jobs: Record<string, Job> };
 
 const dir = new URL('../.github/workflows/', import.meta.url);
 /** Workflow files GitHub runs: both extensions. */
@@ -43,23 +43,29 @@ const ALLOWED_WRITES: Record<string, Record<string, string[]>> = {
   'visual-publish.yml': { publish: ['contents'] },
 };
 
-const TOKEN_EXPR = /\$\{\{[^}]*\b(?:github\.token|secrets\.)[^}]*\}\}/i;
+/** Does a value interpolate the token or a secret? (Expressions are read as in exprsIn, so they may span lines.) */
+const TOKEN_EXPR = { test: (v: string) => exprsIn(v).some((e) => /\b(?:github\.token|secrets\.)/i.test(e)) };
 
 /**
- * Reviewed execution policy for every privileged job (any write scope). `fingerprint` pins the
- * job definition and each step exactly (sha256 of the parsed YAML), so any change to privileged
- * execution is a deliberate, reviewed edit here. `commands` is the closed set of programs its
+ * Reviewed execution policy for every privileged job (any write scope). `fingerprint` pins
+ * exactly (sha256 of the parsed YAML): the workflow settings the job inherits (`on`, `env`,
+ * `defaults`, `permissions`), the job definition without its steps (env, defaults, if, needs,
+ * permissions, environment, …), and each step (uses/with/run/env/shell/working-directory/…),
+ * so any change to privileged execution is a deliberate, reviewed edit here. Not covered: other
+ * workflow files, repository or organization settings, variables and secrets' values, runner
+ * images, and the content of the pinned actions (see .github/action-pins.json). `commands` is the closed set of programs its
  * scripts may run; `node` lists the only first arguments node may be given.
  * To update: change the workflow, run the tests, review the reported new fingerprints, paste.
  */
 const PRIVILEGED_POLICY: Record<string, Record<string, { why: string; fingerprint: string[]; commands: string[]; node: string[] }>> = {
   'deploy.yml': {
-    deploy: { why: 'Pages deployment: one pinned action, no scripts', fingerprint: ['job 6c293e8d85e3517f', 'uses actions/deploy-pages d9d0309b6b65eada'], commands: [], node: [] },
+    deploy: { why: 'Pages deployment: one pinned action, no scripts', fingerprint: ['workflow d240c5174c53487a', 'job 6c293e8d85e3517f', 'uses actions/deploy-pages d9d0309b6b65eada'], commands: [], node: [] },
   },
   'image-scout.yml': {
     publish: {
       why: 'validates an untrusted artifact with coreutils/find/node -e, then pushes a clean directory with git',
       fingerprint: [
+        'workflow 4d3ae8b559c484fe',
         'job e2ac6e7b087ef1bf',
         'uses actions/download-artifact 0c5d08e058334048',
         'run Validate results and stage a clean publishing directory bb7069187900ce6f',
@@ -72,7 +78,7 @@ const PRIVILEGED_POLICY: Record<string, Record<string, { why: string; fingerprin
   'visual-publish.yml': {
     publish: {
       why: 'fetches trusted default-branch code with git and runs the reviewed publisher with node',
-      fingerprint: ['job e66ba9464aa8a859', "run Check out the workflow's own commit (trusted code only) 9a2b43c512eb587d", 'run Validate and publish 4cd8d2c0ab94a471'],
+      fingerprint: ['workflow cb239d9186648d2d', 'job e66ba9464aa8a859', "run Check out the workflow's own commit (trusted code only) 9a2b43c512eb587d", 'run Validate and publish 4cd8d2c0ab94a471'],
       commands: ['git', 'node'],
       node: ['--version', 'scripts/visual/publish/publish.mjs'],
     },
@@ -107,13 +113,27 @@ const UNTRUSTED_DEFAULT_ENV = ['GITHUB_HEAD_REF', 'GITHUB_BASE_REF', 'GITHUB_REF
 type RunExprException = { file: string; job: string; step: string; expr: string; why: string };
 const RUN_EXPR_EXCEPTIONS: RunExprException[] = [];
 
-const exprsIn = (v: unknown) => [...String(v ?? '').matchAll(/\$\{\{\s*(.*?)\s*\}\}/g)].map((m) => m[1].replace(/\s+/g, ' '));
-/** Fingerprints of a job: its definition without steps, then each step. */
-export function fingerprint(job: Job): string[] {
+/**
+ * Every `${{ … }}` expression in a value, whitespace-normalised. Expressions may span lines
+ * (YAML block scalars), and may contain `}` inside string literals; the first `}}` closes one.
+ */
+function exprsIn(v: unknown): string[] {
+  return [...String(v ?? '').matchAll(/\$\{\{([\s\S]*?)\}\}/g)].map((m) => m[1].trim().replace(/\s+/g, ' '));
+}
+
+/** Environment variables that change how programs or shells start: never set for a privileged job. */
+const EXECUTION_ENV = new Set(['NODE_OPTIONS', 'NODE_PATH', 'NODE_EXTRA_CA_CERTS', 'BASH_ENV', 'ENV', 'SHELLOPTS', 'BASHOPTS', 'PROMPT_COMMAND', 'LD_PRELOAD', 'LD_LIBRARY_PATH', 'PATH', 'GIT_EXEC_PATH', 'GIT_SSH_COMMAND', 'GIT_ASKPASS', 'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_SYSTEM', 'PYTHONPATH', 'PYTHONSTARTUP', 'PERL5OPT', 'RUBYOPT']);
+
+/**
+ * Fingerprints of a privileged job: the inherited workflow settings that affect how it runs
+ * (triggers, env, defaults, permissions), its own definition without steps, then each step.
+ */
+export function fingerprint(job: Job, wf: Workflow): string[] {
   const { steps: st, ...rest } = job;
+  const { on, env, defaults, permissions } = wf as Workflow & { on?: unknown };
   const canon = (o: unknown): unknown => (Array.isArray(o) ? o.map(canon) : o && typeof o === 'object' ? Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => [k, canon(v)])) : o);
   const h = (o: unknown) => createHash('sha256').update(JSON.stringify(canon(o))).digest('hex').slice(0, 16);
-  return [`job ${h(rest)}`, ...(st ?? []).map((x) => `${x.uses ? `uses ${x.uses.split('@')[0]}` : `run ${x.name ?? '(unnamed)'}`} ${h(x)}`)];
+  return [`workflow ${h({ on, env, defaults, permissions })}`, `job ${h(rest)}`, ...(st ?? []).map((x) => `${x.uses ? `uses ${x.uses.split('@')[0]}` : `run ${x.name ?? '(unnamed)'}`} ${h(x)}`)];
 }
 
 function writeScopes(perms: unknown, where: string, out: string[]): string[] {
@@ -155,17 +175,23 @@ function violations(workflows: Record<string, Workflow>): string[] {
         const s = `${where} › step ${i + 1}${step.name ? ` (${step.name})` : ''}`;
         if (step.uses?.startsWith('actions/checkout@') && step.with?.['persist-credentials'] !== false) out.push(`${s}: checkout must set persist-credentials: false`);
         if (step.run && TOKEN_EXPR.test(step.run)) out.push(`${s}: token or secret interpolated into run:`);
-        if (step.run && /\$\{\{[^}]*token[^}]*\}\}/i.test(step.run)) out.push(`${s}: token expression interpolated into run:`);
+        if (step.run && exprsIn(step.run).some((e) => /token/i.test(e))) out.push(`${s}: token expression interpolated into run:`);
         if (step.run && /https:\/\/[^\s"']*:\$/.test(step.run)) out.push(`${s}: credentials embedded in a URL`);
         for (const [k, v] of Object.entries(step.with ?? {})) if (TOKEN_EXPR.test(String(v))) out.push(`${s}: token passed as input ${k}`);
         if (writes.length && step.uses?.startsWith('actions/setup-node@')) out.push(`${s}: privileged job sets up Node packages`);
         if (step.run) out.push(...scriptViolations(s, file, jobName, step, untrustedEnv(wf, job, step), writes.length ? (PRIVILEGED_POLICY[file]?.[jobName] ?? null) : undefined));
       }
       if (writes.length) {
+        // Execution settings a privileged job inherits or sets, checked by name as well as fingerprinted.
+        for (const [scope, env] of [['workflow env', wf.env], ['job env', job.env], ...(job.steps ?? []).map((st, i) => [`step ${i + 1} env`, st.env] as const)] as const)
+          for (const k of Object.keys(env ?? {})) if (EXECUTION_ENV.has(k)) out.push(`${where}: execution-control variable ${k} is set for a privileged job (${scope})`);
+        const shellOf = (d: unknown) => (d as { run?: { shell?: string } } | undefined)?.run?.shell;
+        for (const [scope, sh] of [['workflow defaults', shellOf(wf.defaults)], ['job defaults', shellOf((job as { defaults?: unknown }).defaults)], ...(job.steps ?? []).map((st) => ['step', st.shell] as const)] as const)
+          if (sh !== undefined && sh !== 'bash') out.push(`${where}: privileged job runs with a non-default shell (${sh}, ${scope})`);
         const policy = PRIVILEGED_POLICY[file]?.[jobName];
         if (!policy) out.push(`${where}: privileged job has no reviewed execution policy`);
         else {
-          const actual = fingerprint(job);
+          const actual = fingerprint(job, wf);
           if (JSON.stringify(actual) !== JSON.stringify(policy.fingerprint)) out.push(`${where}: privileged job differs from its reviewed fingerprint; review the change, then record ${JSON.stringify(actual)}`);
         }
       }
@@ -214,6 +240,9 @@ function scriptViolations(
     const codeArgs = UNANALYZABLE.has(base) ? c.argv.slice(1) : /^(sh|bash|dash|zsh|ksh)$/.test(base) ? c.argv.slice(code.findIndex((v) => /^-[a-z]*c[a-z]*$/.test(v)) + 1, code.findIndex((v) => /^-[a-z]*c[a-z]*$/.test(v)) + 2) : [];
     for (const w of codeArgs) for (const [n, from] of untrusted) if (new RegExp(`\\$\\{?${n}\\b`).test(w.raw)) out.push(`${s}: untrusted $${n} (from ${from}) expanded inside ${base === 'eval' ? 'eval' : `${base} -c`} code`);
     if (UNANALYZABLE.has(base)) out.push(`${s}: ${base} runs code the policy can't analyse`);
+    // Quoting stops word splitting, not execution: untrusted data must never name the program.
+    for (const [n, from] of untrusted)
+      if (new RegExp(`\\$\\{?${n}\\b`).test(c.argv[0].raw)) out.push(`${s}: untrusted $${n} (from ${from}) used as a command name${c.via.filter((v) => v !== '$(…)').length ? ` (via ${c.via.filter((v) => v !== '$(…)').join(' › ')})` : ''}`);
     if (policy === undefined) continue; // not a privileged job
     const label = c.via.length ? `${name} (via ${c.via.join(' › ')})` : name;
     if (c.argv[0].dynamic) out.push(`${s}: privileged job runs a command whose name is computed (${c.argv[0].raw})`);
@@ -396,6 +425,69 @@ test('M2-2 positives: legitimate patterns stay accepted', () => {
       const used = new Set((real()[file].jobs[job].steps ?? []).flatMap((st) => (st.run ? commands(st.run).commands.map((c) => c.argv[0].value) : [])));
       assert.deepEqual([...used].filter((c) => !['fail'].includes(c)).sort(), [...policy.commands].sort(), `${file} › ${job}: allowlist matches the commands actually used`);
     }
+});
+
+/** Asserts every mutation is rejected with its expected message; reports all misses at once. */
+function assertAllRejected(cases: [string, (w: Record<string, Workflow>) => void, RegExp][]) {
+  const missed = cases.filter(([, mutate, expected]) => !mutated(mutate).some((m) => expected.test(m))).map(([name]) => name);
+  assert.deepEqual(missed, [], `not rejected: ${missed.join('; ')}`);
+}
+
+test('M2-2 r1 (A): inherited workflow-level execution settings are part of the privileged policy', () => {
+  const cases: [string, (w: Record<string, Workflow>) => void, RegExp][] = [
+    ['NODE_OPTIONS in workflow env', (w) => (w['visual-publish.yml'].env = { NODE_OPTIONS: '--require ./evil.cjs' }), /visual-publish\.yml › publish: privileged job differs from its reviewed fingerprint/],
+    ['NODE_OPTIONS in workflow env (named rule)', (w) => (w['visual-publish.yml'].env = { NODE_OPTIONS: '--require ./evil.cjs' }), /visual-publish\.yml › publish: execution-control variable NODE_OPTIONS is set for a privileged job \(workflow env\)/],
+    ['BASH_ENV in workflow env', (w) => (w['image-scout.yml'].env = { BASH_ENV: './x.sh' }), /image-scout\.yml › publish: execution-control variable BASH_ENV is set for a privileged job \(workflow env\)/],
+    ['workflow defaults.run.shell', (w) => (w['image-scout.yml'].defaults = { run: { shell: 'python {0}' } }), /image-scout\.yml › publish: privileged job differs from its reviewed fingerprint/],
+    ['workflow defaults.run.shell (named rule)', (w) => (w['image-scout.yml'].defaults = { run: { shell: 'python {0}' } }), /image-scout\.yml › publish: privileged job runs with a non-default shell \(python \{0\}, workflow defaults\)/],
+    ['workflow defaults.run.working-directory', (w) => (w['visual-publish.yml'].defaults = { run: { 'working-directory': 'untrusted' } }), /visual-publish\.yml › publish: privileged job differs from its reviewed fingerprint/],
+    ['job-level NODE_OPTIONS', (w) => (w['visual-publish.yml'].jobs.publish.env = { ...w['visual-publish.yml'].jobs.publish.env, NODE_OPTIONS: '--import x' }), /execution-control variable NODE_OPTIONS is set for a privileged job \(job env\)/],
+    ['step shell override', (w) => (steps(w['visual-publish.yml'], 'publish')[1].shell = 'sh -e {0}'), /privileged job runs with a non-default shell \(sh -e \{0\}, step\)/],
+    ['new trigger on a privileged workflow', (w) => ((w['deploy.yml'] as Workflow & { on: unknown }).on = { pull_request_target: {} }), /deploy\.yml › deploy: privileged job differs from its reviewed fingerprint/],
+  ];
+  assertAllRejected(cases);
+  // Unprivileged workflows may still use workflow env and defaults freely.
+  assert.deepEqual(mutated((w) => ((w['check.yml'].env = { NODE_OPTIONS: '--max-old-space-size=4096' }), (w['check.yml'].defaults = { run: { shell: 'bash' } }))), []);
+});
+
+test('M2-2 r1 (B): multiline expressions are found in run scripts and env values', () => {
+  const ml = '${{\n  github.event.pull_request.title\n}}';
+  const cases: [string, (w: Record<string, Workflow>) => void, RegExp][] = [
+    ['multiline expression in run', (w) => addRun(w, 'check.yml', 'check', `echo "${ml}"`), /\$\{\{ github\.event\.pull_request\.title \}\} interpolated into run:/],
+    ['multiline expression in a .yaml workflow', (w) => (w['extra.yaml'] = { permissions: { contents: 'read' }, jobs: { j: { steps: [{ run: `git checkout \${{\n github.head_ref }}` }] } } }), /^extra\.yaml › j › step 1: \$\{\{ github\.head_ref \}\} interpolated into run:/],
+    ['multiline untrusted env value, unquoted', (w) => addRun(w, 'check.yml', 'check', 'echo $T', { env: { T: ml } }), /untrusted \$T \(from \$\{\{ github\.event\.pull_request\.title \}\}\) expanded without double quotes/],
+    ['multiline trusted-looking env that is not exact', (w) => addRun(w, 'check.yml', 'check', 'echo $S', { env: { S: '${{\n github.sha ||\n github.head_ref }}' } }), /untrusted \$S \(from \$\{\{ github\.sha \|\| github\.head_ref \}\}\)/],
+    ['expression containing } in a string', (w) => addRun(w, 'check.yml', 'check', "echo ${{ format('{0}', github.head_ref) }}"), /\$\{\{ format\('\{0\}', github\.head_ref\) \}\} interpolated into run:/],
+  ];
+  assertAllRejected(cases);
+  // A multiline trusted expression in env stays trusted (whitespace is normalised).
+  assert.deepEqual(mutated((w) => addRun(w, 'check.yml', 'check', 'echo $S', { env: { S: '${{\n  github.sha\n}}' } })), []);
+  // Exceptions still match exactly, also when the expression is written over several lines.
+  RUN_EXPR_EXCEPTIONS.push({ file: 'check.yml', job: 'check', step: 'injected', expr: 'github.sha', why: 'test-only exception' });
+  try {
+    assert.deepEqual(mutated((w) => addRun(w, 'check.yml', 'check', 'echo "${{\n  github.sha\n}}"')), []);
+    assert.ok(mutated((w) => addRun(w, 'check.yml', 'check', 'echo "${{\n  github.run_id\n}}"')).some((m) => /github\.run_id \}\} interpolated/.test(m)));
+  } finally {
+    RUN_EXPR_EXCEPTIONS.pop();
+  }
+});
+
+test('M2-2 r1 (C): untrusted data is never used as a command name, even quoted', () => {
+  const cases: [string, string, RegExp][] = [
+    ['quoted untrusted variable as the executable', '"$REF_NAME" --help', /untrusted \$REF_NAME \(from \$\{\{ github\.ref_name \}\}\) used as a command name/],
+    ['braced and path-prefixed', '"./bin/${REF_NAME}" run', /untrusted \$REF_NAME .* used as a command name/],
+    ['through env', 'env FOO=1 "$REF_NAME"', /untrusted \$REF_NAME .* used as a command name \(via env\)/],
+    ['through exec', 'exec "$REF_NAME"', /untrusted \$REF_NAME .* used as a command name \(via exec\)/],
+    ['through timeout', 'timeout 10 "$REF_NAME" x', /untrusted \$REF_NAME .* used as a command name \(via timeout\)/],
+    ['through xargs', 'echo a | xargs -0 "$REF_NAME"', /untrusted \$REF_NAME .* used as a command name \(via xargs\)/],
+    ['via command substitution', '"$(printf %s "$REF_NAME")" x', /untrusted \$REF_NAME .* used as a command name/],
+    ['inside $(…)', 'echo "$("$REF_NAME")"', /untrusted \$REF_NAME .* used as a command name/],
+    ['built-in ref variable', '"$GITHUB_HEAD_REF"', /untrusted \$GITHUB_HEAD_REF \(from a GitHub ref name\) used as a command name/],
+  ];
+  assertAllRejected(cases.map(([name, run, expected]) => [name, (w: Record<string, Workflow>) => addRun(w, 'visual.yml', 'capture', run), expected]));
+  // Quoted untrusted values as arguments, and trusted values as command names, stay accepted.
+  for (const ok of ['git log -1 -- "$REF_NAME"', 'printf "%s\\n" "$REF_NAME"', 'env BRANCH="$REF_NAME" node -e "1"', '"$RUNNER_TEMP/tool" --version'])
+    assert.deepEqual(mutated((w) => addRun(w, 'visual.yml', 'capture', ok)), [], ok);
 });
 
 test('exceptions to the no-interpolation rule are exact', () => {
