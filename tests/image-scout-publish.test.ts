@@ -15,6 +15,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
+import { assertInOrder } from './helpers/order.ts';
 
 type Step = { name?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, unknown>; 'working-directory'?: string };
 const wf = yaml.load(execFileSync('cat', ['.github/workflows/image-scout.yml'], { encoding: 'utf8' })) as { jobs: Record<string, { steps: Step[] }> };
@@ -22,6 +23,20 @@ const publish = wf.jobs.publish.steps;
 const download = publish.find((s) => s.uses?.startsWith('actions/download-artifact@'))!;
 const validate = publish.find((s) => /^Validate results/.test(s.name ?? ''))!;
 const push = publish.find((s) => /^Publish results/.test(s.name ?? ''))!;
+
+/** Landmarks of the validation step, in the order they must run. */
+const VALIDATION_PHASES = [
+  `find . -mindepth 1 -printf '%y\\t%s\\t%p\\0' > "$listing" || fail "could not enumerate the artifact"`,
+  '[ "${#files[@]}" -le "$max_files" ] || fail',
+  '[ "$bytes" -le "$max_bytes" ] || fail',
+  'done < "$listing"',
+  '[ -f ./results.json ]',
+  `*.jpg) magic=$(head -c 3`,
+  `*.json) node -e 'JSON.parse`,
+  'rm -rf -- "$OUT"',
+  'mkdir -m 0755 -- "$OUT"',
+  'install -D -m 0644 -- "$p" "$OUT/${p#./}"',
+];
 
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
 const WEBP = Buffer.concat([Buffer.from('RIFF'), Buffer.from([0x24, 0, 0, 0]), Buffer.from('WEBPVP8 ')]);
@@ -71,13 +86,35 @@ test('the publish job downloads outside the workspace and publishes only the sta
   assert.equal(push['working-directory'], '${{ runner.temp }}/scout-publish');
   assert.deepEqual(publish.map((s) => s.uses?.split('@')[0] ?? s.name), ['actions/download-artifact', validate.name, push.name]);
   assert.match(validate.run!, /^set -euo pipefail$/m);
-  // Every entry is validated before anything is copied, and copies are fresh 0644 files.
-  assert.ok(validate.run!.indexOf('done < <(find . -mindepth 1 -print0)') < validate.run!.indexOf('mkdir -m 0755 -- "$OUT"'));
+  // Phases in order: checked enumeration; metadata checks and limits; content checks; then,
+  // only after everything passed, a fresh output directory and the copies.
+  assertInOrder(validate.run!, VALIDATION_PHASES, 'validation step');
   assert.match(validate.run!, /install -D -m 0644 -- "\$p" "\$OUT\/\$\{p#\.\/\}"/);
   // The privileged git operations never trust repository-provided or ambient git config/hooks.
   assert.match(push.run!, /\[ ! -e \.git \] \|\|/);
   assert.match(push.run!, /export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=\/dev\/null/);
   assert.match(push.run!, /git config core\.hooksPath \/dev\/null/);
+});
+
+test('mutation evidence: the phase-order check fails on a missing or reordered phase', () => {
+  const run = validate.run!;
+  // The pre-#32 check compared indexOf results and passed even with its marker gone (-1 < n).
+  const stale = 'done < <(find . -mindepth 1 -print0)';
+  assert.equal(run.indexOf(stale), -1, 'the old marker no longer exists');
+  assert.ok(run.indexOf(stale) < run.indexOf('mkdir -m 0755 -- "$OUT"'), 'which is why the old assertion could never fail');
+  assert.throws(() => assertInOrder(run, [stale, 'mkdir -m 0755 -- "$OUT"']), /marker not found/);
+  // Staging moved before the content checks.
+  const staging = 'rm -rf -- "$OUT"\nmkdir -m 0755 -- "$OUT"\n'; // YAML strips the block indentation
+  assert.ok(run.includes(staging), 'fixture: staging block found');
+  const early = run.replace(staging, '').replace('# Phase 3', `${staging}# Phase 3`);
+  assert.throws(() => assertInOrder(early, VALIDATION_PHASES), /must come after/);
+  // The limit checks moved out of the metadata loop (after it).
+  const limit = '[ "$bytes" -le "$max_bytes" ] || fail "results too large (more than $max_bytes bytes)"';
+  assert.ok(run.includes(limit), 'fixture: limit found');
+  const late = run.replace(limit, ':').replace('done < "$listing"', `done < "$listing"\n${limit}`);
+  assert.throws(() => assertInOrder(late, VALIDATION_PHASES), /must come after/);
+  // Enumeration no longer checked.
+  assert.throws(() => assertInOrder(run.replace(' || fail "could not enumerate the artifact"', ''), VALIDATION_PHASES), /marker not found/);
 });
 
 test('a valid artifact is staged as plain 0644 files in a new directory without .git', () => {
