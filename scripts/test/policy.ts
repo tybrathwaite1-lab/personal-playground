@@ -53,37 +53,104 @@ export function discover(root: string): Discovery {
   return { files, problems };
 }
 
-const RUNNERS = new Set(['test', 'it', 'describe', 'suite']);
+const RUNNER_EXPORTS = new Set(['test', 'it', 'describe', 'suite']);
 const MODIFIERS = new Set(['only', 'skip', 'todo']);
+const TEST_MODULE = /^(node:)?test$/;
 
-/** Focused/skipped/TODO markers in one test file's source (empty = none). */
+/**
+ * Focused/skipped/TODO markers in one test file's source (empty = none).
+ *
+ * Detection is tied to the node:test API, not to the words: it follows what the file imports
+ * from node:test (default, named, renamed and namespace imports), simple aliases of those
+ * bindings (`const check = test`), and the test-context parameter of test callbacks (`t`,
+ * including nested `t.test(...)`). It then reports, on those bindings only:
+ *  - modifier access, called or not: `test.only`, `it['skip']`, `nt.test.todo`, `t.skip()`,
+ *    `const s = test.skip`, `const { only } = test`;
+ *  - dynamic member access whose name can't be read statically (`test[name]`);
+ *  - `only`/`skip`/`todo` options in an object literal passed to a test call (`t.test` too);
+ *  - importing `only`/`skip`/`todo` from node:test.
+ * Unrelated objects with `skip`/`only`/`todo` members, comments and strings are ignored.
+ *
+ * Known limits (by design; not a general JavaScript analyzer): bindings are tracked by name per
+ * file, so shadowing isn't modelled; options passed through a variable, spread or function call,
+ * aliases made through reassignment or other modules, and CommonJS `require` aren't followed.
+ * The runner's runtime check still catches any skip or TODO that actually happens; a focused
+ * test with no other marker is only caught statically.
+ */
 export function focusMarkers(fileName: string, source: string): string[] {
   const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const out: string[] = [];
   const at = (n: ts.Node) => `${fileName}:${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
-  const visit = (n: ts.Node) => {
-    // import { skip, only, todo } from 'node:test'
-    if (ts.isImportDeclaration(n) && ts.isStringLiteral(n.moduleSpecifier) && /^(node:)?test$/.test(n.moduleSpecifier.text)) {
-      const named = n.importClause?.namedBindings;
-      if (named && ts.isNamedImports(named)) for (const el of named.elements) if (MODIFIERS.has((el.propertyName ?? el.name).text)) out.push(`${at(el)}: imports "${(el.propertyName ?? el.name).text}" from node:test`);
+  const runners = new Set<string>(); // identifiers bound to test/it/describe/suite
+  const namespaces = new Set<string>(); // identifiers bound to the node:test module
+  const contexts = new Set<string>(); // test-context parameters (t)
+
+  // Pass 1: bindings from imports.
+  for (const st of sf.statements) {
+    if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier) || !TEST_MODULE.test(st.moduleSpecifier.text)) continue;
+    const clause = st.importClause;
+    if (!clause) continue;
+    if (clause.name) runners.add(clause.name.text); // import test from 'node:test'
+    const nb = clause.namedBindings;
+    if (nb && ts.isNamespaceImport(nb)) namespaces.add(nb.name.text);
+    if (nb && ts.isNamedImports(nb))
+      for (const el of nb.elements) {
+        const imported = (el.propertyName ?? el.name).text;
+        if (RUNNER_EXPORTS.has(imported)) runners.add(el.name.text);
+        if (MODIFIERS.has(imported)) out.push(`${at(el)}: imports "${imported}" from node:test`);
+      }
+  }
+
+  /** The member name of `a.b` / `a['b']`, or null when it can't be read statically. */
+  const memberName = (n: ts.PropertyAccessExpression | ts.ElementAccessExpression): string | null =>
+    ts.isPropertyAccessExpression(n) ? n.name.text : ts.isStringLiteralLike(n.argumentExpression) ? n.argumentExpression.text : null;
+  /** Is this expression a test runner: a runner binding, ns.test/ns.it/…, or t.test? */
+  const isRunner = (e: ts.Expression): boolean => {
+    if (ts.isParenthesizedExpression(e)) return isRunner(e.expression);
+    if (ts.isIdentifier(e)) return runners.has(e.text);
+    if ((ts.isPropertyAccessExpression(e) || ts.isElementAccessExpression(e)) && ts.isIdentifier(e.expression)) {
+      const name = memberName(e);
+      if (namespaces.has(e.expression.text)) return name !== null && RUNNER_EXPORTS.has(name);
+      if (contexts.has(e.expression.text)) return name === 'test';
     }
-    if (ts.isCallExpression(n)) {
-      const callee = n.expression;
-      // test.only(...), it.skip(...), describe.todo(...), t.skip(), t.todo()
-      if (ts.isPropertyAccessExpression(callee) && MODIFIERS.has(callee.name.text)) {
-        const base = callee.expression;
-        if (ts.isIdentifier(base)) out.push(`${at(n)}: ${base.text}.${callee.name.text}()`);
+    return false;
+  };
+  const label = (e: ts.Expression) => e.getText(sf).replace(/\s+/g, '');
+
+  const visit = (n: ts.Node) => {
+    // Aliases: const check = test; const s = test.skip (reported at the access below).
+    if (ts.isVariableDeclaration(n) && n.initializer) {
+      if (ts.isIdentifier(n.name) && isRunner(n.initializer)) runners.add(n.name.text);
+      // const { only, skip: s } = test  /  = nt  /  = t
+      if (ts.isObjectBindingPattern(n.name) && (isRunner(n.initializer) || (ts.isIdentifier(n.initializer) && (namespaces.has(n.initializer.text) || contexts.has(n.initializer.text)))))
+        for (const el of n.name.elements) {
+          const key = el.propertyName && (ts.isIdentifier(el.propertyName) || ts.isStringLiteral(el.propertyName)) ? el.propertyName.text : ts.isIdentifier(el.name) ? el.name.text : '';
+          if (MODIFIERS.has(key)) out.push(`${at(el)}: destructures "${key}" from ${label(n.initializer)}`);
+          else if (RUNNER_EXPORTS.has(key) && ts.isIdentifier(el.name)) runners.add(el.name.text);
+        }
+    }
+    // Modifier access on a runner, the namespace or a test context, called or not.
+    if (ts.isPropertyAccessExpression(n) || ts.isElementAccessExpression(n)) {
+      const base = n.expression;
+      const onApi = isRunner(base) || (ts.isIdentifier(base) && (namespaces.has(base.text) || contexts.has(base.text)));
+      if (onApi) {
+        const name = memberName(n);
+        if (name === null) out.push(`${at(n)}: dynamic member access on the test API (${label(n)})`);
+        else if (MODIFIERS.has(name)) out.push(`${at(n)}: ${label(base)}.${name}`);
       }
-      // test('name', { only: true | skip | todo }, fn)
-      const name = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) && ts.isIdentifier(callee.expression) ? callee.expression.text : '';
-      if (RUNNERS.has(name) || (ts.isPropertyAccessExpression(callee) && callee.name.text === 'test')) {
-        for (const arg of n.arguments)
-          if (ts.isObjectLiteralExpression(arg))
-            for (const p of arg.properties) {
-              const key = p.name && (ts.isIdentifier(p.name) || ts.isStringLiteral(p.name)) ? p.name.text : '';
-              if (MODIFIERS.has(key)) out.push(`${at(p)}: ${key} option on a test`);
-            }
-      }
+    }
+    if (ts.isCallExpression(n) && isRunner(n.expression)) {
+      // Options object: test('x', { skip: true }, fn), t.test('x', { only: true }, fn)
+      for (const arg of n.arguments)
+        if (ts.isObjectLiteralExpression(arg))
+          for (const p of arg.properties) {
+            const pn = p.name;
+            const key = pn && (ts.isIdentifier(pn) || ts.isStringLiteral(pn)) ? pn.text : pn && ts.isComputedPropertyName(pn) && ts.isStringLiteralLike(pn.expression) ? pn.expression.text : '';
+            if (MODIFIERS.has(key)) out.push(`${at(p)}: ${key} option on ${label(n.expression)}()`);
+          }
+      // The callback's first parameter is the test context.
+      for (const arg of n.arguments)
+        if ((ts.isArrowFunction(arg) || ts.isFunctionExpression(arg)) && arg.parameters[0] && ts.isIdentifier(arg.parameters[0].name)) contexts.add(arg.parameters[0].name.text);
     }
     ts.forEachChild(n, visit);
   };

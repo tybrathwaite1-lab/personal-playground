@@ -25,6 +25,14 @@ const files = only.length ? only : found.files;
 const problems: string[] = only.length ? [] : [...found.problems];
 for (const f of files) problems.push(...focusMarkers(f, readFileSync(f, 'utf8')));
 
+// An empty suite is never a pass. Stop before node:test, which would otherwise fall back to
+// its own default file discovery when given no files.
+if (files.length === 0) {
+  console.log(`Test integrity: 0 files discovered under ${root}.\n✖ integrity problem(s):\n  - no test files discovered: an empty suite is never a pass`);
+  for (const p of problems) console.log(`  - ${p}`);
+  process.exit(1);
+}
+
 const events: RunEvent[] = [];
 const stream = run({ files, isolation: 'process', concurrency: true });
 for (const type of ['test:pass', 'test:fail'] as const)
@@ -39,6 +47,7 @@ report.on('end', () => {
   const summary = verifyRun(files, events);
   problems.push(...summary.problems);
   const real = [...summary.testsByFile.values()].reduce((a, b) => a + b, 0);
+  if (real === 0) problems.push('no tests ran: an empty suite is never a pass');
   const lines = [`\nTest integrity: ${files.length} files discovered${only.length ? ' (partial run: completeness not checked)' : ''}, ${real} top-level tests ran.`];
   if (problems.length) {
     lines.push(`✖ ${problems.length} integrity problem(s):`, ...problems.map((p) => `  - ${p.replace(`${process.cwd()}/`, '')}`));

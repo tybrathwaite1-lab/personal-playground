@@ -3,13 +3,19 @@
 ## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-1: eliminate false-positive tests)
 
 - **`npm test` now runs `scripts/test/run.ts`.** It runs every `tests/**/*.test.ts` file (nested included) through the `node:test` API, then fails unless the run is trustworthy:
+  - at least one test file was discovered and at least one test ran (an empty suite is an explicit failure, checked before `node:test` is called);
   - every discovered file reported at least one real top-level test;
   - no misnamed or misplaced test-like file exists (e.g. `*.spec.ts`, `*.test.tsx`, or a test-named file inside `helpers/` or `fixtures/`), and there are no symlinks;
   - nothing is focused, skipped or TODO, checked both in the source (TypeScript parse, so comments and strings don't count) and at run time;
   - nothing failed or was cancelled.
 - **Fixed false positive:** `tests/image-scout-publish.test.ts:75` compared `indexOf` results for a marker #32 had removed, so it read −1 and always passed. It's replaced by `tests/helpers/order.ts` → `assertInOrder()`, which fails on a missing or reordered marker and now covers all ten validation phases. Mutation tests show a missing marker, staging moved before the content checks, a limit moved out of the metadata loop, and an unchecked enumeration each fail.
 - **Tests:** `tests/test-integrity.test.ts` covers discovery, source detection, run verification, and the real runner end to end on synthetic trees: a skip, a runtime skip, a TODO, `.only`, an empty file, a load failure, a misnamed file and a failing test.
-- **Known limitation:** a run with explicit file arguments (`npm test -- tests/x.test.ts`) skips the completeness check and says so.
+- **Focus detection** follows the `node:test` bindings: default, named, renamed and namespace imports; simple aliases; destructuring; the test-context parameter, including nested `t.test`. It reports modifier access called or not (`test['only']`, `const s = test.skip`), dynamic member access (`test[name]`), options in object literals, and `only`/`skip`/`todo` imports. Unrelated objects with those members are ignored.
+- **Node 24 without `--test-only` still runs every test** (checked end to end), so `.only` is caught by the source check alone.
+- **Known limitations:**
+  - Bindings are tracked by name per file, with no shadowing.
+  - Not followed: options passed through variables or spreads, aliases through reassignment or other modules, CommonJS `require`. The runtime check still catches any real skip or TODO; a focus marker hidden that way would not be caught.
+  - A run with explicit file arguments skips the completeness check and says so.
 
 ---
 
