@@ -6,7 +6,8 @@
 - **Done:** PR 0a / #27 (PP-011 reproducible builds), merged at `78a4e5e`; deploy and publisher verified on `main`.
 - **Done:** PR 1 / #28 (accessible design tokens and typography with the approved Newsstand palette), merged at `c2a5974`.
 - **Done:** PR 2 / #29 (graphic primitives, surface-aware controls, hidden `#/styleguide`, Caveat Bold accent). Owner-accepted at `2115aca` (zero manual defects), merged at `b8b39bc`, verified in production.
-- **In review:** M1 security and reproducibility maintenance (workflow permissions, checkout credentials, image scout split, trusted action manifest, Node 24 alignment, install-script restrictions, production audit). No app changes.
+- **Done:** M1 security and reproducibility maintenance (#31), merged at `6efcd88` and verified in production (app byte-identical).
+- **In review:** M1 closeout (image scout artifact boundary, structural workflow tests, editorial image processing test). Owner decision pending on the stale `image-scout` branch (`cb6b8fe`), which still carries the pre-M1 workflow.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
@@ -49,7 +50,7 @@ Open issues: PP-005 #6, PP-006 #7, PP-007 #8, PP-009 #10, PP-010 #11, PP-011 #12
 ## Outstanding verification
 - PR 2 style guide: manual Safari (macOS and iOS, real device), zoom and reduced-motion acceptance **done** (owner, 2026-11-18).
 - Real-device mobile/offline behavior, real-device sync, and visual review of the new planner and Pulse copy (PP-010).
-- Reproducible-build lockfile (PP-011): done (#27). Follow-ups (Node metadata, authenticated action SHAs) are in M1, in review.
+- Reproducible-build lockfile (PP-011): done (#27). Follow-ups (Node metadata, authenticated action SHAs) were done in M1 (#31).
 - **Pulse source degradation (SPAA):** the St. Petersburg Arts Alliance calendar has returned HTTP 403 to CI since about 19:19 UTC on 2026-11-18 (3 consecutive deploys). Its last listings are carried over, marked stale, and drop off as they expire. Reassess around 2026-11-20. The source's access restrictions will not be circumvented; if it persists, contact the publisher.
 - Recurrence expansion (PP-007).
 - The React sync hook's stale-state guard is code-reviewed only.

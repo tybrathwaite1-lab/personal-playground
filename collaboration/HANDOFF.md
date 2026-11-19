@@ -1,6 +1,34 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-18 (M1: security and reproducibility)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M1 security closeout)
+
+- **Post-merge verification of M1 (`6efcd88`):** all passed.
+  - Deploy run 44435684651: build 217/217, deploy, and smoke with `--expect-commit 6efcd88`.
+  - The bundle is still `index-BCRZKX9R.js`, so the app is byte-identical to before M1.
+  - Visual check 44435684597 (60 shots, 0 findings), Style guide 44435684591 (strict, 0 findings), Verify action pins 44435684508, and the publisher run 44436542218 (→ `visual-results/main-0d6e4079e367`).
+- **Image scout trust boundary:**
+  - The artifact is now extracted to `$RUNNER_TEMP/scout-artifact` and validated in three fail-closed phases before anything is copied:
+    1. **Enumerate** once with `find`, writing to a file. Its exit status is checked, so an error or kill, even after partial output, fails the step.
+    2. **Check metadata only:** no symlinks or special files; the only directory allowed is `editorial`; file names must start with a letter or digit and end in `.jpg`, `.webp` or `.json`; each JSON file at most 10 MB; at most 500 files and 50 MB in total. No file content is read until these all pass.
+    3. **Check content:** JPEG and WebP files must start with their format's **signature bytes**. This is a header check, not a full image decode: a file with a valid header but a corrupt body would pass. JSON files must parse.
+  - Allowed files are copied as fresh 0644 files into a new `$RUNNER_TEMP/scout-publish`. Git runs only there, with system/global config ignored and hooks disabled.
+  - **Tests:** `tests/image-scout-publish.test.ts` runs the workflow's own validation step against malicious or edge-case artifacts, three enumeration failures (via a `find` stand-in) and three over-limit artifacts. Logging stand-ins for `head` and `node` prove no content is read before the limits pass; a valid artifact serves as the positive control.
+  - **Before this revision (`c3cf8a2`):** a failing `find` still exited 0, and a 60 MB JSON file was parsed before any size check.
+  - **Earlier, the merged M1 version** rejected `.git/config` and symlinks but accepted an empty `.git` directory, dot-files, leading-dash names, non-image content, invalid JSON and empty nested directories.
+- **Real execution of the hardened image scout workflow is deferred until the owner authorizes it.** It has never run: a run needs a push to `image-scout`, which force-pushes `image-scout-results`.
+- **The `image-scout` branch (`cb6b8fe`):**
+  - It has 0 commits of its own and is 96 commits behind main, so it is simply old main.
+  - It still carries the pre-M1 privileged workflow: `contents: write` for the whole workflow, unpinned `@v4` actions, `npm install` with a write token, and the token in the push URL.
+  - Its only differing content is `briefs.txt` containing `skip=skip`.
+  - **Recommended:** the owner deletes only `image-scout` (see DECISIONS) and recreates it from `main` when a scout run is next wanted. Nothing has been pushed, triggered, deleted or overwritten.
+- **Structural tests:**
+  - Action references and setup-node checks now come from the parsed YAML; the text is used only for release comments.
+  - The pre-M1 image-scout workflow is kept as a fixture and must fail both the permission policy and the manifest.
+- **Editorial images:** processing is extracted unchanged into `scripts/images/process.ts`. `tests/editorial-images.test.ts` runs it on synthetic images every run (dimensions, EXIF rotation, no enlargement, stripped metadata, byte-identical repeat runs, corrupt input).
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-18 (M1: security and reproducibility)
 
 PR #30 is merged as `e3f9bda`. M1 is a separate maintenance PR with no application, UI, navigation, content or Sync changes.
 

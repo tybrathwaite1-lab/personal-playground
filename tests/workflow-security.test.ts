@@ -148,8 +148,10 @@ test('image scout: read-only generation and a write-enabled publish job split by
   assert.match(push.run!, /GIT_CONFIG_KEY_0="http\.https:\/\/github\.com\/\.extraheader"/);
   assert.match(push.run!, /git push -f --quiet "https:\/\/github\.com\/\$REPO\.git"/);
   assert.match(push.run!, /set -euo pipefail/);
-  const check = findStep(wf, 'publish', (s) => /plain files/.test(s.name ?? ''));
-  assert.match(check.run!, /! -type f ! -type d/, 'rejects symlinks and special files');
+  // The validation itself is executed against malicious artifacts in image-scout-publish.test.ts.
+  const check = findStep(wf, 'publish', (s) => /^Validate results/.test(s.name ?? ''));
+  assert.match(check.run!, /find \. -mindepth 1 -printf '%y\\t%s\\t%p\\0' > "\$listing" \|\| fail "could not enumerate/, 'enumeration is checked');
+  assert.match(check.run!, /l\) fail "symlink in results/, 'symlinks are rejected from metadata, never followed');
   assert.match(check.run!, /set -euo pipefail/);
 });
 
@@ -175,6 +177,21 @@ test('mutation evidence: each rule catches a deliberately weakened workflow', ()
     const v = violations(w);
     assert.ok(v.some((m) => expected.test(m)), `${name}: expected a violation matching ${expected}, got ${JSON.stringify(v)}`);
   }
+});
+
+test('realistic regression: the pre-M1 image-scout workflow (still on the image-scout branch) is rejected', () => {
+  const old = yaml.load(readFileSync(new URL('./fixtures/workflows/image-scout-cb6b8fe.yml', import.meta.url), 'utf8')) as Workflow;
+  const v = violations({ 'image-scout.yml': old });
+  const expected = [
+    /^image-scout\.yml: workflow-level token has write scopes \(contents\)/,
+    /^image-scout\.yml › scout: unexpected write scopes \(contents\)/,
+    /^image-scout\.yml › scout › step 1: checkout must set persist-credentials: false/,
+    /^image-scout\.yml › scout › step 2: privileged job sets up Node packages/,
+    /^image-scout\.yml › scout › step 3: privileged job runs package code \(npm\)/,
+    /^image-scout\.yml › scout › step 4: privileged job runs package code \(npx\)/,
+    /token or secret interpolated into run:/,
+  ];
+  for (const e of expected) assert.ok(v.some((m) => e.test(m)), `expected ${e}, got ${JSON.stringify(v, null, 1)}`);
 });
 
 test('npm install-script policy: strict mode on, every package with an install script reviewed', () => {
