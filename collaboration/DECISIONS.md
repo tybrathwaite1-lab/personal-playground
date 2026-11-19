@@ -123,3 +123,18 @@ Context: Claude's read-only assessment of the approved creative direction (share
 - **The production dependency audit is informational:** an unavailable audit is never treated as clean, and remediation is always a separate reviewed change.
 - **Pulse source access restrictions are respected:** a blocked source is reported and carried over until it expires, never worked around.
 
+## 2026-11-19 — Image scout: artifact boundary and retiring the stale branch
+- **Untrusted artifacts:** an artifact from a job that ran third-party code is extracted outside the workspace and checked in three fail-closed phases: a checked enumeration; metadata limits before any content read; then signature bytes and JSON syntax. Only allowed files are copied into a clean directory, and only that directory becomes a git repository. Image validation is a signature check, not a full decode, and is documented as such.
+- **Retiring the stale branch:** `image-scout` at `cb6b8fe` is an old snapshot of main (0 unique commits) that still carries the pre-M1 privileged workflow. Strategy:
+  - The owner deletes **only** `image-scout`; `image-scout-results` stays as the latest scout output.
+  - When scouting is next needed, the owner recreates `image-scout` from current `main`, with real briefs.
+  - That push is the first real run of the hardened workflow, so it happens only with explicit owner authorization.
+  - Claude doesn't delete, push to or recreate either branch.
+- **Owner steps to delete only `image-scout`:**
+  1. On GitHub, open the repository → **Code** → the branch selector → **View all branches** (or go to `/branches`).
+  2. Search for `image-scout`. Two branches will match: `image-scout` and `image-scout-results`.
+  3. Confirm the row is exactly `image-scout`, with latest commit `cb6b8fe`.
+  4. Click its trash-can icon. Don't touch the `image-scout-results` row.
+  5. Check that `image-scout-results` is still listed at `71efe69`, and that the **Actions** tab shows no new "Image scout" run. Deleting a branch isn't expected to start one; if one appears, cancel it and report it.
+  - GitHub offers **Restore** right after deletion if the wrong branch was removed.
+

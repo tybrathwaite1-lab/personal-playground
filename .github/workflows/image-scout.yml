@@ -7,7 +7,8 @@ name: Image scout (maintainer tool)
 #  - generate (read-only token): installs dependencies, runs the scout and the optional
 #    snapshots. Third-party npm code and external downloads only ever run here.
 #  - publish (contents: write): no checkout, no npm, no repository code. It downloads the
-#    generate job's artifact outside the workspace, validates every entry (fail closed), copies
+#    generate job's artifact outside the workspace, validates every entry (fail closed; file
+#    types, names and limits from metadata first, then signature bytes and JSON syntax), copies
 #    only the allowed files into a new empty directory, and force-pushes one parentless commit
 #    of that directory to image-scout-results. The token reaches git
 #    only through an environment-scoped header, never a URL or command argument.
@@ -77,8 +78,16 @@ jobs:
           name: image-scout-results
           path: ${{ runner.temp }}/scout-artifact
 
-      # Validate every entry first (fail closed), then copy only the allowed files, as fresh
-      # 0644 regular files, into a new empty publishing directory.
+      # Fail closed, in three phases, before anything is copied:
+      #  1. enumerate the tree once with find (its exit status is checked; the listing is
+      #     metadata only: type, size, path, without following symlinks);
+      #  2. from that metadata alone, reject unexpected types, directories and names, and
+      #     enforce the per-file JSON cap and the cumulative count and size limits, so no file
+      #     content is read until the whole artifact is within bounds;
+      #  3. read content: JPEG/WebP files must start with their format's signature bytes (a
+      #     header check, not a full decode) and JSON files must parse.
+      # Then copy only the allowed files, as fresh 0644 regular files, into a new empty
+      # publishing directory.
       - name: Validate results and stage a clean publishing directory
         env:
           SRC: ${{ runner.temp }}/scout-artifact
@@ -86,30 +95,49 @@ jobs:
         run: |
           set -euo pipefail
           fail() { echo "::error::$1"; exit 1; }
+          max_files=500
+          max_bytes=52428800
+          max_json_bytes=10485760
           name_ok='^\./(editorial/)?[A-Za-z0-9][A-Za-z0-9_-]*(\.[A-Za-z0-9_-]+)*\.(jpg|webp|json)$'
           [ -d "$SRC" ] && [ ! -L "$SRC" ] || fail "artifact directory missing"
           cd "$SRC"
+
+          # Phase 1: enumerate (checked).
+          listing=$(mktemp)
+          find . -mindepth 1 -printf '%y\t%s\t%p\0' > "$listing" || fail "could not enumerate the artifact"
+
+          # Phase 2: metadata only.
           files=()
           bytes=0
-          while IFS= read -r -d '' p; do
-            if [ -L "$p" ]; then fail "symlink in results: ${p@Q}"
-            elif [ -d "$p" ]; then [ "$p" = ./editorial ] || fail "unexpected directory: ${p@Q}"
-            elif [ -f "$p" ]; then
-              [[ "$p" =~ $name_ok ]] || fail "unexpected file name: ${p@Q}"
-              magic=$(head -c 12 -- "$p" | od -An -tx1 | tr -d ' \n')
-              case "$p" in
-                *.jpg) [[ "$magic" == ffd8ff* ]] || fail "not a JPEG: ${p@Q}" ;;
-                *.webp) [[ "$magic" == 52494646????????57454250 ]] || fail "not a WebP: ${p@Q}" ;;
-                *.json) node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' -- "$p" 2>/dev/null || fail "invalid JSON: ${p@Q}" ;;
-              esac
-              files+=("$p")
-              bytes=$(( bytes + $(stat -c %s -- "$p") ))
-            else fail "special file in results: ${p@Q}"
-            fi
-          done < <(find . -mindepth 1 -print0)
-          [ -f ./results.json ] || fail "results.json is missing"
-          [ "${#files[@]}" -le 500 ] || fail "too many files (${#files[@]})"
-          [ "$bytes" -le 52428800 ] || fail "results too large ($bytes bytes)"
+          while IFS= read -r -d '' rec; do
+            type=${rec%%$'\t'*}; rest=${rec#*$'\t'}
+            size=${rest%%$'\t'*}; p=${rest#*$'\t'}
+            case "$type" in
+              l) fail "symlink in results: ${p@Q}" ;;
+              d) [ "$p" = ./editorial ] || fail "unexpected directory: ${p@Q}" ;;
+              f)
+                [[ "$p" =~ $name_ok ]] || fail "unexpected file name: ${p@Q}"
+                [[ "$size" =~ ^[0-9]+$ ]] || fail "unreadable size: ${p@Q}"
+                if [[ "$p" == *.json ]] && [ "$size" -gt "$max_json_bytes" ]; then fail "JSON file too large ($size bytes): ${p@Q}"; fi
+                files+=("$p")
+                bytes=$(( bytes + size ))
+                [ "${#files[@]}" -le "$max_files" ] || fail "too many files (more than $max_files)"
+                [ "$bytes" -le "$max_bytes" ] || fail "results too large (more than $max_bytes bytes)"
+                ;;
+              *) fail "special file in results: ${p@Q}" ;;
+            esac
+          done < "$listing"
+          [ -f ./results.json ] && [ ! -L ./results.json ] || fail "results.json is missing"
+
+          # Phase 3: content (only now, within limits).
+          for p in "${files[@]}"; do
+            case "$p" in
+              *.jpg) magic=$(head -c 3 -- "$p" | od -An -tx1 | tr -d ' \n'); [ "$magic" = ffd8ff ] || fail "not a JPEG signature: ${p@Q}" ;;
+              *.webp) magic=$(head -c 12 -- "$p" | od -An -tx1 | tr -d ' \n'); [[ "$magic" == 52494646????????57454250 ]] || fail "not a WebP signature: ${p@Q}" ;;
+              *.json) node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' -- "$p" 2>/dev/null || fail "invalid JSON: ${p@Q}" ;;
+            esac
+          done
+
           rm -rf -- "$OUT"
           mkdir -m 0755 -- "$OUT"
           for p in "${files[@]}"; do install -D -m 0644 -- "$p" "$OUT/${p#./}"; done

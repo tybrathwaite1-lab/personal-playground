@@ -150,7 +150,8 @@ test('image scout: read-only generation and a write-enabled publish job split by
   assert.match(push.run!, /set -euo pipefail/);
   // The validation itself is executed against malicious artifacts in image-scout-publish.test.ts.
   const check = findStep(wf, 'publish', (s) => /^Validate results/.test(s.name ?? ''));
-  assert.match(check.run!, /if \[ -L "\$p" \]; then fail "symlink in results/, 'rejects symlinks first');
+  assert.match(check.run!, /find \. -mindepth 1 -printf '%y\\t%s\\t%p\\0' > "\$listing" \|\| fail "could not enumerate/, 'enumeration is checked');
+  assert.match(check.run!, /l\) fail "symlink in results/, 'symlinks are rejected from metadata, never followed');
   assert.match(check.run!, /set -euo pipefail/);
 });
 
