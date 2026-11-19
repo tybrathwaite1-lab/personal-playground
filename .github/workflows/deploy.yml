@@ -37,9 +37,8 @@ jobs:
       - name: Install
         run: npm ci --no-audit --no-fund
 
-      - name: Lint
+      - name: Lint (blocking; warnings fail too)
         run: npm run lint
-        continue-on-error: true # style issues shouldn't block a deploy; check the log
 
       - name: Tests
         run: npm test

@@ -1,6 +1,26 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-2: workflow security tests, revision 1)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-7: blocking lint)
+
+Baseline: `main` at `4571b5b` (M2-2 closed after independent post-merge verification). No new rules, no ESLint upgrade, no dependencies.
+
+- **Before:** `eslint .` ran with `continue-on-error: true` in both Check and the deploy build ("style issues shouldn't block a deploy"). Warnings never failed the command. `main` was already clean (0 errors, 0 warnings).
+- **Now:**
+  - `npm run lint` is `eslint . --max-warnings 0`, so existing warnings (e.g. `react-hooks/exhaustive-deps`) fail as well as errors.
+  - Both lint steps block: Check fails, and so does the deploy build. The deploy job `needs: build`, so nothing is uploaded or deployed.
+- **Tests:** `tests/lint-gate.test.ts` runs the real ESLint binary with the script's exact flags and the repository config, on synthetic stdin source (no files written).
+  - An unused variable fails in `src/`, `scripts/` and `tests/`.
+  - A rules-of-hooks error fails.
+  - A missing hook dependency (a warning alone) fails with "too many warnings (maximum: 0)".
+  - Clean code passes.
+  - Structural checks confirm no `continue-on-error`, lint before the tests, and lint before the Pages upload.
+- **Known limitations:**
+  - The existing config lints only `*.ts`/`*.tsx`. The `.mjs`/`.js` scripts (`scripts/security/*.mjs`, `scripts/visual/publish/*.mjs`, `eslint.config.js`) and `public/sw.js` are not linted. Widening that would be a configuration change, so it is out of scope here.
+  - A scheduled deploy would now stop if lint failed on `main`. That can only happen if code that fails lint reaches `main`, which the required Check job prevents. The lockfile pins the ESLint version.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-2: workflow security tests, revision 1)
 
 Baseline: `main` at `168f514` (M2-1 closed). This is test tooling plus three small workflow edits that move interpolated values into env.
 
