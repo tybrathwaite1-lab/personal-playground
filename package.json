@@ -11,6 +11,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint . --max-warnings 0",
     "test": "tsx --tsconfig tsconfig.app.json scripts/test/run.ts",
+    "test:browser": "tsx --tsconfig tsconfig.app.json scripts/test/run.ts --root browser-tests",
     "content": "tsx scripts/drop/build.ts --strict",
     "links": "tsx scripts/drop/check-links.ts",
     "pulse": "tsx scripts/pulse/ingest.ts",
