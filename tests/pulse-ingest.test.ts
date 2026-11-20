@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { assemblePulse, HORIZON_DAYS, sourceResult } from '../scripts/pulse/assemble.ts';
-import type { PulseEvent, PulseFile } from '../src/types/pulse.ts';
+import type { PulseFile } from '../src/types/pulse.ts';
 import { A, at, B, DAY, feed, HOUR, NOW, prevEvent, previousFile, scenario, stamp, titles } from './helpers/pulse-fixtures.ts';
 
 // ─── Successful reads: eligibility and boundaries ───────────────────
