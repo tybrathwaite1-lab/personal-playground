@@ -139,9 +139,9 @@ test('disconnecting while a round waits to write: the stale round never writes',
     // connect() checks the repo once; the round then checks, reads, and checks again before
     // writing. Hold that last check: the round is about to write.
     let checks = 0;
-    const held = gh.hold((r) => isRepoCheck(A)(r) && ++checks === 3);
+    const held = gh.hold('pre-write privacy check of repository A', (r) => isRepoCheck(A)(r) && ++checks === 3);
     await connect(s, A);
-    await held.arrived;
+    await held.arrived();
     await s.page.getByRole('button', { name: /Disconnect this device/ }).click();
     await s.page.getByRole('button', { name: 'Connect & sync' }).waitFor();
     assert.equal(await config(s), null);
@@ -162,9 +162,9 @@ test('switching repository mid-round: the old repository’s response is ignored
     const gh = s.github!;
     gh.addRepo(A, { file: remoteFile({ 'fieldNotes:a-1': note('a-1', 'Sample note from the old repository') }, NOW - 60_000) });
     const repoB = gh.addRepo(B);
-    const held = gh.hold(isRead(A));
+    const held = gh.hold('read of repository A', isRead(A));
     await connect(s, A);
-    await held.arrived;
+    await held.arrived();
 
     await s.page.getByRole('button', { name: /Disconnect this device/ }).click();
     await connect(s, B);

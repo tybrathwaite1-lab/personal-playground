@@ -15,8 +15,29 @@ Baseline: `main` at `eaa636e` (M2-5 closed: PR #40 merged, closeout independentl
     - every other off-origin request is aborted and recorded.
   - **Failures:** page errors fail the scenario. A failure saves a full-page screenshot and a text report to `browser-out/` and adds the same diagnostics to the error: URL, page and console errors, dialogs, blocked hosts and the fake GitHub's request log.
   - **Waiting:** there are no fixed sleeps; tests wait for observable conditions.
-- **CI:** a blocking step, "Browser behaviour tests", in the Visual check workflow, after the existing build and screenshots. Chromium is already installed there. Permissions stay `contents: read`. On failure the diagnostics are uploaded as the `browser-tests-<sha>` artifact (14 days).
-  - **Merge gating:** the ruleset's only required check is `check` (Check workflow). Making the Visual check's `capture` job required is an owner decision; I haven't changed any settings.
+- **CI:** a blocking step, "Browser behaviour tests (blocking)", in the Visual check workflow, after the existing build and screenshots. Chromium is already installed there. Permissions stay `contents: read`. On failure the diagnostics are uploaded as the `browser-tests-<sha>` artifact (14 days).
+- **Bounded execution (revision 1):**
+  - each browser action or wait fails after 10 s (`ACTION_MS`);
+  - each scenario fails after 60 s (`SCENARIO_MS`), with diagnostics;
+  - waiting for a held GitHub request fails after 10 s and names the request it expected;
+  - when a scenario ends, pass or fail, every hold is released and the browser context is closed;
+  - the CI step has `timeout-minutes: 10`, inside the job's existing 30.
+  - **Evidence:** with the pre-write privacy re-check temporarily removed from `syncRun.ts`, the disconnect race failed after 10.5 s. The error read: "Held request "pre-write privacy check of repository A" did not arrive within 10s". The diagnostics listed the fake GitHub's requests (the write went out without a re-check) and "Outstanding holds: … (never arrived)", with a screenshot. The other 5 sync scenarios still ran and the process exited after 15 s. The mutation was reverted.
+- **Merge gate (revision 1).** The Visual check job now has the display name **"Visual and browser tests"**, and that is the check context to require.
+  - **Why the rename:** its job id `capture` was shared with the Style guide evidence job, so every commit had two check runs named `capture`, and requiring "capture" would have been ambiguous. The job id is unchanged, so the workflow-security tests and the publisher are unaffected.
+  - **How it runs:**
+    - it reports through GitHub Actions (integration id 15368, the same as the existing required `check`);
+    - it is triggered by `push` on every branch except `image-scout`, `image-scout-results` and `visual-results`, with no path filters and no job or step conditions, so documentation-only commits run it too;
+    - it attaches to the PR's head commit exactly as `check` does.
+  - **No indefinitely pending check:** a pull request from those three excluded branches, or from a fork, would never get the check. The existing required `check` has the same exclusions, and no PR has ever come from them. `cancel-in-progress` only cancels runs for older commits on the same branch.
+  - **Failure propagation:** the browser step has no `continue-on-error`, so a failure fails the job. A probe branch demonstrated this in CI; see the PR for the run.
+  - **Owner instructions:**
+    1. Settings → Rules → Rulesets → **Protect main** → Edit.
+    2. Under "Require status checks to pass", keep `check` and choose **Add checks**.
+    3. Search for **Visual and browser tests** (it is listed once a commit has reported it, e.g. PR #41's head). Select it with source **GitHub Actions**.
+    4. Leave "Require branches to be up to date before merging" off (as now), then **Save changes**.
+    5. After saving, PR #41 should list "Visual and browser tests" as required and passing.
+    6. Don't add `capture`: that name is now only the Style guide evidence job.
 - **Coverage.** Assertions are about behaviour: URL, document title, the single `h1`, roles and accessible names, stored data, downloads and requests. They don't depend on CSS classes or layout.
   - **Navigation** (desktop 1280 px and phone 390 px):
     - every route opens directly and has its own title and heading; unknown routes show Home;
@@ -71,7 +92,7 @@ Baseline: `main` at `eaa636e` (M2-5 closed: PR #40 merged, closeout independentl
 
   A failure report from the first mutation (screenshot, URL, dialogs, blocked hosts) was checked to confirm the diagnostics are useful.
 - **Defects found:** none.
-  - **Observation (not a defect, not changed):** if a valid backup is waiting for a decision and the user then picks a malformed file, the error appears while the earlier valid backup's panel stays open. Nothing is applied without a click, and what would be applied is the earlier valid file.
+  - **Low-priority UX ambiguity (recorded, not fixed here):** if a valid backup is waiting for a decision and the user then picks a malformed file, the error appears while the earlier valid backup's panel stays open. Nothing is applied without a click, and what would be applied is the earlier valid file. A possible later fix is to clear the pending backup whenever a new file is chosen.
 - **Limitations and deliberate omissions:**
   - Chromium only; no WebKit or Firefox, and no real iOS Safari or home-screen PWA (PP-010 stays open).
   - The service worker and offline mode aren't exercised (service workers are blocked for isolation).

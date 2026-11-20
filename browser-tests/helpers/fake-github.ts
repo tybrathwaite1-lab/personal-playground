@@ -5,7 +5,8 @@
  * reaches github.com.
  *
  * Scenarios can make the next matching request fail (an HTTP status or a network error), or
- * hold it until they release it, to put the app in the middle of a sync round.
+ * hold it until they release it, to put the app in the middle of a sync round. Waiting for a
+ * held request is bounded: if it never comes, the scenario fails promptly and says which one.
  */
 import type { Route } from 'playwright-core';
 
@@ -35,7 +36,10 @@ export interface Req {
 }
 
 type Rule = { match: (r: Req) => boolean; status: number | 'network'; then?: () => void };
-type Hold = { match: (r: Req) => boolean; arrived: () => void; released: Promise<void> };
+type Hold = { what: string; match: (r: Req) => boolean; arrived: () => void; came: boolean; released: Promise<void>; release: () => void };
+
+/** How long a scenario waits for a held request to arrive. */
+export const HOLD_ARRIVAL_MS = 10_000;
 
 export class FakeGitHub {
   repos = new Map<string, FakeRepo>();
@@ -44,6 +48,8 @@ export class FakeGitHub {
   log: string[] = [];
   private rules: Rule[] = [];
   private holds: Hold[] = [];
+  /** Every hold ever made, so a failing scenario can release them all. */
+  private allHolds: Hold[] = [];
   private shaCounter = 0;
 
   addRepo(name: string, init: Partial<FakeRepo> = {}): FakeRepo {
@@ -65,14 +71,43 @@ export class FakeGitHub {
     this.rules.push({ match, status, then });
   }
 
-  /** Holds the next matching request until `release()`; `arrived` resolves when it comes in. */
-  hold(match: (r: Req) => boolean): { arrived: Promise<void>; release: () => void } {
+  /**
+   * Holds the next matching request (described by `what`) until `release()`. `arrived()`
+   * resolves when it comes in, or rejects after `ms` with the requests seen so far.
+   */
+  hold(what: string, match: (r: Req) => boolean): { arrived: (ms?: number) => Promise<void>; release: () => void } {
     let arrived!: () => void;
     let release!: () => void;
     const arrivedP = new Promise<void>((ok) => (arrived = ok));
     const released = new Promise<void>((ok) => (release = ok));
-    this.holds.push({ match, arrived, released });
-    return { arrived: arrivedP, release };
+    const h: Hold = { what, match, arrived: () => ((h.came = true), arrived()), came: false, released, release };
+    this.holds.push(h);
+    this.allHolds.push(h);
+    return {
+      arrived: async (ms = HOLD_ARRIVAL_MS) => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const late = new Promise<never>((_, fail) => {
+          timer = setTimeout(() => fail(new Error(`Held request "${what}" did not arrive within ${ms / 1000}s. Requests so far: ${this.log.join(' | ') || 'none'}`)), ms);
+        });
+        try {
+          await Promise.race([arrivedP, late]);
+        } finally {
+          clearTimeout(timer);
+        }
+      },
+      release,
+    };
+  }
+
+  /** Holds that are still waiting for their request, or still holding it (for diagnostics). */
+  outstanding(): string[] {
+    return this.allHolds.filter((h) => this.holds.includes(h) || h.came).map((h) => `${h.what} (${h.came ? 'arrived, held' : 'never arrived'})`);
+  }
+
+  /** Lets every held request through (used when a scenario ends, pass or fail). */
+  releaseAll() {
+    this.holds = [];
+    for (const h of this.allHolds) h.release();
   }
 
   count(match: (r: Req) => boolean): number {

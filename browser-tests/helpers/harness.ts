@@ -12,7 +12,11 @@
  *
  * On failure the scenario saves a screenshot and a text report to browser-out/ (uploaded by CI)
  * and appends the same diagnostics to the error: URL, page errors, console errors, dialogs,
- * blocked hosts and the fake GitHub's request log.
+ * blocked hosts and the fake GitHub's request log and outstanding holds.
+ *
+ * Execution is bounded: each browser action or wait fails after ACTION_MS, each scenario after
+ * SCENARIO_MS (the CI step has its own timeout as well). Holds are released and the browser
+ * context is closed however the scenario ends.
  */
 import { after, before } from 'node:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -28,6 +32,10 @@ export const STORAGE_KEY = 'personal-playground:v1';
 export const SYNC_CONFIG_KEY = 'personal-playground:sync-config';
 export const DESKTOP = { width: 1280, height: 800 };
 export const MOBILE = { width: 390, height: 844 };
+/** Upper bound for any single browser action or wait (Playwright's default is 30 s). */
+export const ACTION_MS = 10_000;
+/** Upper bound for a whole scenario (the slowest takes a few seconds). */
+export const SCENARIO_MS = 60_000;
 export { FROZEN_TIME };
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -115,6 +123,7 @@ export function scenario(opts: ScenarioOptions, fn: (s: Session) => Promise<void
           : [],
       },
     });
+    ctx.setDefaultTimeout(ACTION_MS);
     const blocked = new Set<string>();
     await ctx.route('**/*', async (route) => {
       const url = new URL(route.request().url());
@@ -171,12 +180,20 @@ export function scenario(opts: ScenarioOptions, fn: (s: Session) => Promise<void
       consoleErrors,
     };
 
+    const run = fn(s);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_, fail) => {
+      timer = setTimeout(() => fail(new Error(`Scenario did not finish within ${SCENARIO_MS / 1000}s`)), SCENARIO_MS);
+    });
     try {
-      await fn(s);
+      await Promise.race([run, deadline]);
       if (pageErrors.length) throw new Error(`Page errors during the scenario: ${pageErrors.join(' | ')}`);
     } catch (err) {
       throw await withDiagnostics(name, s, opts, err);
     } finally {
+      clearTimeout(timer);
+      run.catch(() => undefined); // a scenario abandoned at the deadline fails once the context closes
+      opts.github?.releaseAll();
       await ctx.close();
     }
   };
@@ -194,7 +211,10 @@ async function withDiagnostics(name: string, s: Session, opts: ScenarioOptions, 
     `Dialogs: ${s.dialogs.join(' | ') || 'none'}`,
     `Blocked hosts: ${[...s.blocked].sort().join(', ') || 'none'}`,
   ];
-  if (opts.github) lines.push(`Fake GitHub requests: ${opts.github.log.join(' | ') || 'none'}`);
+  if (opts.github) {
+    lines.push(`Fake GitHub requests: ${opts.github.log.join(' | ') || 'none'}`);
+    lines.push(`Outstanding holds: ${opts.github.outstanding().join(' | ') || 'none'}`);
+  }
   try {
     await mkdir(OUT, { recursive: true });
     if (!s.page.isClosed()) await s.page.screenshot({ path: join(OUT, `${slug}.png`), fullPage: true });
