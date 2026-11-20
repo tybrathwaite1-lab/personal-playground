@@ -8,7 +8,7 @@ import { useStore } from '../hooks/useStore';
 import { useWeather } from '../hooks/useWeather';
 import type { Experience } from '../types';
 import { formatCost } from '../utils/discovery';
-import { directionsLink, uid } from '../utils/helpers';
+import { directionsLink, isSafeUrl, uid } from '../utils/helpers';
 import { BUDGET_OPTIONS, COMPANY_OPTIONS, MOOD_OPTIONS } from '../utils/labels';
 import {
   DEFAULT_PLAN_OPTIONS,
@@ -159,11 +159,14 @@ function DayPlanPanel() {
                           {s.place.status === 'check' && <span className="tag text-rust">Confirm first</span>}
                         </div>
                       ) : (
-                        e.links?.[0] && (
+                        e.links?.[0] &&
+                        (isSafeUrl(e.links[0].url) ? (
                           <a href={e.links[0].url} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-1.5 text-sm hover:text-rust">
                             <ArrowUpRight size={14} aria-hidden /> {e.links[0].label}
                           </a>
-                        )
+                        ) : (
+                          e.links[0].label && <p className="mt-3 text-sm text-muted">{e.links[0].label}</p>
+                        ))
                       )}
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         <span className="tag">{formatCost(e.cost)}</span>

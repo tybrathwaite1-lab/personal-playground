@@ -1,6 +1,28 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-4: safety-critical utility tests)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (security fix: personal-data URLs)
+
+Baseline: `main` at `90d1eb4` (PR #38 merged; deploy, smoke, visual, strict style guide and publisher green). This resolves defect 1 from M2-4 and nothing else.
+
+- **Fix:** the existing `isSafeUrl` now guards the four boundaries that rendered personal-data URLs (from input, backup import or sync):
+  - `FieldNotes` `n.url`: an unsafe or malformed URL shows no link. The note's title, text and tags are unchanged.
+  - `Digital` `random.url`: the random pick's name and description still show; there's no "Visit" button for an unsafe URL.
+  - `Digital` `w.url`: the site name renders as plain text with the same typography instead of a link. The hostname, description and tags are unchanged.
+  - `Plan` `e.links[0].url`: an unsafe or malformed link shows its label as plain muted text, and nothing if there's no label.
+  - Valid http(s) links render exactly as before, `target="_blank" rel="noreferrer"` included.
+- **Records untouched:** imported and synced records are not deleted or rewritten. `normalizeData`, the storage schema and the sync protocol are unchanged; the characterization test still pins that imported URLs are kept as-is.
+- **Regression protection:**
+  - The four `DEFECT` exceptions are removed from the URL scanner. All four boundaries must now be recognised as guarded, and no reviewed exception may concern personal data.
+  - A new test removes each guard from the real source in memory and requires the scanner to report that href as unguarded. The same four removals in the real files, done locally and reverted, each failed both scanner tests.
+- **Required M2-6 browser case:** import a synthetic backup containing a field note, a custom website and a custom experience whose links are valid (`https://…`) and unsafe (`javascript:…`, `data:…`, malformed). Then check in a real browser:
+  - valid links render and open in a new tab with `noreferrer`;
+  - unsafe ones render no `<a>`, while their text stays readable;
+  - clicking where the link would be runs no script.
+- **Unchanged and still tracked separately:** malformed GitHub responses (M2-4 defect 2) and loose `parseRepo` (defect 3).
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-19 (M2-4: safety-critical utility tests)
 
 Baseline: `main` at `6bfbf0d` (M2-3 closed). Test-only change: no production code, dependencies or workflows. The new tests make no network requests (`fetch` is mocked) and use only synthetic credentials.
 

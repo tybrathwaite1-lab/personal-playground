@@ -121,7 +121,7 @@ export default function Digital() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {random && (
+            {random && isSafeUrl(random.url) && (
               <a href={random.url} target="_blank" rel="noreferrer" className="btn-primary">
                 Visit {hostname(random.url)} <ArrowUpRight size={16} aria-hidden />
               </a>
@@ -152,9 +152,13 @@ export default function Digital() {
               <span className="pt-1 font-mono text-xs text-rust">{String(i + 1).padStart(2, '0')}</span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-3">
-                  <a href={w.url} target="_blank" rel="noreferrer" className="display text-2xl hover:text-rust">
-                    {w.name}
-                  </a>
+                  {isSafeUrl(w.url) ? (
+                    <a href={w.url} target="_blank" rel="noreferrer" className="display text-2xl hover:text-rust">
+                      {w.name}
+                    </a>
+                  ) : (
+                    <span className="display text-2xl">{w.name}</span>
+                  )}
                   <span className="font-mono text-xs text-muted">{hostname(w.url)}</span>
                   {w.custom && <span className="tag text-rust">Yours</span>}
                 </div>
