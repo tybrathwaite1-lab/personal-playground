@@ -80,9 +80,8 @@ const BUILDERS = new Set(['href', 'directionsLink', 'mapsLink']);
 
 /**
  * Unguarded hrefs from data, each reviewed. `bundled`: the URL comes from source-controlled
- * data (and, for Drop, is validated as https by scripts/drop/build.ts). `DEFECT`: the URL can
- * come from imported or synced personal data and is rendered without isSafeUrl; see HANDOFF
- * (M2-4) and the characterization test below.
+ * data (and, for Drop, is validated as https by scripts/drop/build.ts). URLs from personal
+ * data (input, backup import, sync) are never reviewed here: they must be guarded.
  */
 const REVIEWED: Record<string, string> = {
   'src/components/EditorialImage.tsx: meta.sourceUrl': 'bundled: editorial image credits in src/data/images.ts',
@@ -93,10 +92,6 @@ const REVIEWED: Record<string, string> = {
   'src/pages/Pulse.tsx: c.website': 'bundled: communities (src/data/communities.ts)',
   'src/pages/Home.tsx: p.to': 'internal: a hash route from a static list',
   'src/pages/Collection.tsx: link.href': 'guarded upstream: linkFor() returns isSafeUrl(s.url) ? … : null for external links',
-  'src/pages/FieldNotes.tsx: n.url': 'DEFECT: personal data (backup import, sync) rendered without isSafeUrl',
-  'src/pages/Digital.tsx: random.url': 'DEFECT: personal websites (backup import, sync) rendered without isSafeUrl',
-  'src/pages/Digital.tsx: w.url': 'DEFECT: personal websites (backup import, sync) rendered without isSafeUrl',
-  'src/pages/Plan.tsx: e.links[0].url': 'DEFECT: custom experiences (backup import, sync) rendered without isSafeUrl',
 };
 
 /**
@@ -175,9 +170,14 @@ function scanHrefs(): Href[] {
     }
   };
   walk(root);
+  return files.sort().flatMap((file) => scanSource(file, readFileSync(file, 'utf8')));
+}
+
+/** Classifies every JSX href in one file's source. */
+function scanSource(file: string, source: string): Href[] {
   const out: Href[] = [];
-  for (const file of files.sort()) {
-    const sf = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  {
+    const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
     const visit = (n: ts.Node) => {
       if (ts.isJsxAttribute(n) && n.name.getText(sf) === 'href' && n.initializer) {
         const line = sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
@@ -210,10 +210,41 @@ test('every JSX href is a constant, a trusted builder, guarded by isSafeUrl, or 
   assert.deepEqual(unreviewed, [], 'new unguarded hrefs: guard them with isSafeUrl or review them in REVIEWED');
   // The isSafeUrl guards the app relies on today are all recognised.
   const g = hrefs.filter((h) => h.status === 'guarded').map((h) => `${h.file}: ${h.expr}`);
-  assert.deepEqual(g.sort(), ['src/components/AdventurePanel.tsx: s.url', 'src/components/ExperienceCard.tsx: l.url', 'src/components/PlaceCard.tsx: place.website', 'src/pages/Pulse.tsx: e.url']);
+  assert.deepEqual(g.sort(), [
+    'src/components/AdventurePanel.tsx: s.url',
+    'src/components/ExperienceCard.tsx: l.url',
+    'src/components/PlaceCard.tsx: place.website',
+    ...PERSONAL_DATA_BOUNDARIES.map((b) => `${b.file}: ${b.expr}`),
+    'src/pages/Pulse.tsx: e.url',
+  ].sort());
+  assert.ok(!Object.values(REVIEWED).some((why) => /DEFECT|personal/i.test(why)), 'no personal-data URL is a reviewed exception');
   // Every reviewed entry still exists (no stale exceptions).
   const reviewedNow = new Set(hrefs.filter((h) => h.status === 'reviewed').map((h) => `${h.file}: ${h.expr}`));
   assert.deepEqual(Object.keys(REVIEWED).filter((k) => !reviewedNow.has(k)), []);
+});
+
+/**
+ * The four boundaries M2-4 found rendering personal-data URLs (field notes, websites, custom
+ * experience links) without isSafeUrl. Each is now guarded; `guard` is the exact source text
+ * whose removal must be caught.
+ */
+const PERSONAL_DATA_BOUNDARIES = [
+  { file: 'src/pages/Digital.tsx', expr: 'random.url', guard: 'random && isSafeUrl(random.url) &&', unguarded: 'random &&' },
+  { file: 'src/pages/Digital.tsx', expr: 'w.url', guard: '{isSafeUrl(w.url) ? (', unguarded: '{true ? (' },
+  { file: 'src/pages/FieldNotes.tsx', expr: 'n.url', guard: '{isSafeUrl(n.url) && (', unguarded: '{n.url && (' },
+  { file: 'src/pages/Plan.tsx', expr: 'e.links[0].url', guard: '(isSafeUrl(e.links[0].url) ? (', unguarded: '(e.links[0].url ? (' },
+];
+
+test('the four personal-data URL boundaries are guarded, and removing any guard is caught', () => {
+  for (const b of PERSONAL_DATA_BOUNDARIES) {
+    const src = readFileSync(b.file, 'utf8');
+    assert.equal(src.split(b.guard).length - 1, 1, `${b.file}: guard text found exactly once`);
+    const now = scanSource(b.file, src).filter((h) => h.expr === b.expr);
+    assert.deepEqual(now.map((h) => h.status), ['guarded'], `${b.file}: ${b.expr} is guarded`);
+    // Remove the guard (keeping the code otherwise valid): the href becomes unreviewed.
+    const removed = scanSource(b.file, src.replace(b.guard, b.unguarded)).filter((h) => h.expr === b.expr);
+    assert.deepEqual(removed.map((h) => h.status), ['UNREVIEWED'], `${b.file}: removing the guard on ${b.expr} must be caught`);
+  }
 });
 
 test('mutation: removing an isSafeUrl guard, or adding an unguarded data href, is detected', () => {
@@ -265,9 +296,10 @@ test('mutation: removing an isSafeUrl guard, or adding an unguarded data href, i
   assert.deepEqual(accepted, [], `accepted as guarded: ${accepted.join('; ')}`);
 });
 
-test('characterization (DEFECT): imported data keeps unsafe URLs, and React 18 renders them as-is', async () => {
-  // Backup import and sync both go through normalizeData, which does not validate URLs inside
-  // field notes, websites or custom experiences.
+test('characterization: imported records keep their URLs as-is, and React 18 renders unsafe hrefs, so render-time guards are the protection', async () => {
+  // Backup import and sync both go through normalizeData, which does not validate (or rewrite)
+  // URLs inside field notes, websites or custom experiences: personal records are kept intact,
+  // and the rendering boundaries above decide what becomes a link.
   const raw = {
     ...EMPTY_DATA,
     fieldNotes: [{ id: 'fn-1', title: 'x', url: 'javascript:alert(document.domain)', tags: [], createdAt: '2026-01-01' }],

@@ -140,7 +140,7 @@ export default function FieldNotes() {
               </div>
               <h2 className="display mt-1 text-2xl">{n.title}</h2>
               {n.notes && <p className="mt-2 whitespace-pre-line text-sm text-paper/85">{n.notes}</p>}
-              {n.url && (
+              {isSafeUrl(n.url) && (
                 <a href={n.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 font-mono text-xs text-muted hover:text-rust">
                   <ArrowUpRight size={13} aria-hidden /> {hostname(n.url)}
                 </a>
