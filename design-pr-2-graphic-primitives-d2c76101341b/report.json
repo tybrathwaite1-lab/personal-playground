@@ -1,0 +1,681 @@
+{
+ "branch": "design/pr-2-graphic-primitives",
+ "commit": "2115acaabeb2efd7cf0ee05ebb7ee84a19de1c53",
+ "frozenTime": "2026-11-21T15:00:00-05:00",
+ "generatedAt": "2026-11-18T21:05:50.620Z",
+ "axeAvailable": true,
+ "widths": [
+  320,
+  390,
+  768,
+  1280,
+  1440
+ ],
+ "routes": [
+  "home",
+  "discover",
+  "plan",
+  "pulse",
+  "drop",
+  "interests",
+  "local",
+  "digital",
+  "rediscover",
+  "collection",
+  "notes",
+  "backup"
+ ],
+ "shots": [
+  {
+   "route": "home",
+   "width": 320,
+   "file": "320/home.jpg",
+   "fold": "320/home-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "discover",
+   "width": 320,
+   "file": "320/discover.jpg",
+   "fold": "320/discover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "plan",
+   "width": 320,
+   "file": "320/plan.jpg",
+   "fold": "320/plan-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "pulse",
+   "width": 320,
+   "file": "320/pulse.jpg",
+   "fold": "320/pulse-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "drop",
+   "width": 320,
+   "file": "320/drop.jpg",
+   "fold": "320/drop-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "interests",
+   "width": 320,
+   "file": "320/interests.jpg",
+   "fold": "320/interests-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "local",
+   "width": 320,
+   "file": "320/local.jpg",
+   "fold": "320/local-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "digital",
+   "width": 320,
+   "file": "320/digital.jpg",
+   "fold": "320/digital-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "rediscover",
+   "width": 320,
+   "file": "320/rediscover.jpg",
+   "fold": "320/rediscover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "collection",
+   "width": 320,
+   "file": "320/collection.jpg",
+   "fold": "320/collection-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "notes",
+   "width": 320,
+   "file": "320/notes.jpg",
+   "fold": "320/notes-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "backup",
+   "width": 320,
+   "file": "320/backup.jpg",
+   "fold": "320/backup-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "home",
+   "width": 390,
+   "file": "390/home.jpg",
+   "fold": "390/home-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "discover",
+   "width": 390,
+   "file": "390/discover.jpg",
+   "fold": "390/discover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "plan",
+   "width": 390,
+   "file": "390/plan.jpg",
+   "fold": "390/plan-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "pulse",
+   "width": 390,
+   "file": "390/pulse.jpg",
+   "fold": "390/pulse-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "drop",
+   "width": 390,
+   "file": "390/drop.jpg",
+   "fold": "390/drop-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "interests",
+   "width": 390,
+   "file": "390/interests.jpg",
+   "fold": "390/interests-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "local",
+   "width": 390,
+   "file": "390/local.jpg",
+   "fold": "390/local-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "digital",
+   "width": 390,
+   "file": "390/digital.jpg",
+   "fold": "390/digital-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "rediscover",
+   "width": 390,
+   "file": "390/rediscover.jpg",
+   "fold": "390/rediscover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "collection",
+   "width": 390,
+   "file": "390/collection.jpg",
+   "fold": "390/collection-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "notes",
+   "width": 390,
+   "file": "390/notes.jpg",
+   "fold": "390/notes-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "backup",
+   "width": 390,
+   "file": "390/backup.jpg",
+   "fold": "390/backup-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "home",
+   "width": 768,
+   "file": "768/home.jpg",
+   "fold": "768/home-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "discover",
+   "width": 768,
+   "file": "768/discover.jpg",
+   "fold": "768/discover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "plan",
+   "width": 768,
+   "file": "768/plan.jpg",
+   "fold": "768/plan-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "pulse",
+   "width": 768,
+   "file": "768/pulse.jpg",
+   "fold": "768/pulse-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "drop",
+   "width": 768,
+   "file": "768/drop.jpg",
+   "fold": "768/drop-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "interests",
+   "width": 768,
+   "file": "768/interests.jpg",
+   "fold": "768/interests-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "local",
+   "width": 768,
+   "file": "768/local.jpg",
+   "fold": "768/local-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "digital",
+   "width": 768,
+   "file": "768/digital.jpg",
+   "fold": "768/digital-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "rediscover",
+   "width": 768,
+   "file": "768/rediscover.jpg",
+   "fold": "768/rediscover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "collection",
+   "width": 768,
+   "file": "768/collection.jpg",
+   "fold": "768/collection-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "notes",
+   "width": 768,
+   "file": "768/notes.jpg",
+   "fold": "768/notes-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "backup",
+   "width": 768,
+   "file": "768/backup.jpg",
+   "fold": "768/backup-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "home",
+   "width": 1280,
+   "file": "1280/home.jpg",
+   "fold": "1280/home-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "discover",
+   "width": 1280,
+   "file": "1280/discover.jpg",
+   "fold": "1280/discover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "plan",
+   "width": 1280,
+   "file": "1280/plan.jpg",
+   "fold": "1280/plan-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "pulse",
+   "width": 1280,
+   "file": "1280/pulse.jpg",
+   "fold": "1280/pulse-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "drop",
+   "width": 1280,
+   "file": "1280/drop.jpg",
+   "fold": "1280/drop-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "interests",
+   "width": 1280,
+   "file": "1280/interests.jpg",
+   "fold": "1280/interests-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "local",
+   "width": 1280,
+   "file": "1280/local.jpg",
+   "fold": "1280/local-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "digital",
+   "width": 1280,
+   "file": "1280/digital.jpg",
+   "fold": "1280/digital-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "rediscover",
+   "width": 1280,
+   "file": "1280/rediscover.jpg",
+   "fold": "1280/rediscover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "collection",
+   "width": 1280,
+   "file": "1280/collection.jpg",
+   "fold": "1280/collection-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "notes",
+   "width": 1280,
+   "file": "1280/notes.jpg",
+   "fold": "1280/notes-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "backup",
+   "width": 1280,
+   "file": "1280/backup.jpg",
+   "fold": "1280/backup-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": []
+  },
+  {
+   "route": "home",
+   "width": 1440,
+   "file": "1440/home.jpg",
+   "fold": "1440/home-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "discover",
+   "width": 1440,
+   "file": "1440/discover.jpg",
+   "fold": "1440/discover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "plan",
+   "width": 1440,
+   "file": "1440/plan.jpg",
+   "fold": "1440/plan-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "pulse",
+   "width": 1440,
+   "file": "1440/pulse.jpg",
+   "fold": "1440/pulse-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "drop",
+   "width": 1440,
+   "file": "1440/drop.jpg",
+   "fold": "1440/drop-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "interests",
+   "width": 1440,
+   "file": "1440/interests.jpg",
+   "fold": "1440/interests-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "local",
+   "width": 1440,
+   "file": "1440/local.jpg",
+   "fold": "1440/local-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "digital",
+   "width": 1440,
+   "file": "1440/digital.jpg",
+   "fold": "1440/digital-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "rediscover",
+   "width": 1440,
+   "file": "1440/rediscover.jpg",
+   "fold": "1440/rediscover-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "collection",
+   "width": 1440,
+   "file": "1440/collection.jpg",
+   "fold": "1440/collection-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "notes",
+   "width": 1440,
+   "file": "1440/notes.jpg",
+   "fold": "1440/notes-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  },
+  {
+   "route": "backup",
+   "width": 1440,
+   "file": "1440/backup.jpg",
+   "fold": "1440/backup-fold.jpg",
+   "overflowPx": 0,
+   "pageErrors": [],
+   "axe": null
+  }
+ ],
+ "states": [
+  {
+   "name": "Contents menu open (390px)",
+   "file": "states/menu-390.jpg",
+   "note": null,
+   "ok": true
+  },
+  {
+   "name": "Focus ring after 3 × Tab (390px) — screenshot evidence; see the verified keyboard checks",
+   "file": "states/keyboard-focus-390.jpg",
+   "note": null,
+   "ok": true
+  },
+  {
+   "name": "Focus ring after 3 × Tab (1280px) — screenshot evidence; see the verified keyboard checks",
+   "file": "states/keyboard-focus-1280.jpg",
+   "note": null,
+   "ok": true
+  },
+  {
+   "name": "Unknown route falls back to Home",
+   "file": "states/unknown-route-1280.jpg",
+   "note": null,
+   "ok": true
+  }
+ ],
+ "keyboard": [
+  {
+   "width": 390,
+   "route": "home",
+   "checks": [
+    {
+     "name": "Tab moves focus into the page",
+     "pass": true,
+     "detail": "a[href=\"#main\"] \"Skip to content\""
+    },
+    {
+     "name": "First stop is a skip link to existing content",
+     "pass": true,
+     "detail": "a[href=\"#main\"] \"Skip to content\""
+    },
+    {
+     "name": "Every stop is an interactive element",
+     "pass": true,
+     "detail": "8 stops"
+    },
+    {
+     "name": "Focus keeps progressing (no repeats or traps)",
+     "pass": true,
+     "detail": "8 distinct stops of 43 tabbable"
+    },
+    {
+     "name": "Focused elements are scrolled into view",
+     "pass": true,
+     "detail": "all in view"
+    },
+    {
+     "name": "Focused elements show a focus indicator (outline or ring)",
+     "pass": true,
+     "detail": "all indicated"
+    },
+    {
+     "name": "Shift+Tab returns to the previous stop",
+     "pass": true,
+     "detail": "a[href=\"#/discover\"] \"02 DO SOMETHING Hobbies, projects and ou\" (expected a[href=\"#/discover\"] \"02 DO SOMETHING Hobbies, projects and ou\")"
+    }
+   ]
+  },
+  {
+   "width": 1280,
+   "route": "home",
+   "checks": [
+    {
+     "name": "Tab moves focus into the page",
+     "pass": true,
+     "detail": "a[href=\"#main\"] \"Skip to content\""
+    },
+    {
+     "name": "First stop is a skip link to existing content",
+     "pass": true,
+     "detail": "a[href=\"#main\"] \"Skip to content\""
+    },
+    {
+     "name": "Every stop is an interactive element",
+     "pass": true,
+     "detail": "8 stops"
+    },
+    {
+     "name": "Focus keeps progressing (no repeats or traps)",
+     "pass": true,
+     "detail": "8 distinct stops of 46 tabbable"
+    },
+    {
+     "name": "Focused elements are scrolled into view",
+     "pass": true,
+     "detail": "all in view"
+    },
+    {
+     "name": "Focused elements show a focus indicator (outline or ring)",
+     "pass": true,
+     "detail": "all indicated"
+    },
+    {
+     "name": "Shift+Tab returns to the previous stop",
+     "pass": true,
+     "detail": "a[href=\"#/drop\"] \"DROP\" (expected a[href=\"#/drop\"] \"DROP\")"
+    }
+   ]
+  }
+ ],
+ "blockedHosts": []
+}
