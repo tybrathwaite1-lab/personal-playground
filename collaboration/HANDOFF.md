@@ -5,13 +5,15 @@
 Baseline: `main` at `0185593` (PR #39 closed after post-merge verification). No new dependencies, sources or content-policy changes. SPAA's HTTP 403 is not worked around.
 
 - **Behaviour-preserving extraction:** the ingest's decision logic moved unchanged from `scripts/pulse/ingest.ts` into `scripts/pulse/assemble.ts`:
-  - `sourceResult(def, outcome, previous, now)`: keep, carry over or drop; source status.
+  - `sourceResult(def, outcome, previous, now, onParsed?)`: keep, carry over or drop; source status.
   - `assemblePulse(results, now)`: merge, dedupe/sort, file.
 
   `ingest.ts` keeps fetching, logging and writing.
-- **Equivalence evidence:** the old and new ingest were run locally against the same mocked feeds (successes, 403s, HTML block pages, expired and far-future items) and the same previous file. The `pulse.json` output was identical (timestamps normalised) and the logs identical apart from the output path. A structural test checks `ingest.ts` delegates and keeps no second copy of the rules.
+- **Report mode (revision 1):** `--report` price evidence used to run inside the per-source error handling, right after parsing, so an error there failed the source (carry-over, error message logged). It now runs as the optional `onParsed` hook at that same point inside `sourceResult`, so the outcome is unchanged and the feed is parsed once. The first revision had parsed it separately and swallowed such errors; that is corrected.
+- **Equivalence evidence:** the old (`main`) and new ingest were run locally against the same mocked feeds (successes, 403s, HTML block pages, expired and far-future items) and the same previous file, with `--report` off and on. The `pulse.json` output was identical (timestamps normalised) and the logs identical apart from the output path, including all 12 price lines. With `priceEvidence` temporarily made to throw for one listing, both versions failed that source with the thrown message and carried over its 2 listings in report mode, and were unaffected without it. A structural test checks `ingest.ts` delegates and keeps no second copy of the rules.
 - **Coverage** (`tests/pulse-ingest.test.ts`, synthetic fixtures in `tests/helpers/pulse-fixtures.ts`, fixed clock, no network):
-  - **Fresh reads:** kept events and fresh source status; expiry boundaries (stated end, start + 3 h, all-day + 24 h, exactly "now"); the 120-day horizon to the millisecond.
+  - **Fresh reads:** kept events and fresh source status; expiry boundaries (stated end, start + 3 h, all-day + 24 h, exactly "now"); the 120-day horizon, pinned as a literal 120 days in the test (not read from the production constant), at one-second resolution either side, the precision of iCalendar times.
+  - **Report mode:** an error in the `onParsed` hook is a source failure with carry-over and the thrown message; the hook sees the parsed feed and isn't run for failed fetches or unparseable bodies.
   - **Bad feed items:** missing, blank or unparseable fields dropped without affecting the rest; excluded content dropped; cancellations kept and flagged.
   - **Empty feed:** an empty successful feed doesn't carry over.
   - **Failures:**
@@ -21,18 +23,26 @@ Baseline: `main` at `0185593` (PR #39 closed after post-merge verification). No 
     - all sources failing gives a valid empty file.
   - **Determinism:** identical output on repeat and in fresh processes under UTC, Asia/Tokyo and America/Los_Angeles.
   - Normalization, dedupe, ordering and prices were already covered by `pulse*.test.ts`.
-- **Regression evidence:** seven local mutations, each caught, then reverted:
+- **Regression evidence:** nine local mutations, each caught, then reverted:
   - fresh read ignores the horizon;
   - expired listings carried;
   - stale never set;
   - `lastSuccess` forgotten;
   - carried listings dropped when assembling;
   - HTML block page not carried over;
-  - expiry boundary off by one.
+  - expiry boundary off by one;
+  - report-mode hook errors swallowed;
+  - production horizon changed to 121 days.
 - **Confirmed defect** (production unchanged; pinned by a characterization test). A previous `pulse.json` that is JSON but not the expected shape (no `sources` array, e.g. `{"events":[]}`) makes `previous?.sources.find` throw before any error handling.
   - **What happens:** `main()` logs "Pulse ingest crashed" and writes no `pulse.json`, so fresh results from healthy sources are lost for that build. The build continues and the app falls back to places and communities. This was reproduced with both the old and the extracted ingest.
   - **Likelihood:** low. The previous file is our own deployed output, and non-JSON responses are already caught.
-  - **Fix (separate, small):** treat a previous file without array `sources`/`events` as absent in `loadPrevious`, and skip carried entries without a `sourceIds` array (these also throw, on the failure path only).
+  - **Fix (separate, small; not in this PR):** validate the previous file before use. Checking that `sources`/`events` are arrays is not enough on its own; validation also needs to cover:
+    - invalid entries in those arrays (non-objects, `null`);
+    - source entries without a usable `id`/`lastSuccess`;
+    - carried events without a `sourceIds` array (these also throw, on the failure path only);
+    - carried events whose dates can't be read (they would never expire; see below).
+
+    Invalid entries are skipped, and a file that isn't usable at all is treated as absent.
 - **Investigated, not defects:**
   - Carried listings are checked for expiry but not the horizon. They came from an earlier run's horizon, so in practice they are already within today's.
   - A carried listing with an unparseable `start` would never expire (`isExpired` is false for NaN); only reachable via a corrupted previous file.

@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { assemblePulse, HORIZON_DAYS, sourceResult } from '../scripts/pulse/assemble.ts';
+import { assemblePulse, sourceResult } from '../scripts/pulse/assemble.ts';
 import type { PulseFile } from '../src/types/pulse.ts';
 import { A, at, B, DAY, feed, HOUR, NOW, prevEvent, previousFile, scenario, stamp, titles } from './helpers/pulse-fixtures.ts';
 
@@ -44,8 +44,12 @@ test('expiry boundaries: stated end, start + 3 h, and all-day + 24 h, compared w
   assert.deepEqual(titles(r.events).sort(), ['all day today', 'ends exactly now', 'started 3h ago, no end']);
 });
 
-test(`horizon: events starting ${HORIZON_DAYS} days or more ahead are left out of a fresh read`, () => {
-  const H = HORIZON_DAYS * DAY;
+/** The product policy, pinned here independently of the production constant. */
+const POLICY_HORIZON_DAYS = 120;
+
+test('horizon: events starting 120 days or more ahead are left out of a fresh read (checked to the second)', () => {
+  // iCalendar times have one-second resolution, so the boundary is tested one second either side.
+  const H = POLICY_HORIZON_DAYS * DAY;
   const r = sourceResult(A, feed(at(H - 1000, { summary: 'just inside' }), at(H, { summary: 'exactly at the horizon' }), at(H + DAY, { summary: 'beyond' })), null, NOW);
   assert.deepEqual(titles(r.events), ['just inside']);
   assert.equal(r.inFeed, 3, 'all three were in the feed');
@@ -194,10 +198,29 @@ test('repeated runs give identical output, in this process and in other time zon
   }
 });
 
+test('report mode: price-evidence errors are source failures with carryover, as before the extraction', () => {
+  const prev = previousFile([prevEvent('alpha:upcoming', ['alpha'], DAY)]);
+  let seen = 0;
+  const ok = sourceResult(A, feed(at(DAY), at(2 * DAY)), prev, NOW, (raw) => (seen = raw.length));
+  assert.equal(seen, 2, 'the hook receives the parsed feed');
+  assert.equal(ok.source.ok, true);
+  const failing = sourceResult(A, feed(at(DAY)), prev, NOW, () => {
+    throw new Error('price evidence failed');
+  });
+  assert.deepEqual([failing.source.ok, failing.source.error, failing.source.stale], [false, 'price evidence failed', true]);
+  assert.deepEqual(failing.events.map((e) => e.id), ['alpha:upcoming'], 'carried over, exactly as for a fetch failure');
+  // The hook is not run for failed fetches or unparseable bodies.
+  let calls = 0;
+  sourceResult(A, { ok: false, error: 'HTTP 403' }, prev, NOW, () => calls++);
+  sourceResult(A, { ok: true, text: '<html></html>' }, prev, NOW, () => calls++);
+  assert.equal(calls, 0);
+});
+
 test('ingest.ts delegates its decisions to the tested functions (no second copy of the rules)', () => {
   const src = readFileSync('scripts/pulse/ingest.ts', 'utf8');
   assert.match(src, /import \{ assemblePulse, sourceResult, type FetchOutcome, type SourceResult \} from '\.\/assemble\.ts';/);
-  assert.match(src, /const r = sourceResult\(def, outcome, previous, now\);/);
+  assert.match(src, /const r = sourceResult\(def, outcome, previous, now, REPORT \? report : undefined\);/);
+  assert.ok(!src.includes('parseIcs('), 'feeds are parsed once, inside sourceResult');
   assert.match(src, /assemblePulse\(results, now\)/);
   for (const dup of ['isExpired(', 'HORIZON_DAYS', 'dedupe(', 'stale:']) assert.ok(!src.includes(dup), `ingest.ts must not re-implement ${dup}`);
 });

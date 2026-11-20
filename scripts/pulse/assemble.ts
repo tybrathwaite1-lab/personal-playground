@@ -6,7 +6,7 @@
  */
 import type { PulseSourceDef } from '../../src/data/pulseSources.ts';
 import type { PulseEvent, PulseFile, PulseSource } from '../../src/types/pulse.ts';
-import { parseIcs } from '../../src/utils/ics.ts';
+import { parseIcs, type IcsEvent } from '../../src/utils/ics.ts';
 import { dedupe, isExpired, normalizeIcs } from '../../src/utils/pulse.ts';
 
 export const HORIZON_DAYS = 120;
@@ -25,14 +25,17 @@ export interface SourceResult {
  * One source's contribution. A successful read keeps its normalized, unexpired events that
  * start within the horizon. Any failure — fetching, parsing or normalizing — instead carries
  * over this source's unexpired events from `previous` and marks the source stale.
+ * `onParsed` (ingest's --report price evidence) runs on the parsed feed inside the same error
+ * handling, so an error there is also a source failure, as it always was.
  */
-export function sourceResult(def: PulseSourceDef, outcome: FetchOutcome, previous: PulseFile | null, now: Date): SourceResult {
+export function sourceResult(def: PulseSourceDef, outcome: FetchOutcome, previous: PulseFile | null, now: Date, onParsed?: (raw: IcsEvent[]) => void): SourceResult {
   const nowIso = now.toISOString();
   const horizon = now.getTime() + HORIZON_DAYS * 86_400_000;
   const prevSource = previous?.sources.find((s) => s.id === def.id);
   try {
     if (!outcome.ok) throw new Error(outcome.error);
     const raw = parseIcs(outcome.text);
+    onParsed?.(raw);
     const items = raw
       .map((e) => normalizeIcs(e, def.id, nowIso))
       .filter((e): e is PulseEvent => Boolean(e))

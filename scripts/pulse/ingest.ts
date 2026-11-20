@@ -13,7 +13,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { PULSE_SOURCES } from '../../src/data/pulseSources.ts';
 import type { PulseFile } from '../../src/types/pulse.ts';
-import { parseIcs } from '../../src/utils/ics.ts';
+import type { IcsEvent } from '../../src/utils/ics.ts';
 import { normalizeIcs, priceEvidence } from '../../src/utils/pulse.ts';
 import { stripHtml } from '../../src/utils/ics.ts';
 import { assemblePulse, sourceResult, type FetchOutcome, type SourceResult } from './assemble.ts';
@@ -67,16 +67,13 @@ async function main() {
     } catch (err) {
       outcome = { ok: false, error: (err as Error).message };
     }
-    if (REPORT && outcome.ok)
-      try {
-        for (const r of parseIcs(outcome.text)) {
-          const n = normalizeIcs(r, def.id, nowIso);
-          if (n) evidence.set(n.id, priceEvidence(`${r.summary}.\n${r.description ? stripHtml(r.description) : ''}`));
-        }
-      } catch {
-        // reported as a source failure by sourceResult
+    const report = (raw: IcsEvent[]) => {
+      for (const r of raw) {
+        const n = normalizeIcs(r, def.id, nowIso);
+        if (n) evidence.set(n.id, priceEvidence(`${r.summary}.\n${r.description ? stripHtml(r.description) : ''}`));
       }
-    const r = sourceResult(def, outcome, previous, now);
+    };
+    const r = sourceResult(def, outcome, previous, now, REPORT ? report : undefined);
     results.push(r);
     if (r.source.ok) console.log(`✓ ${def.id.padEnd(14)} ${String(r.inFeed).padStart(3)} in feed → ${r.events.length} kept`);
     else console.log(`✗ ${def.id.padEnd(14)} ${r.source.error}${r.events.length ? ` — carried over ${r.events.length}` : ''}`);
