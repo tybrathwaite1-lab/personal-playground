@@ -14,3 +14,5 @@ public/images/editorial/
 
 # Visual check output (scripts/visual/run.ts)
 visual-out/
+# Browser behaviour test failure diagnostics (browser-tests/)
+browser-out/

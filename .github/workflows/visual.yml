@@ -5,6 +5,11 @@ name: Visual check
 # (scripts/visual/run.ts). A self-test first proves the checks fail on a deliberately broken
 # page. Results are a 14-day Actions artifact plus a step summary.
 #
+# The same build then runs the browser behaviour tests (browser-tests/, M2-6): navigation,
+# persistence, backup/restore, GitHub Sync against a fake GitHub, and personal-URL safety.
+# Unlike the screenshots, they are blocking: a failure fails this workflow. Failure
+# screenshots and reports are uploaded as the "browser-tests-<sha>" artifact.
+#
 # Read-only by design: this workflow runs branch code, so it gets no write permission. Any
 # future publishing of screenshots must be a separate, owner-approved design that never
 # executes branch code with write access.
@@ -68,6 +73,17 @@ jobs:
 
       - name: Screenshots and checks (report-only)
         run: npm run visual -- --out visual-out --branch "$REF_NAME" --commit "$COMMIT_SHA"
+
+      - name: Browser behaviour tests (blocking)
+        run: npm run test:browser
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: browser-tests-${{ github.sha }}
+          path: browser-out
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Summary
         if: always()

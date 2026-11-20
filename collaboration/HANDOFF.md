@@ -1,6 +1,92 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (M2-5: deterministic Pulse ingest tests)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (M2-6: browser behaviour tests)
+
+Baseline: `main` at `eaa636e` (M2-5 closed: PR #40 merged, closeout independently verified). This is the final planned M2 package. No new dependencies (Option A: the existing `playwright-core` and Chromium), no app changes, no new services or permissions.
+
+- **What runs:** `npm run test:browser` runs 27 scenarios in 5 files under `browser-tests/`. It reuses the M2-1 runner (`scripts/test/run.ts --root browser-tests`), so the same integrity rules apply: every file discovered and run, nothing focused, skipped or TODO, no empty suite.
+- **Harness** (`browser-tests/helpers/`):
+  - **Build under test:** the production build in `dist/`, served locally under the production base path by the visual check's `serveDist`.
+  - **Isolation:** each scenario gets a fresh browser context with its own storage (empty, or a synthetic seed through `storageState`) and service workers blocked.
+  - **Time and randomness:** the clock is frozen at the visual check's time, Sat 2026-11-21 3 PM New York, with timers still running. Only the Plan a Day scenarios pin `Math.random`.
+  - **Network:**
+    - the visual check's synthetic Pulse and weather fixtures are served;
+    - `api.github.com` is answered by an in-process fake (`fake-github.ts`) when a scenario has one;
+    - every other off-origin request is aborted and recorded.
+  - **Failures:** page errors fail the scenario. A failure saves a full-page screenshot and a text report to `browser-out/` and adds the same diagnostics to the error: URL, page and console errors, dialogs, blocked hosts and the fake GitHub's request log.
+  - **Waiting:** there are no fixed sleeps; tests wait for observable conditions.
+- **CI:** a blocking step, "Browser behaviour tests", in the Visual check workflow, after the existing build and screenshots. Chromium is already installed there. Permissions stay `contents: read`. On failure the diagnostics are uploaded as the `browser-tests-<sha>` artifact (14 days).
+  - **Merge gating:** the ruleset's only required check is `check` (Check workflow). Making the Visual check's `capture` job required is an owner decision; I haven't changed any settings.
+- **Coverage.** Assertions are about behaviour: URL, document title, the single `h1`, roles and accessible names, stored data, downloads and requests. They don't depend on CSS classes or layout.
+  - **Navigation** (desktop 1280 px and phone 390 px):
+    - every route opens directly and has its own title and heading; unknown routes show Home;
+    - the desktop nav moves between sections, with back/forward and `aria-current`;
+    - the phone tab bar works, and the full menu closes on Escape and after choosing a section;
+    - the skip link focuses `<main>` without changing the URL or history;
+    - Day plan → "Plan my day" → following a stop opens it in Discover → back.
+  - **Persistence** (both widths): a new field note, a favorite, a saved site and a setting survive a reload. An older stored record loads, keeps its data, drops invalid entries and is upgraded to the current shape on load. A corrupted record opens an empty playground and the next edit saves cleanly.
+  - **Backup and restore:**
+    - export downloads `personal-playground-backup-2026-11-21.json` (frozen day), which never contains the sync token or repository;
+    - erase → restore from that file;
+    - merge keeps both devices' notes and survives a reload;
+    - "Replace everything" asks first, and declining or cancelling changes nothing;
+    - six malformed files (truncated, empty, plain text, another app's file, an array, `null`) each show an error, offer nothing to import and leave stored data byte-identical;
+    - a legacy bare-data backup still imports.
+  - **GitHub Sync** (synthetic token, fake GitHub):
+    - the first sync uploads, keeps the legacy `settings` mirror and stores the token only under its own key;
+    - pulling picks up another device's note and an older app version's single `settings` entry;
+    - a 409 write conflict re-reads, merges and keeps all three devices' notes;
+    - a rejected token or a public repository fails clearly when connecting, with nothing saved or written;
+    - a repository that stops confirming it is private, or a network failure, stops sync with a clear message and no write, then recovers on "Sync now".
+  - **Sync races:**
+    - **Disconnect** while a round is about to write (its pre-write privacy check is held): the stale round never writes.
+    - **Repository change** while the old round's read is in flight: the old repository's data isn't applied locally or copied into the new repository, nothing is written to the old one, the config still points at the new one and no stale error appears.
+    - **How completion is proved:** the app runs one round at a time, so the next round completing proves the stale one has finished.
+  - **Personal URL safety** (the browser check deferred from #39). A backup containing `https:`, `http:`, `javascript:`, mixed-case `JaVaScRiPt:`, space-prefixed `javascript:`, `data:` and malformed URLs is imported through the Backup page. Then:
+    - **Field Notes and both Digital paths (the list and the random destination):** every kind is checked.
+    - **Plan a Day stops:** `https:`, `javascript:` and `data:` are checked, since a plan has three stops.
+    - **Unsafe URLs:** no link is rendered, the title, notes or description and the link label stay readable, and clicking that text runs no script and opens no navigation or tab.
+    - **Safe URLs:** the link opens in a new tab (`target=_blank`, `rel` includes `noreferrer`), sends no `Referer` and leaves no `window.opener`.
+    - **Whole-page check:** no `<a>` anywhere on the page has a non-http(s) href.
+- **Determinism and isolation:** locally the full suite passed 5 times in a row, including with the host time zone set to Asia/Tokyo and America/Los_Angeles: 27/27 each, in about 17 s.
+- **Mutation evidence:** 15 temporary mutations to app code, each rebuilt, tested and reverted (`src/` is clean in the PR). All 15 were caught:
+
+  | Mutation | Failing scenario(s) |
+  |---|---|
+  | Field Notes link guard removed | Field Notes URL safety |
+  | Digital list guard removed | Digital list, Digital random (whole-page href check) |
+  | Digital random-destination guard removed | Digital random |
+  | Plan stop link guard removed | Plan a Day |
+  | Truncated JSON backup accepted as empty data | malformed backups |
+  | Replace runs without asking | replace asks first |
+  | Personal data never saved | both reload scenarios, legacy record, corrupted record |
+  | Legacy cleanup removed (invalid favorites kept) | legacy record |
+  | Stale round may write after disconnect | disconnect race |
+  | Stale-round detection disabled | disconnect race, repository-change race |
+  | Write conflict not retried | conflict |
+  | Unconfirmed privacy treated as private | privacy/network recovery |
+  | Phone menu stays open after choosing | phone navigation |
+  | Route changes not followed | direct routes, desktop nav, phone nav, Plan a Day interaction |
+  | Skip link replaces the route in the URL | in-page navigation |
+
+  A failure report from the first mutation (screenshot, URL, dialogs, blocked hosts) was checked to confirm the diagnostics are useful.
+- **Defects found:** none.
+  - **Observation (not a defect, not changed):** if a valid backup is waiting for a decision and the user then picks a malformed file, the error appears while the earlier valid backup's panel stays open. Nothing is applied without a click, and what would be applied is the earlier valid file.
+- **Limitations and deliberate omissions:**
+  - Chromium only; no WebKit or Firefox, and no real iOS Safari or home-screen PWA (PP-010 stays open).
+  - The service worker and offline mode aren't exercised (service workers are blocked for isolation).
+  - Automatic sync after an edit (4 s delay), sync on visibility or online events, and multi-tab storage events aren't covered.
+  - Plan a Day covers three of the seven URL kinds; the other four are covered in Field Notes and both Digital paths.
+  - Sync tests use the fake GitHub's request shapes from `src/utils/github.ts`, not recordings of the real API.
+  - **Local-only build:** this container has no Vite or React 18, so local development used a temporary esbuild build (Tailwind compiled from the repo's config, icons stubbed). The esbuild build isn't committed. CI runs the suite against the real Vite production build.
+- **Unchanged and tracked separately:**
+  - previous Pulse snapshot validation (M2-5);
+  - the intermittent hang in the production smoke step;
+  - malformed GitHub responses and loose `parseRepo` (M2-4 defects 2 and 3).
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-20 (M2-5: deterministic Pulse ingest tests)
 
 Baseline: `main` at `0185593` (PR #39 closed after post-merge verification). No new dependencies, sources or content-policy changes. SPAA's HTTP 403 is not worked around.
 
