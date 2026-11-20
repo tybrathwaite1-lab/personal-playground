@@ -4,13 +4,13 @@
  * succeed, return nothing, or fail; and how the previous pulse.json is used. Synthetic feeds
  * and a fixed clock only — no network. Existing normalization, de-duplication and price
  * parsing are covered in pulse.test.ts, pulse-dedupe.test.ts and pulse-price.test.ts.
+ * R1: validation of the previous snapshot (usablePrevious) before anything is carried over.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { assemblePulse, sourceResult } from '../scripts/pulse/assemble.ts';
-import type { PulseFile } from '../src/types/pulse.ts';
+import { assemblePulse, sourceResult, usablePrevious } from '../scripts/pulse/assemble.ts';
 import { A, at, B, DAY, feed, HOUR, NOW, prevEvent, previousFile, scenario, stamp, titles } from './helpers/pulse-fixtures.ts';
 
 // ─── Successful reads: eligibility and boundaries ───────────────────
@@ -153,32 +153,111 @@ test('all sources failing with no previous file gives an empty, valid file (the 
 
 // ─── Previous snapshot handling (characterization) ─────────────────
 
-test('characterization: carried listings are not held to the horizon, and an unparseable start never expires', () => {
+test('characterization: carried listings are not held to the horizon', () => {
   // A fresh read drops events starting 120+ days ahead; carried ones are only checked for
   // expiry. A carried listing came from a previous run's horizon, so in practice it can only
-  // be beyond today's horizon if the previous file was produced differently. An invalid start
-  // makes isExpired false (NaN), so such a listing would be carried indefinitely.
-  const prev = previousFile([prevEvent('alpha:far', ['alpha'], 200 * DAY), { ...prevEvent('alpha:garbled', ['alpha'], DAY), start: 'not a date' }]);
-  const r = sourceResult(A, { ok: false, error: 'HTTP 403' }, prev, NOW);
-  assert.deepEqual(r.events.map((e) => e.id), ['alpha:far', 'alpha:garbled']);
+  // be beyond today's horizon if the previous file was produced differently.
+  const prev = previousFile([prevEvent('alpha:far', ['alpha'], 200 * DAY)]);
+  const r = sourceResult(A, { ok: false, error: 'HTTP 403' }, usablePrevious(prev).file, NOW);
+  assert.deepEqual(r.events.map((e) => e.id), ['alpha:far']);
   // The fresh path drops the same far-future listing.
   assert.deepEqual(sourceResult(A, feed(at(200 * DAY)), null, NOW).events, []);
 });
 
-test('characterization (defect): a previous file without a sources array throws, which stops the whole ingest', () => {
-  // ingest.ts reads `previous?.sources.find(...)` for every source, before its error handling.
-  // loadPrevious only checks that the previous file is JSON, so JSON of another shape makes
-  // this throw; main() then logs "Pulse ingest crashed" and writes no pulse.json at all, so
-  // fresh results from healthy sources are lost too (the build continues; the app falls back).
-  for (const bad of [{ events: [] }, { sources: {}, events: [] }, { sources: null, events: [] }] as unknown as PulseFile[])
-    assert.throws(() => sourceResult(A, feed(at(DAY)), bad, NOW), TypeError, JSON.stringify(bad));
-  // Carried listings without sourceIds throw on the failure path only.
-  const noIds = { ...previousFile([]), events: [{ id: 'x', title: 'x', start: NOW.toISOString() }] } as unknown as PulseFile;
-  assert.equal(sourceResult(A, feed(at(DAY)), noIds, NOW).source.ok, true, 'a successful read never looks at previous events');
-  assert.throws(() => sourceResult(A, { ok: false, error: 'HTTP 403' }, noIds, NOW), TypeError);
-  // A previous file with no events, or a missing source entry, is fine.
-  assert.equal(sourceResult(A, { ok: false, error: 'HTTP 403' }, { ...previousFile([]), events: undefined } as unknown as PulseFile, NOW).source.stale, false);
-  assert.equal(sourceResult(A, { ok: false, error: 'HTTP 403' }, { ...previousFile([]), sources: [] }, NOW).source.lastSuccess, null);
+// ─── Previous snapshot validation (R1) ──────────────────────────────
+
+const failing = { ok: false as const, error: 'HTTP 403' };
+
+test('a valid previous snapshot passes validation unchanged', () => {
+  const prev = previousFile([prevEvent('alpha:a', ['alpha'], DAY, { end: new Date(NOW.getTime() + DAY + HOUR).toISOString(), url: 'https://example.org/a' }), prevEvent('both:b', ['alpha', 'beta'], 2 * DAY)]);
+  const { file, dropped } = usablePrevious(structuredClone(prev));
+  assert.deepEqual(file, prev);
+  assert.deepEqual(dropped, []);
+  // Carry-over from it is exactly what it was before validation existed.
+  assert.deepEqual(sourceResult(A, failing, file, NOW), sourceResult(A, failing, prev, NOW));
+});
+
+test('a previous snapshot that is missing or not an object is treated as absent', () => {
+  for (const raw of [null, undefined]) assert.deepEqual(usablePrevious(raw), { file: null, dropped: [] });
+  for (const raw of [[], 'pulse', 42, true]) {
+    const { file, dropped } = usablePrevious(raw);
+    assert.equal(file, null, JSON.stringify(raw));
+    assert.deepEqual(dropped, ['the whole file (not an object)']);
+  }
+  const r = sourceResult(A, failing, usablePrevious([]).file, NOW);
+  assert.deepEqual([r.source.ok, r.source.stale, r.source.lastSuccess, r.events], [false, false, null, []]);
+});
+
+test('a previous snapshot without usable source or event lists no longer stops the ingest', () => {
+  // Before R1 each of these made sourceResult throw a TypeError, and the ingest wrote no pulse.json.
+  const events = [prevEvent('alpha:upcoming', ['alpha'], DAY)];
+  for (const sources of [undefined, null, {}, 'x']) {
+    const { file, dropped } = usablePrevious({ generatedAt: 'x', events, sources });
+    assert.deepEqual(file!.sources, [], JSON.stringify(sources));
+    assert.ok(dropped.includes('sources (not a list)'));
+    const r = sourceResult(A, failing, file, NOW);
+    assert.deepEqual(r.events.map((e) => e.id), ['alpha:upcoming'], 'valid events still carried over');
+    assert.equal(r.source.lastSuccess, null);
+    assert.equal(sourceResult(A, feed(at(DAY)), file, NOW).source.ok, true);
+  }
+  for (const evs of [undefined, null, {}, 'x']) {
+    const { file, dropped } = usablePrevious({ ...previousFile([]), events: evs });
+    assert.deepEqual(file!.events, []);
+    assert.ok(dropped.includes('events (not a list)'));
+    assert.equal(sourceResult(A, failing, file, NOW).source.lastSuccess, '2026-11-19T17:00:00.000Z', 'valid sources still used');
+  }
+});
+
+test('invalid previous entries are left out; valid ones are carried over with their attribution', () => {
+  const good = prevEvent('alpha:good', ['alpha'], DAY);
+  const shared = prevEvent('both:shared', ['alpha', 'beta'], 2 * DAY);
+  const bad: [unknown, string][] = [
+    [null, 'not an object'],
+    ['alpha:string', 'not an object'],
+    [{ ...good, id: undefined }, 'no id'],
+    [{ ...good, id: '' }, 'no id'],
+    [{ ...good, title: undefined }, 'no title'],
+    [{ ...good, start: 'not a date' }, 'unreadable start'],
+    [{ ...good, start: undefined }, 'unreadable start'],
+    [{ ...good, end: 'soon' }, 'unreadable end'],
+    [{ ...good, allDay: 'no' }, 'no allDay flag'],
+    [{ ...good, sourceIds: undefined }, 'no sourceIds'],
+    [{ ...good, sourceIds: 'alpha' }, 'no sourceIds'],
+    [{ ...good, sourceIds: [] }, 'no sourceIds'],
+    [{ ...good, sourceIds: ['alpha', 7] }, 'no sourceIds'],
+    [{ ...good, tags: null }, 'invalid tags or categories'],
+    [{ ...good, categories: 'Music' }, 'invalid tags or categories'],
+  ];
+  const raw = { ...previousFile([]), events: [good, ...bad.map(([e]) => e), shared] };
+  const { file, dropped } = usablePrevious(raw);
+  assert.deepEqual(file!.events, [good, shared]);
+  const expected = new Map<string, number>();
+  for (const [, why] of bad) expected.set(`event: ${why}`, (expected.get(`event: ${why}`) ?? 0) + 1);
+  assert.deepEqual(dropped, [...expected].map(([w, n]) => `${w} ×${n}`));
+
+  const a = sourceResult(A, failing, file, NOW);
+  const b = sourceResult(B, failing, file, NOW);
+  assert.deepEqual(a.events.map((e) => e.id), ['alpha:good', 'both:shared']);
+  assert.deepEqual(b.events.map((e) => e.id), ['both:shared'], 'a shared listing is carried for each of its sources');
+  assert.deepEqual(a.events[1].sourceIds, ['alpha', 'beta'], 'attribution unchanged');
+  assert.equal(a.source.stale, true);
+});
+
+test('unreadable dates can no longer keep a listing alive forever; expiry still applies to valid ones', () => {
+  // isExpired() is false for an unreadable date, so before R1 such a listing was carried on every failing run.
+  const raw = previousFile([{ ...prevEvent('alpha:garbled', ['alpha'], DAY), start: 'not a date' }, prevEvent('alpha:expired', ['alpha'], -DAY), prevEvent('alpha:ok', ['alpha'], DAY)]);
+  const r = sourceResult(A, failing, usablePrevious(raw).file, NOW);
+  assert.deepEqual(r.events.map((e) => e.id), ['alpha:ok']);
+});
+
+test('invalid source entries are left out, and an unreadable lastSuccess is forgotten rather than reported', () => {
+  const p = previousFile([prevEvent('alpha:x', ['alpha'], DAY)]);
+  const raw = { ...p, sources: [null, { name: 'no id' }, { ...p.sources[0], lastSuccess: 'yesterday' }, p.sources[1]] };
+  const { file, dropped } = usablePrevious(raw);
+  assert.deepEqual(file!.sources.map((s) => [s.id, s.lastSuccess]), [['alpha', null], ['beta', '2026-11-19T17:00:00.000Z']]);
+  assert.deepEqual(dropped, ['source: no id ×2', 'source: unreadable lastSuccess ×1']);
+  assert.equal(sourceResult(A, failing, file, NOW).source.lastSuccess, null);
+  assert.equal(sourceResult(B, failing, file, NOW).source.lastSuccess, '2026-11-19T17:00:00.000Z');
 });
 
 // ─── Determinism ────────────────────────────────────────────────────
@@ -218,7 +297,9 @@ test('report mode: price-evidence errors are source failures with carryover, as 
 
 test('ingest.ts delegates its decisions to the tested functions (no second copy of the rules)', () => {
   const src = readFileSync('scripts/pulse/ingest.ts', 'utf8');
-  assert.match(src, /import \{ assemblePulse, sourceResult, type FetchOutcome, type SourceResult \} from '\.\/assemble\.ts';/);
+  assert.match(src, /import \{ assemblePulse, sourceResult, usablePrevious, type FetchOutcome, type SourceResult \} from '\.\/assemble\.ts';/);
+  assert.match(src, /const \{ file, dropped \} = usablePrevious\(raw\);/, 'the previous snapshot is validated before use');
+  assert.ok(!/as PulseFile\)/.test(src), 'no unchecked cast of the previous snapshot');
   assert.match(src, /const r = sourceResult\(def, outcome, previous, now, REPORT \? report : undefined\);/);
   assert.ok(!src.includes('parseIcs('), 'feeds are parsed once, inside sourceResult');
   assert.match(src, /assemblePulse\(results, now\)/);

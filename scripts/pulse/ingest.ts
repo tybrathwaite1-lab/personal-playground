@@ -16,7 +16,7 @@ import type { PulseFile } from '../../src/types/pulse.ts';
 import type { IcsEvent } from '../../src/utils/ics.ts';
 import { normalizeIcs, priceEvidence } from '../../src/utils/pulse.ts';
 import { stripHtml } from '../../src/utils/ics.ts';
-import { assemblePulse, sourceResult, type FetchOutcome, type SourceResult } from './assemble.ts';
+import { assemblePulse, sourceResult, usablePrevious, type FetchOutcome, type SourceResult } from './assemble.ts';
 
 const args = process.argv.slice(2);
 const arg = (name: string, def: string) => {
@@ -29,17 +29,22 @@ const UA = 'PersonalPlaygroundBot/1.0 (+https://github.com/tybrathwaite1-lab/per
 const REPORT = args.includes('--report');
 const evidence = new Map<string, string[]>();
 
+/** The previously deployed pulse.json, validated (usablePrevious); null when missing or unreadable. */
 async function loadPrevious(): Promise<PulseFile | null> {
   if (!PREVIOUS) return null;
+  let raw: unknown = null;
   try {
     if (/^https?:/.test(PREVIOUS)) {
-      const r = await fetch(PREVIOUS, { headers: { 'User-Agent': UA } });
-      return r.ok ? ((await r.json()) as PulseFile) : null;
-    }
-    return existsSync(PREVIOUS) ? (JSON.parse(readFileSync(PREVIOUS, 'utf8')) as PulseFile) : null;
-  } catch {
+      const r = await fetch(PREVIOUS, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(20_000) });
+      raw = r.ok ? await r.json() : null;
+    } else raw = existsSync(PREVIOUS) ? JSON.parse(readFileSync(PREVIOUS, 'utf8')) : null;
+  } catch (e) {
+    console.log(`Previous snapshot unavailable (${(e as Error).message}); nothing to carry over.`);
     return null;
   }
+  const { file, dropped } = usablePrevious(raw);
+  if (dropped.length) console.log(`Previous snapshot: left out ${dropped.join(', ')}`);
+  return file;
 }
 
 async function fetchText(url: string): Promise<string> {
