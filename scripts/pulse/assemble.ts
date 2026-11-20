@@ -66,3 +66,56 @@ export function assemblePulse(results: SourceResult[], now: Date): { file: Pulse
   const events = dedupe(results.flatMap((r) => r.events)); // also sorts by actual start instant
   return { file: { generatedAt: now.toISOString(), timezone: 'America/New_York', sources: results.map((r) => r.source), events }, listings };
 }
+
+// ─── Previous snapshot validation (R1) ───────────────────────────────
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+const isStr = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
+const isDate = (v: unknown): v is string => typeof v === 'string' && Number.isFinite(Date.parse(v));
+const strings = (v: unknown, nonEmpty = false) => Array.isArray(v) && v.every(isStr) && (!nonEmpty || v.length > 0);
+
+/** Why a previous event can't be carried over, or null when it can. */
+function eventProblem(e: unknown): string | null {
+  if (!isObj(e)) return 'not an object';
+  if (!isStr(e.id)) return 'no id';
+  if (!isStr(e.title)) return 'no title';
+  if (!isDate(e.start)) return 'unreadable start';
+  if (e.end !== undefined && !isDate(e.end)) return 'unreadable end';
+  if (typeof e.allDay !== 'boolean') return 'no allDay flag';
+  if (!strings(e.sourceIds, true)) return 'no sourceIds';
+  if (!strings(e.tags) || !strings(e.categories)) return 'invalid tags or categories';
+  return null;
+}
+
+/**
+ * The parts of a previous pulse.json that are safe to carry over. The previous file is
+ * normally our own deployed output, but it is read over the network, so it is checked rather
+ * than trusted: anything that isn't an object is treated as absent; a missing or non-array
+ * `sources` or `events` counts as empty; entries that couldn't be carried over safely
+ * (including events whose dates can't be read, which would otherwise never expire) are left
+ * out. Valid entries are returned unchanged. `dropped` summarizes what was left out.
+ */
+export function usablePrevious(raw: unknown): { file: PulseFile | null; dropped: string[] } {
+  if (!isObj(raw)) return { file: null, dropped: raw === null || raw === undefined ? [] : ['the whole file (not an object)'] };
+  const dropped: string[] = [];
+  const count = new Map<string, number>();
+  const note = (what: string) => count.set(what, (count.get(what) ?? 0) + 1);
+  if (!Array.isArray(raw.sources)) dropped.push('sources (not a list)');
+  if (!Array.isArray(raw.events)) dropped.push('events (not a list)');
+
+  const sources: PulseSource[] = [];
+  for (const s of Array.isArray(raw.sources) ? raw.sources : []) {
+    if (!isObj(s) || !isStr(s.id)) note('source: no id');
+    else if (s.lastSuccess !== null && s.lastSuccess !== undefined && !isDate(s.lastSuccess)) {
+      note('source: unreadable lastSuccess');
+      sources.push({ ...(s as unknown as PulseSource), lastSuccess: null });
+    } else sources.push(s as unknown as PulseSource);
+  }
+  const events: PulseEvent[] = [];
+  for (const e of Array.isArray(raw.events) ? raw.events : []) {
+    const problem = eventProblem(e);
+    if (problem) note(`event: ${problem}`);
+    else events.push(e as unknown as PulseEvent);
+  }
+  for (const [what, n] of count) dropped.push(`${what} ×${n}`);
+  return { file: { ...(raw as unknown as PulseFile), sources, events }, dropped };
+}

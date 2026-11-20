@@ -1,6 +1,48 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (M2-6: browser behaviour tests)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (R1: previous Pulse snapshot validation)
+
+Baseline: `main` at `4c6d9be` (M2 closed). This is the first of four reliability-closeout PRs (R1–R4), done one at a time.
+
+- **Issue confirmed** (M2-5's characterization):
+  - `sourceResult` read `previous?.sources.find(...)` and `e.sourceIds.includes(...)` without checking the shape, and `loadPrevious` only checked that the file was JSON. So a previous `pulse.json` that is JSON but the wrong shape (no `sources` list, a top-level array, a `null` event entry) made the ingest log "Pulse ingest crashed" and write no `pulse.json` at all.
+  - Separately, an event with an unreadable date never expires (`isExpired` is false for NaN), so it was carried over on every failing run.
+  - The `--previous` URL fetch had no timeout.
+- **Fix:**
+  - `usablePrevious(raw)` (in `scripts/pulse/assemble.ts`) checks the previous file before anything is carried over:
+    - **Whole file:** anything that isn't an object is treated as absent. A missing or non-list `sources`/`events` counts as empty, so the other list is still used.
+    - **Events left out:** non-objects, and events without a string `id`/`title`, a readable `start` (and `end` if present), a boolean `allDay`, a non-empty list of `sourceIds` strings, or string lists for `tags`/`categories`.
+    - **Sources:** entries without an `id` are left out, and an unreadable `lastSuccess` becomes `null`.
+    - **Valid entries are returned unchanged.** Expiry, freshness, the horizon, stale marking and attribution are unchanged; validation only decides what is eligible.
+  - `loadPrevious` validates through `usablePrevious`, logs what was left out (`Previous snapshot: left out …`) and has a 20 s timeout on the URL fetch.
+- **Tests** (`tests/pulse-ingest.test.ts`): the defect characterization is replaced by 6 regression tests:
+  - a valid snapshot is unchanged and carry-over is identical;
+  - a missing or non-object file is treated as absent;
+  - missing or non-list `sources`/`events` no longer stop the ingest, and the valid part is still used;
+  - 15 kinds of invalid event entry are left out, while valid ones are carried over with their attribution (a shared listing is carried for each of its sources);
+  - unreadable dates no longer live forever, and expiry still applies;
+  - invalid source entries are left out and an unreadable `lastSuccess` is forgotten.
+  - The far-future characterization stays.
+- **Mutation evidence:** 7 local mutations, each caught and then reverted:
+  - start, end, title or sourceIds not checked;
+  - a missing `sources` list discards the whole file;
+  - a bad `lastSuccess` is kept;
+  - ingest skips validation.
+- **End-to-end evidence:** local runs with mocked feeds, comparing the `main` ingest and this one:
+
+  | Previous snapshot | `main` | This PR |
+  |---|---|---|
+  | Valid | `pulse.json` written | identical counts |
+  | No `sources` list | crashed, no `pulse.json` | written; valid events carried |
+  | A `null` event, an unreadable start, a missing `sourceIds` | crashed, no `pulse.json` | written; those three left out |
+  | Top-level array | crashed, no `pulse.json` | written; treated as absent |
+
+- **Production check (after merge):** the deploy reads the previous snapshot from production. I couldn't download the current Pages artifact here (the artifact storage host isn't allowed from this session), so the first post-merge deploy log is the check: no "Previous snapshot: left out" line is expected, and carried counts (e.g. spaa, lowry) should match.
+- **Limitations:** the validator checks the fields carry-over and dedupe depend on, not every optional display field (`venue`, `geo`, `priceNote` …). Those come from our own earlier output, and the app already treats them as optional. Carried listings are still not held to the horizon (unchanged, characterized).
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-20 (M2-6: browser behaviour tests)
 
 Baseline: `main` at `eaa636e` (M2-5 closed: PR #40 merged, closeout independently verified). This is the final planned M2 package. No new dependencies (Option A: the existing `playwright-core` and Chromium), no app changes, no new services or permissions.
 

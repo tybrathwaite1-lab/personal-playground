@@ -1,4 +1,4 @@
-# Status — 2026-11-20 (Sprint 02 "The Newsstand Effect" in progress; M1 closed; M2 test harness: final package in review)
+# Status — 2026-11-20 (Sprint 02 "The Newsstand Effect" in progress; M1 and M2 closed; essential reliability closeout R1–R4 in progress)
 
 **Sprint 02, "The Newsstand Effect", is in progress** (authorized by the owner on 2026-11-18). Sprint 01 "Make discovery dependable" is complete; production was verified at `68186d8`.
 
@@ -19,7 +19,9 @@
   - **M2-4 (safety-critical utility tests) is closed:** PR #38 merged, `main` at `90d1eb4`, post-merge checks passed. It found one defect (personal-data URLs rendered without `isSafeUrl`) and two minor ones.
   - **Security fix (personal-data URLs) is closed:** PR #39 merged, `main` at `0185593`, post-merge checks passed (deploy and smoke on the new bundle). Real-browser verification is a required M2-6 case.
   - **M2-5 (Pulse ingest tests) is closed:** PR #40 merged, `main` at `eaa636e`, post-merge checks passed (closeout independently verified). It confirmed one defect, tracked separately: a previous `pulse.json` of the wrong shape stops the whole ingest.
-  - **M2-6 (browser behaviour tests) is in review**, the final planned M2 package: navigation, persistence, backup/restore, GitHub Sync against a fake GitHub, and the personal-URL browser check deferred from #39. Blocking in the Visual check workflow. See HANDOFF.
+  - **M2-6 (browser behaviour tests) is closed:** PR #41 merged, `main` at `4c6d9be`, post-merge checks passed. **M2 is closed** (independently verified). Required checks: `check` and `Visual and browser tests`.
+- **Essential reliability closeout (not M3):** R1 previous Pulse snapshot validation → R2 production smoke reliability → R3 GitHub response validation → R4 repository-name parsing, one PR at a time.
+  - **R1 is in review.** See HANDOFF.
   - **Tracked separately:** malformed GitHub responses and loose repo parsing (M2-4 defects 2 and 3); validation of the previous Pulse snapshot (M2-5); low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
   - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
