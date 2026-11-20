@@ -12,10 +12,11 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { PULSE_SOURCES } from '../../src/data/pulseSources.ts';
-import type { PulseEvent, PulseFile, PulseSource } from '../../src/types/pulse.ts';
+import type { PulseFile } from '../../src/types/pulse.ts';
 import { parseIcs } from '../../src/utils/ics.ts';
-import { dedupe, isExpired, normalizeIcs, priceEvidence } from '../../src/utils/pulse.ts';
+import { normalizeIcs, priceEvidence } from '../../src/utils/pulse.ts';
 import { stripHtml } from '../../src/utils/ics.ts';
+import { assemblePulse, sourceResult, type FetchOutcome, type SourceResult } from './assemble.ts';
 
 const args = process.argv.slice(2);
 const arg = (name: string, def: string) => {
@@ -25,7 +26,6 @@ const arg = (name: string, def: string) => {
 const OUT = arg('--out', 'public/data/pulse.json');
 const PREVIOUS = arg('--previous', process.env.PULSE_PREVIOUS ?? '');
 const UA = 'PersonalPlaygroundBot/1.0 (+https://github.com/tybrathwaite1-lab/personal-playground; personal, non-commercial; 1 request/source/day)';
-const HORIZON_DAYS = 120;
 const REPORT = args.includes('--report');
 const evidence = new Map<string, string[]>();
 
@@ -57,51 +57,36 @@ async function fetchText(url: string): Promise<string> {
 async function main() {
   const now = new Date();
   const nowIso = now.toISOString();
-  const horizon = now.getTime() + HORIZON_DAYS * 86_400_000;
   const previous = await loadPrevious();
-  const sources: PulseSource[] = [];
-  let events: PulseEvent[] = [];
+  const results: SourceResult[] = [];
 
   for (const def of PULSE_SOURCES) {
-    const prevSource = previous?.sources.find((s) => s.id === def.id);
+    let outcome: FetchOutcome;
     try {
-      const raw = parseIcs(await fetchText(def.feed));
-      if (REPORT)
-        for (const r of raw) {
+      outcome = { ok: true, text: await fetchText(def.feed) };
+    } catch (err) {
+      outcome = { ok: false, error: (err as Error).message };
+    }
+    if (REPORT && outcome.ok)
+      try {
+        for (const r of parseIcs(outcome.text)) {
           const n = normalizeIcs(r, def.id, nowIso);
           if (n) evidence.set(n.id, priceEvidence(`${r.summary}.\n${r.description ? stripHtml(r.description) : ''}`));
         }
-      const items = raw
-        .map((e) => normalizeIcs(e, def.id, nowIso))
-        .filter((e): e is PulseEvent => Boolean(e))
-        .filter((e) => !isExpired(e, now.getTime()) && Date.parse(e.start) < horizon);
-      events.push(...items);
-      sources.push({ id: def.id, name: def.name, homepage: def.homepage, feed: def.feed, ok: true, lastSuccess: nowIso, count: items.length });
-      console.log(`✓ ${def.id.padEnd(14)} ${String(raw.length).padStart(3)} in feed → ${items.length} kept`);
-    } catch (err) {
-      const carried = (previous?.events ?? []).filter((e) => e.sourceIds.includes(def.id) && !isExpired(e, now.getTime()));
-      events.push(...carried);
-      sources.push({
-        id: def.id,
-        name: def.name,
-        homepage: def.homepage,
-        feed: def.feed,
-        ok: false,
-        lastSuccess: prevSource?.lastSuccess ?? null,
-        count: carried.length,
-        error: (err as Error).message,
-        stale: carried.length > 0,
-      });
-      console.log(`✗ ${def.id.padEnd(14)} ${(err as Error).message}${carried.length ? ` — carried over ${carried.length}` : ''}`);
-    }
+      } catch {
+        // reported as a source failure by sourceResult
+      }
+    const r = sourceResult(def, outcome, previous, now);
+    results.push(r);
+    if (r.source.ok) console.log(`✓ ${def.id.padEnd(14)} ${String(r.inFeed).padStart(3)} in feed → ${r.events.length} kept`);
+    else console.log(`✗ ${def.id.padEnd(14)} ${r.source.error}${r.events.length ? ` — carried over ${r.events.length}` : ''}`);
   }
 
-  const before = events.length;
-  events = dedupe(events); // also sorts by actual start instant
+  const { file, listings: before } = assemblePulse(results, now);
+  const { sources, events } = file;
   const merged = events.filter((e) => e.sourceIds.length > 1).length;
   console.log(`Dedupe: ${before} listings → ${events.length} events (${before - events.length} duplicates merged; ${merged} confirmed by 2+ sources)`);
   console.log(`Venue coordinates (ICS GEO, validated): ${events.filter((e) => e.geo).length} of ${events.length} events`);
-  const file: PulseFile = { generatedAt: nowIso, timezone: 'America/New_York', sources, events };
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, JSON.stringify(file));
   const ok = sources.filter((s) => s.ok).length;

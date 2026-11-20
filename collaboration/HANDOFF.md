@@ -1,6 +1,51 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (security fix: personal-data URLs)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (M2-5: deterministic Pulse ingest tests)
+
+Baseline: `main` at `0185593` (PR #39 closed after post-merge verification). No new dependencies, sources or content-policy changes. SPAA's HTTP 403 is not worked around.
+
+- **Behaviour-preserving extraction:** the ingest's decision logic moved unchanged from `scripts/pulse/ingest.ts` into `scripts/pulse/assemble.ts`:
+  - `sourceResult(def, outcome, previous, now)`: keep, carry over or drop; source status.
+  - `assemblePulse(results, now)`: merge, dedupe/sort, file.
+
+  `ingest.ts` keeps fetching, logging and writing.
+- **Equivalence evidence:** the old and new ingest were run locally against the same mocked feeds (successes, 403s, HTML block pages, expired and far-future items) and the same previous file. The `pulse.json` output was identical (timestamps normalised) and the logs identical apart from the output path. A structural test checks `ingest.ts` delegates and keeps no second copy of the rules.
+- **Coverage** (`tests/pulse-ingest.test.ts`, synthetic fixtures in `tests/helpers/pulse-fixtures.ts`, fixed clock, no network):
+  - **Fresh reads:** kept events and fresh source status; expiry boundaries (stated end, start + 3 h, all-day + 24 h, exactly "now"); the 120-day horizon to the millisecond.
+  - **Bad feed items:** missing, blank or unparseable fields dropped without affecting the rest; excluded content dropped; cancellations kept and flagged.
+  - **Empty feed:** an empty successful feed doesn't carry over.
+  - **Failures:**
+    - 403, other HTTP errors, timeouts and HTML block pages carry over the source's unexpired listings, mark it stale and remember `lastSuccess`;
+    - nothing to carry → not stale;
+    - partial failure keeps successful sources, and carried and fresh copies merge;
+    - all sources failing gives a valid empty file.
+  - **Determinism:** identical output on repeat and in fresh processes under UTC, Asia/Tokyo and America/Los_Angeles.
+  - Normalization, dedupe, ordering and prices were already covered by `pulse*.test.ts`.
+- **Regression evidence:** seven local mutations, each caught, then reverted:
+  - fresh read ignores the horizon;
+  - expired listings carried;
+  - stale never set;
+  - `lastSuccess` forgotten;
+  - carried listings dropped when assembling;
+  - HTML block page not carried over;
+  - expiry boundary off by one.
+- **Confirmed defect** (production unchanged; pinned by a characterization test). A previous `pulse.json` that is JSON but not the expected shape (no `sources` array, e.g. `{"events":[]}`) makes `previous?.sources.find` throw before any error handling.
+  - **What happens:** `main()` logs "Pulse ingest crashed" and writes no `pulse.json`, so fresh results from healthy sources are lost for that build. The build continues and the app falls back to places and communities. This was reproduced with both the old and the extracted ingest.
+  - **Likelihood:** low. The previous file is our own deployed output, and non-JSON responses are already caught.
+  - **Fix (separate, small):** treat a previous file without array `sources`/`events` as absent in `loadPrevious`, and skip carried entries without a `sourceIds` array (these also throw, on the failure path only).
+- **Investigated, not defects:**
+  - Carried listings are checked for expiry but not the horizon. They came from an earlier run's horizon, so in practice they are already within today's.
+  - A carried listing with an unparseable `start` would never expire (`isExpired` is false for NaN); only reachable via a corrupted previous file.
+
+  Both are pinned and would be addressed by the same validation fix.
+- **Limitations:**
+  - Fetching itself (timeouts, redirects, the `User-Agent`) and `loadPrevious` aren't unit-tested.
+  - Feeds are synthetic, not recordings of the real sources.
+  - The 120-day horizon and the expiry rules are pinned as they are, not reconsidered.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-20 (security fix: personal-data URLs)
 
 Baseline: `main` at `90d1eb4` (PR #38 merged; deploy, smoke, visual, strict style guide and publisher green). This resolves defect 1 from M2-4 and nothing else.
 

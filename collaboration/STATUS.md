@@ -17,7 +17,8 @@
   - **M2-7 (blocking lint) is closed:** PR #36 merged, `main` at `f499a5b`, post-merge checks passed.
   - **M2-3 (deterministic planner tests) is closed:** PR #37 merged, `main` at `6bfbf0d`, post-merge checks passed.
   - **M2-4 (safety-critical utility tests) is closed:** PR #38 merged, `main` at `90d1eb4`, post-merge checks passed. It found one defect (personal-data URLs rendered without `isSafeUrl`) and two minor ones.
-  - **Security fix (personal-data URLs) is in review:** the four rendering boundaries are guarded. Real-browser verification is a required M2-6 case. M2-5 waits for approval.
+  - **Security fix (personal-data URLs) is closed:** PR #39 merged, `main` at `0185593`, post-merge checks passed (deploy and smoke on the new bundle). Real-browser verification is a required M2-6 case.
+  - **M2-5 (Pulse ingest tests) is in review.** It confirmed one defect: a previous `pulse.json` of the wrong shape stops the whole ingest. See HANDOFF.
   - **Tracked separately:** malformed GitHub responses and loose repo parsing (M2-4 defects 2 and 3).
   - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
