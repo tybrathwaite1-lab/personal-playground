@@ -56,7 +56,7 @@ const surfaces = new Map<string, Map<string, string>>();
 for (const m of css.matchAll(/\.surface-([\w-]+)\s*\{([^}]*)\}/g)) if (m[2].includes('--surface:')) surfaces.set(m[1], vars(m[2]));
 
 test('every surface declares the full token set', () => {
-  assert.deepEqual([...surfaces.keys()], ['ink', 'raised', 'hunter', 'editorial', 'cream', 'orange', 'mustard', 'pink', 'cobalt', 'olive', 'forest']);
+  assert.deepEqual([...surfaces.keys()], ['ink', 'raised', 'hunter', 'editorial', 'cream', 'orange', 'mustard', 'pink', 'cobalt', 'olive', 'forest', 'teal']);
   for (const [name, v] of surfaces) {
     assert.deepEqual([...v.keys()].sort(), ['accent', 'control', 'duo-art', 'fg', 'fg-muted', 'focus', 'rule', 'surface'], name);
     // Duotone artwork multiplies onto light surfaces and screens onto dark ones.
@@ -79,7 +79,7 @@ test('every surface pair meets WCAG AA: text 4.5:1, focus indicator and control 
     assert.ok(r('control') >= 3, `${name}: --control is ${r('control').toFixed(2)}:1`);
     rows.push(`${name}: fg ${r('fg').toFixed(2)} · muted ${r('fg-muted').toFixed(2)} · accent ${r('accent').toFixed(2)} · focus ${r('focus').toFixed(2)} · control ${r('control').toFixed(2)}`);
   }
-  assert.equal(rows.length, 11);
+  assert.equal(rows.length, 12);
 });
 
 test('surface-aware controls (.ui-*) keep every state accessible on every surface', () => {

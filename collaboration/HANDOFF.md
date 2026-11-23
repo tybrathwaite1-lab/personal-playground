@@ -1,6 +1,94 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R4 closeout: reliability closeout R1–R4 complete)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 01: The Living Cover)
+
+Baseline: `main` at `6e0fe78`. This implements Creative Brief v1 (approved 2026-11-23). It adds no dependencies, APIs, remote assets or tracking, and changes no route identifiers. Pulse, the planner, discovery, Sync, privacy and backup logic are untouched.
+
+### Design walkthrough
+- **The cover is a magazine cover, not a hero.**
+  - **Nameplate:** "Personal Playground." in Anton is the identity. It runs on one line on desktop, sized to the column, so real content starts within the fold. On phones it stacks on two lines.
+  - **Beside it:** the question "What sounds good today?" and the functional entry points ("What's on nearby", "Surprise me").
+  - **Cover lines:** the magazine device of short teasers that promise what's inside. Here each one is a live way in: today's first Pulse listing, this week's Drop lead, and your saved count.
+  - **Cover star:** today's featured experience, as a taped-down photo with a "Today's pick" stamp and a Save button. That makes the acceptance path (open → recognise → explore something real → save → return) one tap from the cover.
+- **Atmosphere is the light in the room**, not a theme switch. Each state paints the cover and the Window band with already-tested surfaces:
+
+  | Atmosphere | Cover | Window band | Glow |
+  |---|---|---|---|
+  | Morning | cream (fresh newsprint) | orange | mustard, high on the left |
+  | Afternoon | deep teal | cream | mustard, high on the right |
+  | After hours | editorial ink | teal | low orange lamp |
+
+  A thin rule in the atmosphere's colour runs under the header on every page. Nothing else changes: text, links, order, features and data are identical, and a browser test proves it.
+- **Deep teal** is new: `#0E3A3D`, the brief's "deep teal". Paper text is 11.4:1, muted 7.7:1, mustard accent and focus 7.7:1, and every surface-aware control state is checked by `design-tokens.test.ts`.
+- **The five areas, using existing content only:**
+  - **Cover:** described above.
+  - **The Window:** Local Pulse, with a lead listing (saveable), then the rest, the recurring community and the place. Weather and the three quick-plan buttons stay.
+  - **The Issue:** the existing Weekly Drop teaser.
+  - **Your Space:** recently saved, plus Collection, Field Notes (with count) and Rediscover.
+  - **Go Wander:** Do something, Plan an outing, Wander online and Somewhere nearby, then Pick a vibe.
+  - The editorial names are section concepts. Visible headings stay plain ("Around St. Pete", "Recently saved", "Pick a direction").
+- **Navigation (refined, not rewritten):**
+  - an accent bar under the current desktop section;
+  - a bar over the current phone tab;
+  - the atmosphere selector also in the full menu;
+  - closing the menu with Escape or × returns focus to the button that opened it.
+
+  Routes, labels, the skip link, settings and backup access are unchanged.
+- **Tradeoffs:**
+  - **Featured experience moved to the cover:** it was lower on the page, so the cover has something real to save.
+  - **"Discover something" path dropped from Go Wander:** it linked to the Drop, which now has its own area. Go Wander gained Plan, Digital and Local.
+  - **Numbers dropped:** the paths aren't a sequence, so the 01/02/03 markers are gone.
+  - **Secondary pages:** keep the Field Guide look; only the shared navigation changed.
+  - **Selector placement:** on the cover (not in the header) to keep the header uncrowded on phones, and in the menu for every other page.
+  - **Device preference:** the atmosphere choice is a per-device preference, not personal data, so it isn't synced or included in backups.
+
+### Evidence
+- **Unit tests:** `tests/atmosphere.test.ts` covers:
+  - hour boundaries, with every minute of the day mapped once;
+  - Auto vs manual;
+  - storage that is missing, invalid, blocked or failing;
+  - tested-surface mapping.
+
+  The token, primitive and style-guide tests were extended for teal and the atmosphere section. A new guard checks that only the style guide imports the graphic index, which loads the Caveat face.
+- **Browser tests:** 14 new scenarios, 41 in total.
+  - **Atmosphere:**
+    - Auto at 07:30, 15:00 and 21:45;
+    - Auto changing at 11:00 without a reload (fake timers);
+    - manual choice persisting across reloads and sections until Auto, with the keyboard arrows working, at desktop and phone widths;
+    - styling only: identical text, links, headings, controls and stored data in all four states.
+  - **Homepage:** every useful action kept, with the primary action above the fold, at desktop and phone widths.
+  - **Acceptance:** save the cover star, reload, find it in Your Space and the Collection, at desktop and phone widths.
+  - **Navigation:** the menu's atmosphere selector and focus return, at desktop and phone widths; visible active states.
+- **Mutations:** 9 caught and reverted:
+  - morning boundary moved;
+  - Auto stored instead of cleared;
+  - Auto never re-checking the clock;
+  - choice not persisted;
+  - atmosphere changing content order;
+  - cover star unsaveable;
+  - Go Wander path lost;
+  - menu focus not returned;
+  - an untested surface mapping.
+- **Strict style-guide evidence:** the harness now also opens the homepage in each atmosphere at 390 and 1280 px. It runs axe (WCAG A/AA, all impacts), checks overflow, page errors and that the atmosphere was applied, and checks that the nameplate breaks no words and has 2 lines on phones and 1 line on desktop. Screenshots are in `atmosphere/<state>-<width>[-fold].jpg` in the `styleguide-<sha>` artifact.
+- **Found and fixed during CI review:**
+  - Importing the primitives through the graphic index put the Caveat face in the app entry; the strict check caught it, and the guard now prevents it.
+  - The nameplate broke "Playground" on phones; it now has its own size, and the strict check above prevents a recurrence.
+- **Revision 1 (creative review): typographic cover art.** The cover star's fallback used to be the generic dark striped placeholder. That fallback shows when the featured experience has no editorial photo or it fails to load, and in the style-guide build, which has no photos. It is now a **type cover** (`CoverArt`), built only from existing pieces:
+  - **Surface:** a tested Newsstand surface, orange on the cream morning cover and mustard otherwise, with Grain and a CSS halftone dot field.
+  - **Type:** the experience's first word set huge, sized to fit and refitted if a different font is showing, then the rest of the name.
+  - **Details:** its interests, and its Japanese kicker (or 特集).
+  - **Disclosure:** a "Type cover" label, so it is never mistaken for a photo of the thing.
+  - **Accessibility and provenance:** one accessible name ("Typographic cover for …"). No images, so there is nothing to credit and no new sources.
+  - **Other changes:** `EditorialImage` gains an optional `fallback` (other callers unchanged), and the cover's tape is now cream.
+  - **Tests:** a new browser scenario (desktop and phone) forces the photo to fail and checks the type cover: its name, the disclosure, no stripes, the word fitting, and that it follows the atmosphere. Three mutations were caught: fallback removed, fit disabled, disclosure removed.
+- **Limitations:**
+  - Secondary pages still use the Field Guide controls, so only the cover and Window band follow the atmosphere.
+  - The cover star's editorial photo can be a generic illustrative image when no subject-specific one exists (existing image rules).
+  - Atmosphere screenshots are in the style-guide artifact, not on `visual-results`: the publisher's state set is fixed by its security policy and wasn't changed.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R4 closeout: reliability closeout R1–R4 complete)
 
 - **R4 merge:** PR #45 was merged at the approved head `784ad82` as `49136fa567c79b57da19b3931cdb1541f5cb64c4` (parents `7ee7698`, `784ad82`). Both required checks were green before merging.
 - **Production verification on `49136fa`:**

@@ -125,3 +125,50 @@ for (const [label, viewport] of [['desktop', DESKTOP], ['phone', MOBILE]] as con
     await expectSection(page, '#/plan', 'Plan an Outing');
   }));
 }
+
+for (const [label, viewport, opener] of [
+  ['desktop', DESKTOP, 'Open menu'],
+  ['phone', MOBILE, 'More'],
+] as const) {
+  test(`the full menu (${label}): offers the atmosphere selector, and Escape or × returns focus to the button that opened it`, scenario({ viewport }, async ({ page, open }) => {
+    await open('drop');
+    const button = page.getByRole('button', { name: opener, exact: true }).first();
+    const menu = page.getByRole('dialog', { name: 'All sections' });
+    await button.click();
+    await menu.waitFor();
+    await menu.getByRole('group', { name: 'Atmosphere' }).waitFor();
+    await menu.getByRole('radio', { name: /^Morning/ }).check();
+    await page.waitForFunction(() => document.documentElement.dataset.atmosphere === 'morning');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-expanded') !== null && document.activeElement?.getAttribute('aria-controls') === 'more-menu');
+    assert.equal(await button.evaluate((b) => b === document.activeElement), true, 'focus is back on the opener');
+
+    await button.click();
+    await menu.getByRole('button', { name: 'Close menu' }).click();
+    await menu.waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-controls') === 'more-menu');
+    // Settings and backup stay reachable from the menu.
+    await button.click();
+    await menu.getByRole('link', { name: /Backup & Settings/ }).click();
+    await expectSection(page, '#/backup', 'Backup');
+  }));
+}
+
+test('active states are visible: the current section is marked in the desktop bar and the phone tab bar', scenario({ viewport: DESKTOP }, async ({ page, open, ctx }) => {
+  await open('collection');
+  const bar = await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Collection' })
+    .evaluate((a) => ({ current: a.getAttribute('aria-current'), mark: getComputedStyle(a, '::after').transform }));
+  assert.equal(bar.current, 'page');
+  assert.notEqual(bar.mark, 'matrix(0, 0, 0, 1, 0, 0)', 'the accent bar is drawn under the current section');
+  const phone = await ctx.newPage();
+  await phone.setViewportSize(MOBILE);
+  await phone.goto(page.url());
+  const tab = await phone
+    .getByRole('navigation', { name: 'Primary' })
+    .getByRole('link', { name: 'Collection' })
+    .evaluate((a) => ({ current: a.getAttribute('aria-current'), mark: getComputedStyle(a, '::before').content }));
+  assert.deepEqual(tab, { current: 'page', mark: '""' });
+}));

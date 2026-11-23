@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { imageFor, type EditorialImageMeta } from '../data/images';
 
 /**
@@ -13,6 +13,7 @@ export function EditorialImage({
   className = '',
   caption = true,
   priority = false,
+  fallback,
 }: {
   subject: string;
   fallbackTags?: string[];
@@ -20,12 +21,14 @@ export function EditorialImage({
   className?: string;
   caption?: boolean;
   priority?: boolean;
+  /** Shown instead of the default placeholder when there is no image or it fails to load. */
+  fallback?: ReactNode;
 }) {
   const meta = imageFor(subject, fallbackTags);
   const [failed, setFailed] = useState(false);
   const base = `${import.meta.env.BASE_URL}images/editorial/`;
 
-  if (!meta || failed) return <Fallback ratio={ratio} className={className} label={subject} />;
+  if (!meta || failed) return fallback ? <figure className={className}>{fallback}</figure> : <Fallback ratio={ratio} className={className} label={subject} />;
 
   return (
     <figure className={className}>

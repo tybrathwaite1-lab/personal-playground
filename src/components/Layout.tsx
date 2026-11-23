@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Archive,
   CalendarDays,
@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { href, type RouteName } from '../hooks/useRoute';
+import { AtmospherePicker } from './AtmospherePicker';
 import { InPageLink } from './InPageLink';
 import { useStore } from '../hooks/useStore';
 import { useSync } from '../hooks/useSync';
@@ -59,11 +60,26 @@ export function Layout({ current, children }: { current: RouteName; children: Re
   const { toast, storageOk } = useStore();
   const online = useOnline();
   const sync = useSync();
+  /** The button that opened the menu, so closing it (Escape or ×) hands focus back there. */
+  const opener = useRef<HTMLElement | null>(null);
+  const openMenu = (e: { currentTarget: HTMLElement }) => {
+    opener.current = e.currentTarget;
+    setMenuOpen(true);
+  };
+  const closeMenu = () => {
+    setMenuOpen(false);
+    requestAnimationFrame(() => opener.current?.focus());
+  };
 
+  // Choosing a section closes the menu; focus then belongs to the new page, not the opener.
   useEffect(() => setMenuOpen(false), [current]);
   useEffect(() => {
     if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenuOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setMenuOpen(false);
+      requestAnimationFrame(() => opener.current?.focus());
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [menuOpen]);
@@ -76,7 +92,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
       </InPageLink>
 
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="pt-safe sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
+      <header className="pt-safe atmos-rule sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 md:px-6">
           <a href={href('home')} className="flex items-baseline gap-3" aria-label="Personal Playground — home">
             <span className="display text-xl tracking-normal">
@@ -91,7 +107,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
                   <a
                     href={href(n.route)}
                     aria-current={current === n.route ? 'page' : undefined}
-                    className="block px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:text-paper aria-[current=page]:text-paper aria-[current=page]:underline aria-[current=page]:decoration-rust aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8"
+                    className="nav-link block px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:text-paper aria-[current=page]:text-paper"
                   >
                     {n.short}
                   </a>
@@ -123,7 +139,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
               aria-expanded={menuOpen}
               aria-controls="more-menu"
               aria-label="Open menu"
-              onClick={() => setMenuOpen(true)}
+              onClick={openMenu}
             >
               <Menu size={22} aria-hidden />
             </button>
@@ -161,7 +177,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
                 <a
                   href={href(n.route)}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex h-16 flex-col items-center justify-center gap-1 ${active ? 'text-paper' : 'text-muted'}`}
+                  className={`tab-link relative flex h-16 flex-col items-center justify-center gap-1 ${active ? 'text-paper' : 'text-muted'}`}
                 >
                   <Icon size={20} aria-hidden className={active ? 'text-rust' : ''} />
                   <span className="font-mono text-[10px] uppercase tracking-wider">{n.short}</span>
@@ -172,7 +188,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
           <li>
             <button
               type="button"
-              onClick={() => setMenuOpen(true)}
+              onClick={openMenu}
               aria-expanded={menuOpen}
               aria-controls="more-menu"
               className={`flex h-16 w-full flex-col items-center justify-center gap-1 ${
@@ -191,7 +207,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
         <div className="fixed inset-0 z-50 overflow-y-auto bg-ink" id="more-menu" role="dialog" aria-modal="true" aria-label="All sections">
           <div className="pt-safe flex h-14 items-center justify-between border-b border-line px-4">
             <span className="label">Contents · 目次</span>
-            <button type="button" className="btn-ghost" onClick={() => setMenuOpen(false)} aria-label="Close menu" autoFocus>
+            <button type="button" className="btn-ghost" onClick={closeMenu} aria-label="Close menu" autoFocus>
               <X size={22} aria-hidden />
             </button>
           </div>
@@ -208,6 +224,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
               </li>
             ))}
           </ul>
+          <AtmospherePicker className="px-4 pb-10 pt-6" />
         </div>
       )}
 

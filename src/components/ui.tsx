@@ -89,6 +89,7 @@ export function SaveButton({
   subtitle,
   url,
   compact,
+  onSurface,
 }: {
   kind: SavedKind;
   refId: string;
@@ -96,6 +97,8 @@ export function SaveButton({
   subtitle?: string;
   url?: string;
   compact?: boolean;
+  /** Resolve colors against the nearest `.surface-*` (for Newsstand surfaces); behaviour is unchanged. */
+  onSurface?: boolean;
 }) {
   const { isSaved, toggleSave } = useStore();
   const saved = isSaved(kind, refId);
@@ -103,12 +106,12 @@ export function SaveButton({
   return (
     <button
       type="button"
-      className={compact ? 'btn-ghost' : 'btn'}
+      className={onSurface ? 'ui-button' : compact ? 'btn-ghost' : 'btn'}
       aria-pressed={saved}
       aria-label={saved ? `Remove ${title} from collection` : `Save ${title} to collection`}
       onClick={() => toggleSave({ kind, refId, title, subtitle, url })}
     >
-      <Icon size={compact ? 18 : 16} className={saved ? 'text-rust' : ''} aria-hidden />
+      <Icon size={compact ? 18 : 16} className={saved ? (onSurface ? 'text-accent' : 'text-rust') : ''} aria-hidden />
       {!compact && (saved ? 'Saved' : 'Save')}
     </button>
   );

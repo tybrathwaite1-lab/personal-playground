@@ -23,6 +23,9 @@ const g = await import('../src/components/graphic/index.ts');
 const { parseHash, isRouteHash, ROUTES, PREVIEWS } = await import('../src/hooks/useRoute.ts');
 const { InPageLink } = await import('../src/components/InPageLink.tsx');
 const { default: StyleGuide } = await import('../src/styleguide/StyleGuide.tsx');
+const { AtmosphereProvider } = await import('../src/hooks/useAtmosphere.tsx');
+/** The style guide renders inside the app's providers; its atmosphere section needs this one. */
+const guide = () => h(AtmosphereProvider, null, h(StyleGuide));
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (p: string) => readFileSync(join(root, p), 'utf8');
@@ -74,6 +77,10 @@ test('the style guide and the handwritten face are code-split away from the app 
   const importers = files('src').filter((f) => /\.(tsx?|css)$/.test(f) && /@fontsource\/caveat/.test(read(f)));
   assert.deepEqual(importers, ['src/components/graphic/Annotation.tsx']);
   assert.match(read('src/components/graphic/Annotation.tsx'), /import '@fontsource\/caveat\/latin-700\.css';/, 'Latin, bold only');
+  // The graphic index re-exports Annotation (and so the font): app code imports the primitives
+  // it needs directly, and only the style guide and the graphic module itself use the index.
+  const indexImporters = files('src').filter((f) => /\.tsx?$/.test(f) && /from '[./]*\/?(?:components\/)?graphic'/.test(read(f)));
+  assert.deepEqual(indexImporters, ['src/styleguide/StyleGuide.tsx'], 'only the style guide imports the graphic index');
 });
 
 test('the handwritten face is decorative only', () => {
@@ -151,8 +158,8 @@ test('artwork: explicit provenance, never a photo by default, and a stable fallb
 });
 
 test('the style guide renders every demonstration with sound structure', () => {
-  const m = html(h(StyleGuide));
-  for (const id of ['sg-compositions', 'sg-surfaces', 'sg-type', 'sg-primitives', 'sg-controls', 'sg-nesting', 'sg-resilience', 'sg-motion'])
+  const m = html(guide());
+  for (const id of ['sg-compositions', 'sg-surfaces', 'sg-atmosphere', 'sg-type', 'sg-primitives', 'sg-controls', 'sg-nesting', 'sg-resilience', 'sg-motion'])
     assert.match(m, new RegExp(`<section aria-labelledby="${id}"`), id);
   for (const id of ['sg-cover-title', 'sg-feature-title', 'sg-listings-title', 'sg-elsewhere-title']) assert.match(m, new RegExp(`id="${id}"`), id);
   assert.match(m, /href="#sg-main"[^>]*>Skip to style guide</);
@@ -177,7 +184,7 @@ test('the style guide renders every demonstration with sound structure', () => {
 });
 
 test('annotations never carry unique essential information', () => {
-  const m = html(h(StyleGuide));
+  const m = html(guide());
   // font-hand only appears inside <Annotation>, which is always decorative (tested above).
   const notes = [...m.matchAll(/<span class="font-hand[^"]*">([^<]+)<\/span>/g)].map((x) => x[1]);
   assert.ok(notes.length >= 5, notes.join(', '));

@@ -177,6 +177,137 @@
       font-size: clamp(3rem, 25cqi, 10rem);
     }
   }
+  /* ── Editorial Cover (Creative Slice 01) ── */
+  /* Atmosphere changes only these tested surfaces; the change eases (instant under reduced motion). */
+  .atmos-surface {
+    transition:
+      background-color 700ms ease,
+      color 700ms ease;
+  }
+  /* The light in the room: a soft glow whose position and warmth follow the atmosphere. Decorative. */
+  .atmos-glow {
+    opacity: 0.55;
+    transition: background 700ms ease;
+    background: radial-gradient(60% 55% at 12% 0%, rgb(var(--pp-ns-mustard) / 0.32), transparent 70%);
+  }
+  [data-atmosphere='afternoon'] .atmos-glow {
+    background: radial-gradient(55% 60% at 92% 4%, rgb(var(--pp-ns-mustard) / 0.16), transparent 70%);
+  }
+  [data-atmosphere='after-hours'] .atmos-glow {
+    background: radial-gradient(50% 55% at 8% 100%, rgb(var(--pp-ns-orange) / 0.2), transparent 72%);
+  }
+  /* The nameplate. On phones it stacks on two lines, sized so "Playground." (≈ 4.6em of Anton,
+     its longest word) fits the column without breaking. On wider screens it runs on one line
+     (≈ 8.6em for "Personal Playground."), sized from the column, so it never wraps or overflows. */
+  .nameplate {
+    font-size: clamp(2.75rem, 12vw, 10rem);
+    line-height: 0.92; /* stacked lines of caps need a breath more than the 0.85 cover leading */
+  }
+  @supports (width: 1cqi) {
+    .nameplate {
+      font-size: clamp(2.75rem, 20cqi, 10rem);
+    }
+  }
+  @media (min-width: 768px) {
+    .nameplate {
+      font-size: clamp(3rem, 10vw, 9rem);
+    }
+    @supports (width: 1cqi) {
+      .nameplate {
+        font-size: clamp(3rem, 10.8cqi, 9.5rem);
+      }
+    }
+  }
+  .cover-line {
+    @apply flex flex-col gap-1 py-3.5;
+  }
+  .cover-line-title {
+    @apply font-display text-[clamp(1.5rem,1.2rem+1vw,2.1rem)] uppercase leading-none text-fg;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+    transition: text-decoration-color 160ms ease;
+  }
+  .cover-line:hover .cover-line-title {
+    text-decoration-color: rgb(var(--accent));
+  }
+  /* The cover star is pasted onto the cover: a slight tilt and a paper shadow. */
+  .cover-star-image {
+    transform: rotate(1.25deg);
+    box-shadow: 0 18px 32px -18px rgb(var(--pp-ink) / 0.75);
+  }
+  /* Shared navigation: a thin rule in the atmosphere's color across the top of every page, a
+     solid accent bar under the current desktop section, and a bar over the current phone tab. */
+  .atmos-rule {
+    border-top: 3px solid rgb(var(--pp-ns-mustard));
+    transition: border-color 700ms ease;
+  }
+  [data-atmosphere='morning'] .atmos-rule {
+    border-top-color: rgb(var(--pp-ns-orange));
+  }
+  [data-atmosphere='afternoon'] .atmos-rule {
+    border-top-color: rgb(var(--pp-ns-teal));
+  }
+  .nav-link {
+    position: relative;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 0;
+    height: 2px;
+    background: rgb(var(--pp-rust));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 180ms ease;
+  }
+  .nav-link:hover::after {
+    transform: scaleX(0.4);
+  }
+  .nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+  .tab-link[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: rgb(var(--pp-rust));
+  }
+  /* Type cover (CoverArt): the cover star's artwork when there is no photo. A halftone dot field
+     fading in from one corner, and the experience's first word set huge and cropped. */
+  .cover-art-dots {
+    background-image: radial-gradient(circle, rgb(var(--fg) / 0.22) 1.6px, transparent 2px);
+    background-size: 9px 9px;
+    -webkit-mask-image: radial-gradient(120% 90% at 100% 0%, rgb(var(--fg)) 20%, transparent 70%);
+    mask-image: radial-gradient(120% 90% at 100% 0%, rgb(var(--fg)) 20%, transparent 70%);
+  }
+  .cover-art {
+    container-type: inline-size;
+  }
+  .cover-art-word {
+    line-height: 0.82;
+  }
+  /* Atmosphere chips (AtmospherePicker): native radios underneath, surface-aware states. */
+  .atmos-chip {
+    @apply inline-flex min-h-[44px] items-center border border-control px-3 font-mono text-[0.75rem] uppercase tracking-wider text-fg transition-colors;
+  }
+  .peer:hover ~ .atmos-chip {
+    @apply border-fg bg-fg/10;
+  }
+  .peer:checked ~ .atmos-chip {
+    @apply border-fg bg-fg text-surface;
+  }
+  .peer:focus-visible ~ .atmos-chip {
+    outline: 2px solid rgb(var(--focus));
+    outline-offset: 2px;
+  }
+
   /* Static focus preview (the same ring :focus-visible draws), for documentation only. */
   .focus-preview {
     outline: 2px solid rgb(var(--focus));
