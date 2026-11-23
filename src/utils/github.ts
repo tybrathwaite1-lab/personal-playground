@@ -51,13 +51,30 @@ export function saveConfig(c: SyncConfig | null) {
   }
 }
 
-/** Accepts "owner/repo", a github.com URL, or a .git URL. */
+/**
+ * GitHub account names: letters, digits and hyphens, starting with a letter or digit; at most 39.
+ * (New names can't end in or repeat a hyphen, but some older accounts do, so those are allowed.)
+ */
+const OWNER = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/;
+/** GitHub repository names: letters, digits, ".", "_" and "-"; at most 100; not "." or "..". */
+const REPO = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,100}$/;
+
+/**
+ * Reads a repository from exactly these forms, and rejects anything else rather than guessing:
+ *  - "owner/repo"
+ *  - a github.com web or clone URL: "https://github.com/owner/repo" (also http, "www.", or no
+ *    scheme)
+ *  - SSH: "git@github.com:owner/repo"
+ * Each may end in "/" or ".git". Other hosts, extra path segments (e.g. /tree/main), queries,
+ * credentials, ports and spaces are rejected.
+ */
 export function parseRepo(input: string): { owner: string; repo: string } | null {
-  const m = input
-    .trim()
-    .replace(/\.git$/, '')
-    .match(/(?:github\.com[/:])?([A-Za-z0-9-]+)\/([A-Za-z0-9._-]+)\/?$/);
-  return m ? { owner: m[1], repo: m[2] } : null;
+  const s = input.trim();
+  const url = s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/(.*)$/i) ?? s.match(/^git@github\.com:(.*)$/i);
+  const parts = (url ? url[1] : s).replace(/\/$/, '').replace(/\.git$/, '').split('/');
+  if (parts.length !== 2) return null;
+  const [owner, repo] = parts;
+  return OWNER.test(owner) && REPO.test(repo) ? { owner, repo } : null;
 }
 
 function headers(token: string): HeadersInit {

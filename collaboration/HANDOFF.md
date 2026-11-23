@@ -1,6 +1,51 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R3: malformed GitHub responses)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R4: strict repository-name parsing)
+
+Baseline: `main` at `7ee7698` (R3 merged and verified in production). This is the last item in the reliability closeout.
+
+- **R3 production verification:** PR #44 was merged at the approved head `f98e05d` as `7ee76987a4c908627f548a1fc3608e1e7b8ac793` (parents `183c395`, `f98e05d`).
+  - **Deploy 45249024662:**
+    - build: 318/318 tests;
+    - the ingest wrote 121 events from 6/7 sources, with spaa returning HTTP 403 and 18 listings carried over;
+    - smoke passed against `7ee7698`, with `PipeWrap ×2` logged at exit again.
+  - **Visual check 45249024518:** 27/27 browser tests.
+  - **Style guide evidence 45249024668** and **Publish visual results 45249586359** (tied to `7ee7698`) both succeeded.
+  - **Unchanged:** `image-scout-results` is still at `71efe69`.
+  - No sync tests were run against real data or credentials.
+- **Issue confirmed** (M2-4 defect 3): `parseRepo` wasn't anchored at the start, so it guessed:
+  - `https://gitlab.example/octo/repo` → `octo/repo`;
+  - `https://github.com.evil.example/octo/repo` → `octo/repo`;
+  - `https://github.com/octo/repo/tree/main` → owner `tree`, repo `main`;
+  - `oc to/repo` → `to/repo`.
+  - `verifyRepo` always limited the impact: nothing syncs unless the token can write to a private repo.
+- **Fix:** `parseRepo` now accepts exactly these forms:
+  - `owner/repo`;
+  - a github.com URL: `https://github.com/owner/repo`, also with `http`, `www.` or no scheme, case-insensitive host;
+  - `git@github.com:owner/repo`.
+
+  Each may end in `/` or `.git`.
+  - **Owner:** letters, digits and hyphens, starting with a letter or digit, at most 39. Older accounts that end in or repeat a hyphen are allowed.
+  - **Repo:** `[A-Za-z0-9._-]`, at most 100, not `.` or `..`.
+  - **Rejected:** everything else. That includes other hosts and look-alikes, extra path segments, queries, fragments, credentials, ports, spaces and empty parts. The form shows its existing "Enter the repository as owner/name" message.
+- **Tests:** the old test with its loose-parsing characterization is replaced by:
+  - 18 accepted forms;
+  - 39 rejected inputs (incomplete, foreign or look-alike hosts, extra paths, query, fragment, credentials, port, invalid names, length limits);
+  - `sameConfig`, unchanged.
+- **Mutations:** 6 caught, each reverted:
+  - URL host not anchored;
+  - last two path segments taken;
+  - owner rule loosened;
+  - repo rule loosened;
+  - any SSH host accepted;
+  - query stripped instead of rejected.
+- **Limitations:**
+  - GitHub Enterprise hosts aren't supported (they never were intentionally).
+  - Names that pass the format check still have to exist and pass `verifyRepo`.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R3: malformed GitHub responses)
 
 Baseline: `main` at `183c395` (R2 merged and verified in production).
 

@@ -23,8 +23,9 @@
 - **Essential reliability closeout (not M3):** R1 previous Pulse snapshot validation → R2 production smoke reliability → R3 GitHub response validation → R4 repository-name parsing, one PR at a time.
   - **R1 is closed:** PR #42 merged as `b06c203`; production verified (ingest wrote `pulse.json`, previous snapshot validated with nothing left out, SPAA carry-over continuing).
   - **R2 is closed:** PR #43 merged as `183c395`; production smoke passed in ~1 s against `183c395` and exited promptly.
-  - **R3 (GitHub malformed-response validation) is in review.** See HANDOFF.
-  - **Tracked separately:** loose repo parsing (M2-4 defect 3, R4); low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
+  - **R3 is closed:** PR #44 merged as `7ee7698`; production verified (deploy, smoke, visual, style guide and publish all passed).
+  - **R4 (strict repository-name parsing) is in review**, the last closeout item. See HANDOFF. Creative implementation waits until R4 is merged and verified.
+  - **Tracked separately:** low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
   - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.

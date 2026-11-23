@@ -272,23 +272,51 @@ test('loadConfig / saveConfig when storage is unavailable or failing: no throw, 
   });
 });
 
-test('parseRepo and sameConfig', () => {
+test('parseRepo accepts the supported GitHub forms exactly (R4)', () => {
   for (const [input, want] of [
     ['octo/repo', { owner: 'octo', repo: 'repo' }],
     ['  octo/repo.name  ', { owner: 'octo', repo: 'repo.name' }],
+    ['octo/repo/', { owner: 'octo', repo: 'repo' }],
+    ['octo/repo.git', { owner: 'octo', repo: 'repo' }],
+    ['Octo-Cat-2/My_Repo-1.x', { owner: 'Octo-Cat-2', repo: 'My_Repo-1.x' }],
     ['https://github.com/octo/repo', { owner: 'octo', repo: 'repo' }],
     ['https://github.com/octo/repo/', { owner: 'octo', repo: 'repo' }],
-    ['git@github.com:octo/repo.git', { owner: 'octo', repo: 'repo' }],
     ['https://github.com/octo/repo.git', { owner: 'octo', repo: 'repo' }],
+    ['http://github.com/octo/repo', { owner: 'octo', repo: 'repo' }],
+    ['https://www.github.com/octo/repo', { owner: 'octo', repo: 'repo' }],
+    ['HTTPS://GitHub.com/octo/repo', { owner: 'octo', repo: 'repo' }],
+    ['github.com/octo/repo', { owner: 'octo', repo: 'repo' }],
+    ['git@github.com:octo/repo.git', { owner: 'octo', repo: 'repo' }],
+    ['git@github.com:octo/repo', { owner: 'octo', repo: 'repo' }],
+    ['a/b', { owner: 'a', repo: 'b' }],
+    // Older GitHub accounts may end in or repeat a hyphen; they are still real accounts.
+    ['octo-/repo', { owner: 'octo-', repo: 'repo' }],
+    ['oc--to/repo', { owner: 'oc--to', repo: 'repo' }],
+    [`${'a'.repeat(39)}/${'r'.repeat(100)}`, { owner: 'a'.repeat(39), repo: 'r'.repeat(100) }],
   ] as const)
     assert.deepEqual(parseRepo(input), want, input);
-  for (const bad of ['', 'octo', 'octo/', '/repo', 'octo/re po', 'octo/repo/extra/x?y'])
-    assert.equal(parseRepo(bad), null, bad);
-  // Characterization (minor): the pattern isn't anchored at the start, so leading text is
-  // ignored — "oc to/repo" reads as to/repo and a non-GitHub URL reads as its last two parts.
-  // verifyRepo still has to confirm a private repo the token can write before anything syncs.
-  assert.deepEqual(parseRepo('oc to/repo'), { owner: 'to', repo: 'repo' });
-  assert.deepEqual(parseRepo('https://gitlab.example/octo/repo'), { owner: 'octo', repo: 'repo' });
+});
+
+test('parseRepo rejects other hosts, extra path segments and ambiguous input instead of guessing (R4)', () => {
+  const rejected = [
+    // incomplete
+    '', '   ', 'octo', 'octo/', '/repo', 'https://github.com/', 'https://github.com/octo', 'git@github.com:octo',
+    // other hosts and look-alikes (before R4 these read as their last two path parts)
+    'https://gitlab.example/octo/repo', 'gitlab.com/octo/repo', 'https://github.com.evil.example/octo/repo',
+    'https://evil.example/github.com/octo/repo', 'https://notgithub.com/octo/repo', 'git@gitlab.com:octo/repo',
+    'ftp://github.com/octo/repo', 'https://api.github.com/repos/octo/repo',
+    // extra path, query, fragment, credentials, port
+    'https://github.com/octo/repo/tree/main', 'https://github.com/octo/repo/issues', 'octo/repo/extra', 'octo/repo/extra/x?y',
+    'https://github.com/octo/repo?tab=readme', 'https://github.com/octo/repo#readme', 'https://user:pw@github.com/octo/repo',
+    'https://github.com:443/octo/repo', 'octo//repo',
+    // ambiguous or invalid names (before R4, "oc to/repo" read as to/repo)
+    'oc to/repo', 'octo/re po', 'octo /repo', 'octo/repo two', '-octo/repo', 'oc.to/repo', 'oc_to/repo',
+    `${'a'.repeat(40)}/repo`, `octo/${'r'.repeat(101)}`, 'octo/.', 'octo/..', 'octo/.git', 'octo/re$po', 'octo/repo\nother/repo',
+  ];
+  for (const bad of rejected) assert.equal(parseRepo(bad), null, JSON.stringify(bad));
+});
+
+test('sameConfig compares every field', () => {
   assert.equal(sameConfig(CFG, { ...CFG }), true);
   assert.equal(sameConfig(CFG, { ...CFG, token: 'other' }), false);
   assert.equal(sameConfig(CFG, { ...CFG, path: 'x.json' }), false);
