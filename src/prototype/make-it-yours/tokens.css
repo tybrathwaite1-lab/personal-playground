@@ -1,0 +1,52 @@
+/*
+ * Creative Slice 02 prototype: the Studio's curated colour sets. Loaded only by the prototype's
+ * own chunk and scoped to its root, so nothing here reaches the production app.
+ *
+ * Each set is RGB triplets: paper (the page), ink (text), muted (secondary text), four shape
+ * colours (a–d), the text colour that sits on each shape (on-a–on-d) and the focus ring.
+ * tests/make-it-yours.test.ts checks every pair: text 4.5:1, focus ring and control boundary 3:1.
+ */
+[data-miy-look='studio'][data-miy-palette='poster'] {
+  --miy-paper: 251 246 236;
+  --miy-ink: 29 27 51;
+  --miy-muted: 85 81 110;
+  --miy-a: 242 84 45;
+  --miy-b: 47 91 234;
+  --miy-c: 255 197 61;
+  --miy-d: 46 173 135;
+  --miy-on-a: var(--miy-ink);
+  --miy-on-b: var(--miy-paper);
+  --miy-on-c: var(--miy-ink);
+  --miy-on-d: var(--miy-ink);
+  --miy-focus: 47 91 234;
+}
+
+[data-miy-look='studio'][data-miy-palette='sherbet'] {
+  --miy-paper: 255 243 238;
+  --miy-ink: 43 24 56;
+  --miy-muted: 94 74 104;
+  --miy-a: 255 119 174;
+  --miy-b: 142 125 255;
+  --miy-c: 200 238 90;
+  --miy-d: 255 155 69;
+  --miy-on-a: var(--miy-ink);
+  --miy-on-b: var(--miy-ink);
+  --miy-on-c: var(--miy-ink);
+  --miy-on-d: var(--miy-ink);
+  --miy-focus: 106 63 214;
+}
+
+[data-miy-look='studio'][data-miy-palette='night'] {
+  --miy-paper: 23 24 46;
+  --miy-ink: 247 241 230;
+  --miy-muted: 189 184 214;
+  --miy-a: 255 110 94;
+  --miy-b: 69 207 194;
+  --miy-c: 255 213 74;
+  --miy-d: 156 139 255;
+  --miy-on-a: var(--miy-paper);
+  --miy-on-b: var(--miy-paper);
+  --miy-on-c: var(--miy-paper);
+  --miy-on-d: var(--miy-paper);
+  --miy-focus: 255 213 74;
+}

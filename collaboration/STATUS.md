@@ -1,4 +1,4 @@
-# Status — 2026-11-23 (Sprint 02 "The Newsstand Effect" in progress; M1, M2 and R1–R4 complete; Creative Slice 01 in review)
+# Status — 2026-11-23 (Sprint 02 "The Newsstand Effect" in progress; M1, M2, R1–R4 and Creative Slice 01 complete; Slice 02 B1 in review)
 
 **Current verified baseline:** `main` at `49136fa` (R4 merged 2026-11-23). Production deploy, smoke (`--expect-commit 49136fa`), Visual and browser tests (27/27), strict style guide and visual publication all passed, with **320/320** unit and integration tests. Commits and test counts further down are historical baselines unless marked current.
 
@@ -29,8 +29,9 @@
   - **R4 is closed:** PR #45 merged as `49136fa`; production verified.
   - **The reliability closeout (R1–R4) is complete.** Creative implementation hasn't started; the owner and ChatGPT will prepare and approve Creative Brief v1 before the next implementation PR.
   - **Tracked separately:** low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
-- **Creative Brief v1 is approved** (owner and ChatGPT, 2026-11-23). **Creative Slice 01, "The Living Cover", is in review:** the Editorial Cover homepage, the atmosphere system (Auto, Morning, Afternoon, After hours) and refined shared navigation. See HANDOFF.
-- **Next:** waiting on independent engineering review and the owner's visual approval of Slice 01. Earlier sequencing notes still stand: the thin Explore hub comes before the navigation switch, and browser-based PR previews are approved in principle and deferred (see DECISIONS).
+- **Creative Brief v1 is approved** (owner and ChatGPT, 2026-11-23). **Creative Slice 01, "The Living Cover", is merged:** PR #47 as `983a371` (Deploy, Visual check, Style guide evidence and Publish visual results all succeeded on that commit).
+- **Creative Slice 02, "Make It Yours":** the Phase A proposal is approved with three refinements (owner and ChatGPT, 2026-11-23). **B1 is in review:** an isolated prototype at the hidden route `#/preview/make-it-yours` with the journey shell, the Studio look, a sample discovery, optional interests and colour/type, and a populated soft landing. B2 (The Quiet Room, with its one self-hosted serif, and The Underground) is required for Slice 02 to be complete and starts only after B1 is reviewed. See HANDOFF.
+- **Next:** waiting on independent review of B1. Earlier sequencing notes still stand: the thin Explore hub comes before the navigation switch, and browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
 ## Sprint 01 — engineering (Claude): all merged
