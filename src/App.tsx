@@ -16,6 +16,8 @@ import Rediscover from './pages/Rediscover';
 
 // Hidden review route (#/styleguide), code-split so it adds nothing to the app bundle.
 const StyleGuide = lazy(() => import('./styleguide/StyleGuide'));
+// Creative Slice 02 prototype (#/preview/make-it-yours): hidden, code-split and isolated from personal data.
+const MakeItYours = lazy(() => import('./prototype/make-it-yours/MakeItYours'));
 
 export default function App() {
   const route = useRoute();
@@ -23,6 +25,10 @@ export default function App() {
   useEffect(() => {
     if (route.preview === 'styleguide') {
       document.title = 'Style guide (preview) — Personal Playground';
+      return;
+    }
+    if (route.preview === 'preview/make-it-yours') {
+      document.title = 'Make it yours (prototype) — Personal Playground';
       return;
     }
     const label = NAV.find((n) => n.route === route.name)?.label ?? (route.name === 'backup' ? 'Backup' : '');
@@ -33,6 +39,14 @@ export default function App() {
     return (
       <Suspense fallback={<p className="p-6 font-mono text-xs uppercase tracking-label text-fg-muted">Loading style guide…</p>}>
         <StyleGuide />
+      </Suspense>
+    );
+  }
+
+  if (route.preview === 'preview/make-it-yours') {
+    return (
+      <Suspense fallback={<p className="p-6 font-mono text-xs uppercase tracking-label text-fg-muted">Loading prototype…</p>}>
+        <MakeItYours params={route.params} />
       </Suspense>
     );
   }

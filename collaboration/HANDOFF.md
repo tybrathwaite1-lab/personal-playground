@@ -1,6 +1,38 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 01: The Living Cover)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 02 B1: Make It Yours prototype)
+
+Baseline: `main` at `983a371` (Slice 01 merged). This implements Phase B1 of Creative Slice 02 as approved on 2026-11-23 (D1–D7 verdicts and three required refinements). It is a prototype, not production onboarding: the homepage, every existing route, personal storage, Sync, discovery ranking, Pulse and the planner are untouched. No dependencies, remote assets, tracking or APIs were added.
+
+### What it is
+
+- **Entry:** `#/preview/make-it-yours`, a second hidden preview beside `#/styleguide` (one entry in `PREVIEWS`, lazy-loaded in `App.tsx`, its own JS and CSS chunk). Nothing in the app links to it. It renders outside the app layout with its own header: the wordmark, a permanent "Prototype preview: nothing here is saved" label and Exit preview.
+- **Journey:** browse looks one at a time (Studio first; The Quiet Room and The Underground are listed honestly as not built until B2), open a sample idea and come back, choose a look or skip, optionally pick interests, optionally adjust colour and type, and land in a populated Playground. There's no welcome screen, questionnaire, checklist or congratulations step.
+- **The Studio:** IBM Plex Sans (lower-case, loose grid) or Plex Mono (the Typewriter pairing); flat overlapping shapes in four colours; cards of differing size and colour. Three curated colour sets (Poster, Sherbet, Night studio) × two type pairings, all contrast-tested. It shares no composition with today's style.
+- **Skip (D3 as modified):** Skip records an explicit "no aesthetic preference". The arrival then shows the prototype's fallback style (today's app surfaces) and says so: "No look chosen. You're seeing the prototype's default style, not a look chosen for you." No look is inferred; colour controls appear only once a look is chosen.
+- **Content:** ten fixed, real ideas from the curated catalogue, identical in every look; no Pulse, Drop, weather, dates or times. Twelve broad interests map to catalogue tags; three (Making things, Film, Sport) match nothing in the sample on purpose.
+
+### The three required refinements
+
+1. **Honest, meaningful interest feedback.** Each interest shows how many sample ideas it matches before it's picked ("3 sample ideas", "none in this sample"). Picking writes out what changed and why ("3 of 10 sample ideas match. Local History Adventure now leads the cover."), names the idea now leading the cover, and updates the cover preview; on phones this is a sticky bar so it stays in view. Zero matches say so plainly and leave the mix unchanged ("Nothing in this sample matches Film yet. The cover keeps a mix instead."). The arrival repeats it. No copy says "for you" or "recommended".
+2. **Functional equivalence without identical composition.** The browser test compares what someone can do and find on the arrival in the Studio and in the fallback style (landmarks, the h1, h2 headings, every link destination, every action, the ten ideas, the featured idea, the one invitation) and separately requires the two to differ in cover composition, heading typeface, text transform and page colour. It does not compare DOM structure or heading positions.
+3. **Hash-route steps.** The URL holds only where you are (`step`, the `look` in view, an open `sample`); choices live in memory. Tested: direct links to any step, Back/Forward through steps with choices kept in the same page, an idea opened from the arrival and closed by Back or the button, reload (choices are gone and a note says the preview keeps choices only while the page is open), a direct link to an idea (its Back button stays in the prototype), unknown parameters (fall back to the first look), and Exit (the real homepage, no prototype left in the page).
+
+### Evidence
+
+- Unit: `tests/make-it-yours.test.ts` (7 tests): sample and interest mapping, ordering, feedback wording, URL round trip and position-only keys, choices (Skip ≠ any look), contrast for all three Studio colour sets, and static isolation (no storage, app data, sync or network access in `src/prototype/`; only `App.tsx` and `useRoute.ts` refer to it).
+- Browser: `browser-tests/make-it-yours.test.ts` (9 scenarios): keyboard journey (desktop and phone), interest feedback including zero matches, Skip, hash routes, functional equivalence (desktop and phone), colour and type, and isolation (every storage key byte-identical after a full journey with a preview save; no request leaves the origin).
+- Strict style guide: new `prototype/` screenshots and checks for 8 states × 390/1280 (Studio look, an unbuilt look, colour open, a sample idea, interests, two Studio arrivals, the skipped arrival): axe, overflow, broken heading words and page errors count as findings; the bundle check requires the prototype to be its own chunk.
+- Mutations, each caught and then restored: Skip inferring a look, focus return removed, a storage write added, a muted colour weakened, and zero matches no longer reported.
+- Existing tests: two allowlists gained the new route, nothing else changed. `graphic-primitives` now expects two previews; `url-safety` trusts `placeHref` as a builder (it only ever returns `#/preview/make-it-yours?…`, asserted in the new unit test).
+
+### Notes for review
+
+- The sample discovery is a step (`&sample=`) rather than a modal, so Back closes it and the look styles it fully. Focus returns to the link that opened it.
+- No editorial photos in B1: sample ideas use decorative shape art. Photos and credits can come with B2's Underground.
+- The app's reduced-motion rule gives every property a 0.01 ms transition; the prototype turns transitions off under reduced motion so a change of look is instant.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 01: The Living Cover)
 
 Baseline: `main` at `6e0fe78`. This implements Creative Brief v1 (approved 2026-11-23). It adds no dependencies, APIs, remote assets or tracking, and changes no route identifiers. Pulse, the planner, discovery, Sync, privacy and backup logic are untouched.
 

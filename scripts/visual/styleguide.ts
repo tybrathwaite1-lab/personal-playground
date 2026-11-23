@@ -12,6 +12,10 @@
  * transfer size (loaded by the style guide, never by the app shell).
  * Creative Slice 01: the homepage in each atmosphere (atmosphere/<state>-<w>.jpg and -fold.jpg),
  * with the same axe, overflow and page-error checks, counted as findings in strict mode.
+ * Creative Slice 02 (B1): the Make It Yours prototype (#/preview/make-it-yours) in each state a
+ * reviewer needs to see (prototype/<state>-<w>.jpg and -fold.jpg), with axe, overflow, broken
+ * words in headings and page errors, counted as findings; and a bundle check that the prototype
+ * is its own chunk.
  *
  * Usage: npm run build && npx tsx scripts/visual/styleguide.ts [--out dir] [--strict]
  */
@@ -513,6 +517,123 @@ async function atmosphereChecks(browser: Browser, origin: string, blocked: Set<s
   return out;
 }
 
+/**
+ * Creative Slice 02 prototype states. Each is reached the way a person would (clicks from the
+ * first look), since choices live only in memory and a link can't carry them.
+ */
+const PROTOTYPE_STATES: { name: string; label: string; steps: (page: Page) => Promise<void> }[] = [
+  { name: 'look-studio', label: 'Look 1 of 3: Studio', steps: async () => undefined },
+  {
+    name: 'look-unbuilt',
+    label: 'Look 2 of 3: The Quiet Room (not built in B1)',
+    steps: async (page) => {
+      await page.getByRole('button', { name: /^Next look/ }).click();
+      await page.locator('[data-miy-unbuilt]').waitFor();
+    },
+  },
+  {
+    name: 'look-customise',
+    label: 'Studio with colour and type open (Sherbet)',
+    steps: async (page) => {
+      await page.getByText('Adjust colour and type').click();
+      await page.getByRole('radio', { name: 'Sherbet' }).check();
+    },
+  },
+  {
+    name: 'sample',
+    label: 'A sample idea, opened from the Studio cover',
+    steps: async (page) => {
+      await page.getByRole('link', { name: 'Open a sample idea' }).click();
+      await page.locator('[data-miy-sample]').waitFor();
+    },
+  },
+  {
+    name: 'interests',
+    label: 'Interests: Walks and Film picked (one with matches, one without)',
+    steps: async (page) => {
+      await page.getByRole('button', { name: 'Choose Studio' }).click();
+      await page.getByRole('checkbox', { name: /^Walks/ }).check();
+      await page.getByRole('checkbox', { name: /^Film/ }).check();
+    },
+  },
+  {
+    name: 'arrival-studio',
+    label: 'Arrival: Studio (Poster, Bold sans), Walks picked',
+    steps: async (page) => {
+      await page.getByRole('button', { name: 'Choose Studio' }).click();
+      await page.getByRole('checkbox', { name: /^Walks/ }).check();
+      await page.getByRole('button', { name: 'Enter the Playground' }).click();
+      await page.locator('[data-miy-arrival]').waitFor();
+    },
+  },
+  {
+    name: 'arrival-night',
+    label: 'Arrival: Studio (Night studio, Typewriter), saved in the preview',
+    steps: async (page) => {
+      await page.getByRole('button', { name: 'Choose Studio' }).click();
+      await page.getByRole('button', { name: 'Enter the Playground' }).click();
+      await page.locator('[data-miy-arrival]').waitFor();
+      await page.getByText('Adjust colour and type').click();
+      await page.getByRole('radio', { name: 'Night studio' }).check();
+      await page.getByRole('radio', { name: 'Typewriter' }).check();
+      await page.locator('[data-miy-save]').click();
+      await page.evaluate(() => window.scrollTo(0, 0));
+    },
+  },
+  {
+    name: 'arrival-skipped',
+    label: 'Arrival after Skip: no look chosen (fallback style)',
+    steps: async (page) => {
+      await page.getByRole('button', { name: 'Skip for now' }).click();
+      await page.locator('[data-miy-arrival]').waitFor();
+    },
+  },
+];
+
+async function prototypeChecks(browser: Browser, origin: string, blocked: Set<string>) {
+  const out: { state: string; label: string; width: number; broken: string[]; overflowPx: number; offenders: string[]; pageErrors: string[]; axe: WidthResult['axe']; files: string[] }[] = [];
+  await mkdir(join(OUT, 'prototype'), { recursive: true });
+  for (const width of Object.keys(WIDTHS).map(Number))
+    for (const st of PROTOTYPE_STATES) {
+      const ctx = await newContext(browser, origin, width, 'reduce', blocked);
+      const { page, errors } = await open(ctx, origin, '#/preview/make-it-yours');
+      await page.locator('[data-miy]').waitFor();
+      await st.steps(page);
+      // Under reduced motion every property has a 0.01 ms transition: let frames pass.
+      await page.waitForTimeout(150);
+      // No word in a heading or a cover title breaks across lines.
+      const broken = await page.evaluate(() => {
+        const bad: string[] = [];
+        for (const el of document.querySelectorAll('main h1, main h2, .studio-title, .studio-star-title, .studio-idea-name')) {
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            const text = n.textContent ?? '';
+            for (const m of text.matchAll(/\S+/g)) {
+              const r = document.createRange();
+              r.setStart(n, m.index!);
+              r.setEnd(n, m.index! + m[0].length);
+              if (new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size > 1) bad.push(m[0]);
+            }
+          }
+        }
+        return bad;
+      });
+      const axe = (await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()).violations.map((v) => ({
+        id: v.id,
+        impact: v.impact ?? null,
+        nodes: v.nodes.length,
+        targets: v.nodes.slice(0, 4).map((n) => n.target.join(' ')),
+      }));
+      const { overflowPx, offenders } = await measureOverflow(page);
+      const files = [`prototype/${st.name}-${width}-fold.jpg`, `prototype/${st.name}-${width}.jpg`];
+      await page.screenshot({ path: join(OUT, files[0]), type: 'jpeg', quality: 80 });
+      await page.screenshot({ path: join(OUT, files[1]), type: 'jpeg', quality: 72, fullPage: true });
+      out.push({ state: st.name, label: st.label, width, broken, overflowPx, offenders, pageErrors: errors, axe, files });
+      await ctx.close();
+    }
+  return out;
+}
+
 /** The app shell must not load the handwritten face. */
 async function homeLoadsNoCaveat(browser: Browser, origin: string, blocked: Set<string>) {
   const ctx = await newContext(browser, origin, 390, 'reduce', blocked);
@@ -535,6 +656,7 @@ async function bundle() {
   const entries = [...html.matchAll(/assets\/([^"]+\.(?:js|css))/g)].map((m) => m[1]);
   const entryText = (await Promise.all(entries.map((e) => readFile(join(DIST, 'assets', e), 'utf8')))).join('\n');
   const guide = await Promise.all(assets.filter((f) => /^StyleGuide-.*\.(js|css)$/.test(f)).map(size));
+  const prototype = await Promise.all(assets.filter((f) => /^MakeItYours-.*\.(js|css)$/.test(f)).map(size));
   return {
     caveatFiles: caveatAll,
     caveatLatinBold: caveat,
@@ -544,6 +666,8 @@ async function bundle() {
     entryReferencesCaveat: /caveat-[\w-]+\.(?:woff2?|ttf|otf)/i.test(entryText),
     entryContainsStyleGuide: /Skip to style guide/.test(entryText),
     styleGuideChunks: guide,
+    entryContainsPrototype: /Prototype preview: nothing here is saved|miy-root/.test(entryText),
+    prototypeChunks: prototype,
   };
 }
 
@@ -570,6 +694,12 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
       `- ${a.applied && a.nameplate.pass && !a.axe.length && a.overflowPx <= 1 && !a.pageErrors.length ? '✅' : '❌'} ${a.atmosphere} @ ${a.width}px: ${a.applied ? 'applied' : 'NOT APPLIED'}; nameplate ${a.nameplate.lines} line(s)${a.nameplate.broken.length ? `, BROKEN: ${a.nameplate.broken.join(', ')}` : ', no broken words'}; axe ${a.axe.length ? a.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${a.overflowPx}px${a.offenders.length ? ` (${a.offenders.join(', ')})` : ''}; errors ${a.pageErrors.length ? a.pageErrors.join(' / ') : 'none'} (${a.files.map((f) => `[${f}](${f})`).join(' · ')})`,
     );
   L.push('');
+  L.push('## Make It Yours prototype (Creative Slice 02, B1)', '');
+  for (const p of r.prototype)
+    L.push(
+      `- ${!p.broken.length && !p.axe.length && p.overflowPx <= 1 && !p.pageErrors.length ? '✅' : '❌'} ${p.label} @ ${p.width}px: axe ${p.axe.length ? p.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${p.overflowPx}px${p.offenders.length ? ` (${p.offenders.join(', ')})` : ''}; ${p.broken.length ? `BROKEN words: ${p.broken.join(', ')}` : 'no broken words'}; errors ${p.pageErrors.length ? p.pageErrors.join(' / ') : 'none'} (${p.files.map((f) => `[${f}](${f})`).join(' · ')})`,
+    );
+  L.push('');
   L.push('## Cover headline', '');
   for (const c of r.cover) L.push(`- ${c.pass ? '✅' : '❌'} ${c.width}px: ${c.fontSize}, ${c.lines} line(s), ${c.brokenWords.length ? `BROKEN: ${c.brokenWords.join(', ')}` : 'no broken words'}${c.overflow ? ', OVERFLOW' : ''} ([${c.file}](${c.file}))`);
   L.push('');
@@ -578,6 +708,7 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
   L.push('', '## Fonts and bundle', '');
   L.push(`- ${r.home.pass ? '✅' : '❌'} The app shell (#/) requests no Caveat files (${r.home.requests} requests, loaded: ${r.home.loaded})`);
   L.push(`- ${r.bundle.entryReferencesCaveat ? '❌' : '✅'} App entry files (${r.bundle.entryFiles.join(', ')}) declare no Caveat font files`);
+  L.push(`- ${r.bundle.entryContainsPrototype || !r.bundle.prototypeChunks.length ? '❌' : '✅'} The prototype is a separate chunk: ${r.bundle.prototypeChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsStyleGuide ? '❌' : '✅'} The style guide is a separate chunk: ${r.bundle.styleGuideChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ')}`);
   L.push(`- Caveat Bold, Latin: ${r.bundle.caveatLatinBold.map((c) => `${c.file} ${c.bytes} B`).join(', ')} (budget ${FONT_BUDGET} B; WOFF2 is already compressed)`);
   L.push(`- All Caveat files in the build: ${r.bundle.caveatFiles.join(', ')}`);
@@ -600,6 +731,7 @@ async function run() {
     const home = await homeLoadsNoCaveat(browser, origin, blocked);
     const cover = await coverChecks(browser, origin, blocked);
     const atmospheres = await atmosphereChecks(browser, origin, blocked);
+    const prototype = await prototypeChecks(browser, origin, blocked);
     const b = await bundle();
     const fontOk = b.caveatLatinBold.length === 1 && b.caveatLatinBold.every((c) => c.bytes <= FONT_BUDGET);
     const findings =
@@ -620,8 +752,10 @@ async function run() {
       (home.pass ? 0 : 1) +
       (b.entryReferencesCaveat ? 1 : 0) +
       (b.entryContainsStyleGuide ? 1 : 0) +
+      prototype.reduce((n, p) => n + p.broken.length + p.axe.length + (p.overflowPx > 1 ? 1 : 0) + p.pageErrors.length, 0) +
+      (b.entryContainsPrototype || !b.prototypeChunks.length ? 1 : 0) +
       (fontOk ? 0 : 1);
-    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, home, bundle: b, blockedHosts: [...blocked].sort() };
+    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, prototype, home, bundle: b, blockedHosts: [...blocked].sort() };
   } finally {
     await browser.close();
     server.close();

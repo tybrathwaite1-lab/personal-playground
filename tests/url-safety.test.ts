@@ -75,8 +75,11 @@ test('normalizeUrl adds https:// to bare hosts; the result still goes through is
 
 type Href = { file: string; line: number; expr: string; status: 'constant' | 'builder' | 'guarded' | 'reviewed' };
 
-/** Builders whose output is always an internal hash route or an https URL they construct. */
-const BUILDERS = new Set(['href', 'directionsLink', 'mapsLink']);
+/**
+ * Builders whose output is always an internal hash route or an https URL they construct.
+ * placeHref: the Slice 02 prototype's steps, always '#/preview/make-it-yours?…' (tests/make-it-yours.test.ts).
+ */
+const BUILDERS = new Set(['href', 'directionsLink', 'mapsLink', 'placeHref']);
 
 /**
  * Unguarded hrefs from data, each reviewed. `bundled`: the URL comes from source-controlled

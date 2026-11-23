@@ -45,7 +45,14 @@ test('#/styleguide is a hidden preview: not a route, not in navigation, everythi
   for (const r of ROUTES) assert.equal(parseHash(`#/${r}`).preview, null, r);
   assert.equal(parseHash('#/nope').name, 'home');
   assert.equal(parseHash('#/nope').preview, null);
-  assert.deepEqual(PREVIEWS, ['styleguide']);
+  assert.deepEqual(PREVIEWS, ['styleguide', 'preview/make-it-yours']);
+  // The Slice 02 prototype is a second hidden preview; its query is its own step state.
+  const miy = parseHash('#/preview/make-it-yours?step=interests');
+  assert.equal(miy.preview, 'preview/make-it-yours');
+  assert.equal(miy.name, 'home');
+  assert.equal(miy.params.get('step'), 'interests');
+  assert.equal(parseHash('#/preview').preview, null);
+  assert.equal(parseHash('#/preview/other').preview, null);
   assert.equal(ROUTES.length, 12);
   assert.equal((ROUTES as string[]).includes('styleguide'), false, 'not part of the standard route set');
   assert.equal(/styleguide/i.test(read('src/components/Layout.tsx')), false, 'never linked from navigation');

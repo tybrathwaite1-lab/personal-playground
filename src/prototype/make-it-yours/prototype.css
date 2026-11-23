@@ -1,0 +1,869 @@
+/*
+ * Creative Slice 02 prototype (Make It Yours, B1). Loaded only by the prototype's chunk and
+ * scoped to .miy-root, so the production app is untouched. Colours come from ./tokens.css
+ * (Studio) or the app's own tokens (the fallback style); no colour is written here.
+ */
+
+/* ── Fallback style (no look chosen): today's app tokens ─────────────── */
+.miy-root[data-miy-look='default'] {
+  --miy-paper: var(--pp-ink);
+  --miy-ink: var(--pp-paper);
+  --miy-muted: var(--pp-muted);
+  --miy-a: var(--pp-rust);
+  --miy-b: var(--pp-ns-mustard);
+  --miy-c: var(--pp-hunter);
+  --miy-d: var(--pp-rust);
+  --miy-on-d: var(--pp-ink);
+  --miy-focus: var(--pp-rust);
+}
+
+/* ── Shell ───────────────────────────────────────────────────────────── */
+.miy-root {
+  min-height: 100dvh;
+  background: rgb(var(--miy-paper));
+  color: rgb(var(--miy-ink));
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  color-scheme: light;
+}
+.miy-root[data-miy-look='default'],
+.miy-root[data-miy-palette='night'] {
+  color-scheme: dark;
+}
+/* The app's film grain belongs to its own style, not the Studio's flat colour. */
+body:has(.miy-root[data-miy-look='studio'])::before {
+  display: none;
+}
+/* Reduced motion: changes of look, colour and type are instant (the app's global rule only
+   shortens transitions, which still leaves every property easing for a frame). */
+@media (prefers-reduced-motion: reduce) {
+  .miy-root,
+  .miy-root * {
+    transition-property: none !important;
+  }
+}
+.miy-root :focus-visible {
+  outline: 3px solid rgb(var(--miy-focus));
+  outline-offset: 3px;
+}
+.miy-root[data-miy-look='default'] :focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 2px;
+}
+.miy-root [tabindex='-1']:focus:not(:focus-visible) {
+  outline: none;
+}
+.miy-skip {
+  position: absolute;
+  left: -9999px;
+}
+.miy-skip:focus {
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 70;
+  padding: 0.5rem 0.75rem;
+  background: rgb(var(--miy-ink));
+  color: rgb(var(--miy-paper));
+}
+.miy-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid rgb(var(--miy-ink));
+}
+.miy-wordmark {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.miy-badge {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  padding: 0.2rem 0.6rem;
+  border: 1.5px dashed currentColor;
+  border-radius: 999px;
+}
+.miy-exit {
+  margin-left: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.miy-main {
+  max-width: 75rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+@media (min-width: 768px) {
+  .miy-header {
+    padding: 0.75rem 2rem;
+  }
+  .miy-main {
+    padding: 2.5rem 2rem 5rem;
+  }
+}
+.miy-note {
+  margin: 0 0 1.5rem;
+  padding: 0.6rem 0.9rem;
+  border-left: 4px solid rgb(var(--miy-ink));
+  max-width: 60ch;
+}
+
+/* ── Type ────────────────────────────────────────────────────────────── */
+.miy-h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.miy-h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.miy-lede {
+  margin: 0.75rem 0 0;
+  max-width: 60ch;
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+.miy-small {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgb(var(--miy-muted));
+}
+.miy-count {
+  margin: 0 0 0.5rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: rgb(var(--miy-muted));
+}
+.miy-kicker-jp {
+  margin: 0.5rem 0 0;
+  font-family: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  letter-spacing: 0.3em;
+  color: rgb(var(--miy-muted));
+}
+.miy-list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+.miy-root[data-miy-type='mono'] :is(.miy-h1, .miy-h2, .studio-title, .studio-star-title, .studio-idea-name, .studio-lines-title) {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.miy-root[data-miy-type='mono'] .studio-title {
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+}
+.miy-root[data-miy-look='default'] :is(.miy-h1, .miy-h2) {
+  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+
+/* ── Controls ────────────────────────────────────────────────────────── */
+.miy-actions,
+.miy-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.miy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.15rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--miy-ink));
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+.miy-button:hover {
+  background: rgb(var(--miy-ink) / 0.1);
+}
+.miy-button-primary {
+  background: rgb(var(--miy-ink));
+  color: rgb(var(--miy-paper));
+}
+.miy-button-primary:hover {
+  background: rgb(var(--miy-ink) / 0.88);
+}
+.miy-button[aria-pressed='true'] {
+  background: rgb(var(--miy-d));
+  border-color: rgb(var(--miy-ink));
+  color: rgb(var(--miy-on-d));
+}
+.miy-text-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+/* The fallback style's controls follow the surface they sit on, as the app's .ui-button does. */
+.miy-root[data-miy-look='default'] .miy-button {
+  border-radius: 0;
+  border-color: rgb(var(--fg));
+  color: rgb(var(--fg));
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.miy-root[data-miy-look='default'] .miy-button:hover {
+  background: rgb(var(--fg) / 0.1);
+}
+.miy-root[data-miy-look='default'] .miy-button-primary {
+  background: rgb(var(--fg));
+  color: rgb(var(--surface));
+}
+.miy-root[data-miy-look='default'] .miy-button-primary:hover {
+  background: rgb(var(--fg) / 0.9);
+}
+.miy-root[data-miy-look='default'] .miy-button[aria-pressed='true'] {
+  background: rgb(var(--accent));
+  border-color: rgb(var(--accent));
+  color: rgb(var(--surface));
+}
+
+/* ── Step 1: looks ───────────────────────────────────────────────────── */
+.miy-look-head {
+  margin-bottom: 1.5rem;
+}
+.miy-look-body {
+  display: grid;
+  gap: 1.5rem;
+}
+@media (min-width: 1024px) {
+  .miy-look-body {
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    align-items: start;
+  }
+}
+.miy-stage {
+  margin: 0;
+  min-width: 0;
+}
+.miy-look-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.miy-unbuilt {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 20rem;
+  padding: 2rem;
+  border: 2px dashed currentColor;
+}
+.miy-unbuilt p {
+  margin: 0;
+  max-width: 50ch;
+}
+.miy-unbuilt-name {
+  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+.miy-skip-row p {
+  margin-top: 0;
+}
+
+/* ── Customise ───────────────────────────────────────────────────────── */
+.miy-customise {
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.25rem;
+  padding: 0.25rem 1rem 0.75rem;
+}
+.miy-summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.miy-customise-groups {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+@media (min-width: 640px) {
+  .miy-yours .miy-customise-groups {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.miy-yours .miy-customise {
+  margin-top: 1.25rem;
+  max-width: 40rem;
+}
+.miy-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.miy-legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+.miy-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.miy-option input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: rgb(var(--miy-ink));
+}
+.miy-swatch {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+}
+.miy-swatch > span {
+  width: 0.85rem;
+  height: 1.35rem;
+}
+.miy-swatch > span:nth-child(1) {
+  background: rgb(var(--miy-a));
+}
+.miy-swatch > span:nth-child(2) {
+  background: rgb(var(--miy-b));
+}
+.miy-swatch > span:nth-child(3) {
+  background: rgb(var(--miy-paper));
+}
+.miy-type-sample {
+  width: 2.25rem;
+  font-weight: 600;
+}
+.miy-type-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 500;
+}
+
+/* ── Step 2: interests ───────────────────────────────────────────────── */
+.miy-interests {
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 1024px) {
+  .miy-interests {
+    grid-template-columns: minmax(0, 1fr) 24rem;
+    align-items: start;
+  }
+  .miy-interests-preview {
+    position: sticky;
+    top: 1.5rem;
+  }
+}
+.miy-interests .miy-fieldset {
+  margin: 1.5rem 0;
+}
+.miy-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.miy-chip {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.45rem 1rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.25rem;
+  cursor: pointer;
+}
+.miy-chip-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.miy-chip:hover {
+  background: rgb(var(--miy-ink) / 0.1);
+}
+.miy-chip:has(.miy-chip-input:checked) {
+  background: rgb(var(--miy-ink));
+  color: rgb(var(--miy-paper));
+}
+.miy-chip:has(.miy-chip-input:checked) .miy-chip-name::before {
+  content: '✓ ' / '';
+}
+.miy-chip:has(.miy-chip-input:focus-visible) {
+  outline: 3px solid rgb(var(--miy-focus));
+  outline-offset: 3px;
+}
+.miy-chip-name {
+  font-weight: 600;
+}
+.miy-chip-count {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+.miy-root[data-miy-look='default'] .miy-chip {
+  border-radius: 0;
+}
+.miy-interests-preview {
+  min-width: 0;
+}
+.miy-feedback {
+  margin: 0.75rem 0 0;
+  line-height: 1.5;
+}
+.miy-leads {
+  margin: 0.5rem 0 1rem;
+}
+/* On phones the preview becomes a compact bar that stays in view while you pick. */
+@media (max-width: 1023.98px) {
+  .miy-interests-preview {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -1rem;
+    padding: 0.75rem 1rem;
+    background: rgb(var(--miy-paper));
+    border-top: 2px solid rgb(var(--miy-ink));
+  }
+  .miy-interests-preview .miy-h2 {
+    font-size: 1rem;
+  }
+  .miy-feedback {
+    margin-top: 0.25rem;
+    font-size: 0.9375rem;
+  }
+  .miy-leads {
+    margin: 0.25rem 0 0;
+    font-size: 0.9375rem;
+  }
+  .miy-mini {
+    display: none;
+  }
+}
+
+/* ── Arrival and sample ──────────────────────────────────────────────── */
+.miy-section {
+  margin-top: 3.5rem;
+}
+.miy-subline {
+  margin-bottom: 1.5rem;
+}
+.miy-yours {
+  padding-top: 1.5rem;
+  border-top: 2px solid rgb(var(--miy-ink));
+}
+.miy-yours .miy-actions {
+  margin-top: 1rem;
+}
+.miy-star-actions {
+  margin-top: 1rem;
+}
+.miy-invite {
+  margin: 0 0 0.6rem;
+  font-weight: 600;
+}
+.miy-back {
+  margin-bottom: 1.5rem;
+}
+.miy-sample-grid {
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 1024px) {
+  .miy-sample-grid {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+}
+.miy-sample .miy-h2 {
+  margin-top: 2rem;
+}
+.miy-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 1rem 0;
+  border-top: 2px solid rgb(var(--miy-ink));
+  border-bottom: 2px solid rgb(var(--miy-ink));
+  max-width: 40rem;
+}
+.miy-facts dt {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: rgb(var(--miy-muted));
+}
+.miy-facts dd {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+/* ── The Studio ──────────────────────────────────────────────────────── */
+.studio-cover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  container: studio / inline-size;
+  padding: 1.25rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.75rem;
+  background: rgb(var(--miy-paper));
+}
+.studio-shape {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+.studio-sun {
+  width: 34cqi;
+  aspect-ratio: 1;
+  right: -14cqi;
+  top: -14cqi;
+  border-radius: 50%;
+  background: rgb(var(--miy-a));
+}
+.studio-moon {
+  width: 30cqi;
+  aspect-ratio: 2 / 1;
+  left: -7cqi;
+  bottom: -1px;
+  border-radius: 30cqi 30cqi 0 0;
+  background: rgb(var(--miy-b));
+}
+.studio-bar {
+  width: 44cqi;
+  height: max(14px, 3cqi);
+  right: -4cqi;
+  bottom: 24%;
+  border-radius: 999px;
+  background: rgb(var(--miy-c));
+  transform: rotate(-9deg);
+}
+.studio-dots {
+  width: 22cqi;
+  aspect-ratio: 1;
+  left: -3cqi;
+  bottom: -3cqi;
+  background-image: radial-gradient(rgb(var(--miy-ink) / 0.55) 22%, transparent 25%);
+  background-size: 14px 14px;
+}
+.studio-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.5rem;
+}
+.studio-masthead {
+  min-width: 0;
+}
+.studio-title {
+  margin: 0;
+  font-size: clamp(2.5rem, 9.5cqi, 7rem);
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+.studio-title > span {
+  white-space: nowrap;
+}
+.studio-dek {
+  margin: 0.9rem 0 0;
+  max-width: 28ch;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+}
+.studio-star {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  margin: 0.5rem 0.4rem;
+}
+.studio-star-shape {
+  position: absolute;
+  inset: -0.7rem -0.5rem;
+  z-index: -1;
+  border-radius: 2rem;
+  background: rgb(var(--miy-d));
+  transform: rotate(3deg);
+}
+.studio-star-card {
+  padding: 1.25rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.25rem;
+  background: rgb(var(--miy-paper));
+  transform: rotate(-1.25deg);
+}
+.studio-kicker {
+  display: inline-block;
+  margin: 0;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: rgb(var(--miy-c));
+  color: rgb(var(--miy-on-c));
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+}
+.studio-star-title {
+  margin: 0.65rem 0 0.35rem;
+  font-size: clamp(1.6rem, 1.1rem + 2.2cqi, 2.6rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+.studio-star-text {
+  margin: 0;
+  line-height: 1.5;
+}
+.studio-lines {
+  min-width: 0;
+  padding: 1rem 1.25rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.25rem;
+  background: rgb(var(--miy-paper));
+}
+.studio-lines-title {
+  margin: 0 0 0.5rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.studio-lines ul {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.studio-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+.studio-mark {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.2rem;
+}
+.studio-line-0 .studio-mark {
+  border-radius: 50%;
+  background: rgb(var(--miy-a));
+}
+.studio-line-1 .studio-mark {
+  background: rgb(var(--miy-b));
+  transform: rotate(12deg);
+}
+.studio-line-2 .studio-mark {
+  background: rgb(var(--miy-d));
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.studio-line-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.6rem;
+  font-weight: 600;
+}
+.studio-line-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+}
+.studio-match {
+  display: inline-block;
+  padding: 0.05rem 0.55rem;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+@container studio (min-width: 720px) {
+  .studio-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.75rem 1.5rem;
+    padding: 1rem;
+  }
+  .studio-masthead {
+    grid-column: 1 / 8;
+  }
+  .studio-star {
+    grid-column: 8 / 13;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+  .studio-lines {
+    grid-column: 1 / 7;
+    align-self: end;
+  }
+  .studio-sun {
+    width: 30cqi;
+    right: -8cqi;
+    top: -12cqi;
+  }
+  .studio-moon {
+    left: 44%;
+    width: 20cqi;
+  }
+}
+
+.studio-ideas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  grid-auto-flow: dense;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .studio-idea-0 {
+    grid-column: span 2;
+  }
+}
+.studio-idea-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  height: 100%;
+  padding: 1.25rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.5rem;
+  background: rgb(var(--miy-paper));
+  color: rgb(var(--miy-ink));
+  text-decoration: none;
+}
+.studio-idea-0 .studio-idea-link {
+  background: rgb(var(--miy-a));
+  color: rgb(var(--miy-on-a));
+}
+.studio-idea-2 .studio-idea-link {
+  background: rgb(var(--miy-c));
+  color: rgb(var(--miy-on-c));
+  border-radius: 1.5rem 0.4rem 1.5rem 0.4rem;
+}
+.studio-idea-3 .studio-idea-link {
+  background: rgb(var(--miy-b));
+  color: rgb(var(--miy-on-b));
+}
+.studio-idea-4 .studio-idea-link {
+  border-style: dashed;
+}
+.studio-idea-name {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.studio-idea-0 .studio-idea-name {
+  font-size: 2rem;
+}
+.studio-idea-text {
+  line-height: 1.5;
+}
+.studio-idea-link:hover .studio-idea-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .studio-idea-link {
+    transition: transform 160ms ease;
+  }
+  .studio-idea-link:hover {
+    transform: translateY(-2px) rotate(-0.6deg);
+  }
+}
+
+.studio-art {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 1.5rem;
+  background: rgb(var(--miy-paper));
+}
+.studio-art > span {
+  position: absolute;
+}
+.studio-art-a {
+  width: 58%;
+  aspect-ratio: 1;
+  left: var(--x);
+  top: 8%;
+  border-radius: 50%;
+  background: rgb(var(--miy-a));
+}
+.studio-art-b {
+  width: 72%;
+  height: 28%;
+  right: -12%;
+  bottom: 6%;
+  border-radius: 999px;
+  background: rgb(var(--miy-b));
+  transform: rotate(var(--r));
+}
+.studio-art-c {
+  width: 34%;
+  aspect-ratio: 1;
+  left: 8%;
+  bottom: 14%;
+  background: rgb(var(--miy-d));
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.miy-root[data-miy-look='default'] .studio-art {
+  border-radius: 0;
+  border-color: rgb(var(--pp-control));
+}
+
+/* ── Fallback cover ──────────────────────────────────────────────────── */
+.fallback-title {
+  margin: 0;
+  font-size: clamp(2.75rem, 1.8rem + 4vw, 5.5rem);
+}
+.fallback-cover-mini .fallback-title {
+  font-size: 2.5rem;
+}
