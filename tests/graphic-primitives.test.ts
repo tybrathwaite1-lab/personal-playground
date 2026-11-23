@@ -77,6 +77,10 @@ test('the style guide and the handwritten face are code-split away from the app 
   const importers = files('src').filter((f) => /\.(tsx?|css)$/.test(f) && /@fontsource\/caveat/.test(read(f)));
   assert.deepEqual(importers, ['src/components/graphic/Annotation.tsx']);
   assert.match(read('src/components/graphic/Annotation.tsx'), /import '@fontsource\/caveat\/latin-700\.css';/, 'Latin, bold only');
+  // The graphic index re-exports Annotation (and so the font): app code imports the primitives
+  // it needs directly, and only the style guide and the graphic module itself use the index.
+  const indexImporters = files('src').filter((f) => /\.tsx?$/.test(f) && /from '[./]*\/?(?:components\/)?graphic'/.test(read(f)));
+  assert.deepEqual(indexImporters, ['src/styleguide/StyleGuide.tsx'], 'only the style guide imports the graphic index');
 });
 
 test('the handwritten face is decorative only', () => {

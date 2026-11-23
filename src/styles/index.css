@@ -196,8 +196,17 @@
   [data-atmosphere='after-hours'] .atmos-glow {
     background: radial-gradient(50% 55% at 8% 100%, rgb(var(--pp-ns-orange) / 0.2), transparent 72%);
   }
-  /* On wider screens the nameplate runs on one line across the cover: sized from the column
-     (≈ 8.6em of Anton for "Personal Playground."), so it never wraps or overflows. */
+  /* The nameplate. On phones it stacks on two lines, sized so "Playground." (≈ 4.6em of Anton,
+     its longest word) fits the column without breaking. On wider screens it runs on one line
+     (≈ 8.6em for "Personal Playground."), sized from the column, so it never wraps or overflows. */
+  .nameplate {
+    font-size: clamp(2.75rem, 12vw, 10rem);
+  }
+  @supports (width: 1cqi) {
+    .nameplate {
+      font-size: clamp(2.75rem, 20cqi, 10rem);
+    }
+  }
   @media (min-width: 768px) {
     .nameplate {
       font-size: clamp(3rem, 10vw, 9rem);

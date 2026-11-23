@@ -3,7 +3,10 @@ import { ArrowRight, Dices } from 'lucide-react';
 import { AtmospherePicker } from '../components/AtmospherePicker';
 import { DropTeaser } from '../components/DropTeaser';
 import { EditorialImage } from '../components/EditorialImage';
-import { Grain, PaperEdge, Stamp, Surface, Tape } from '../components/graphic';
+// Direct module imports: the graphic index also re-exports Annotation, which loads the Caveat
+// face, and the app shell must never load it (style guide evidence checks this).
+import { Grain, PaperEdge, Stamp, Tape } from '../components/graphic/primitives';
+import { Surface } from '../components/graphic/Surface';
 import { SaveButton } from '../components/ui';
 import { VibePicker } from '../components/VibePicker';
 import { WeatherStrip } from '../components/WeatherStrip';

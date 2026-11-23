@@ -465,7 +465,7 @@ async function reducedMotion(browser: Browser, origin: string, width: number, bl
 /** The Editorial Cover homepage in each atmosphere: screenshots plus axe, overflow and errors. */
 async function atmosphereChecks(browser: Browser, origin: string, blocked: Set<string>) {
   const surfaces: Record<string, string> = { morning: 'cream', afternoon: 'teal', 'after-hours': 'editorial' };
-  const out: { atmosphere: string; width: number; applied: boolean; overflowPx: number; offenders: string[]; pageErrors: string[]; axe: WidthResult['axe']; files: string[] }[] = [];
+  const out: { atmosphere: string; width: number; applied: boolean; nameplate: { lines: number; broken: string[]; pass: boolean }; overflowPx: number; offenders: string[]; pageErrors: string[]; axe: WidthResult['axe']; files: string[] }[] = [];
   await mkdir(join(OUT, 'atmosphere'), { recursive: true });
   for (const width of Object.keys(WIDTHS).map(Number))
     for (const atmosphere of Object.keys(surfaces)) {
@@ -477,6 +477,26 @@ async function atmosphereChecks(browser: Browser, origin: string, blocked: Set<s
         ([a, tone]) => document.documentElement.dataset.atmosphere === a && document.querySelector('[data-home-area="cover"]')?.getAttribute('data-surface') === tone,
         [atmosphere, surfaces[atmosphere]],
       );
+      // The nameplate never breaks a word: two lines on phones, one on wider screens.
+      const np = await page.evaluate(() => {
+        const h = document.getElementById('cover-title')!;
+        const tops = new Set<number>();
+        const broken: string[] = [];
+        const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          const text = n.textContent ?? '';
+          for (const m of text.matchAll(/\S+/g)) {
+            const r = document.createRange();
+            r.setStart(n, m.index!);
+            r.setEnd(n, m.index! + m[0].length);
+            const rows = new Set([...r.getClientRects()].map((x) => Math.round(x.top)));
+            rows.forEach((t) => tops.add(t));
+            if (rows.size > 1) broken.push(m[0]);
+          }
+        }
+        return { lines: tops.size, broken };
+      });
+      const nameplate = { ...np, pass: !np.broken.length && np.lines === (width < 768 ? 2 : 1) };
       const axe = (await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()).violations.map((v) => ({
         id: v.id,
         impact: v.impact ?? null,
@@ -487,7 +507,7 @@ async function atmosphereChecks(browser: Browser, origin: string, blocked: Set<s
       const files = [`atmosphere/${atmosphere}-${width}-fold.jpg`, `atmosphere/${atmosphere}-${width}.jpg`];
       await page.screenshot({ path: join(OUT, files[0]), type: 'jpeg', quality: 78 });
       await page.screenshot({ path: join(OUT, files[1]), type: 'jpeg', quality: 70, fullPage: true });
-      out.push({ atmosphere, width, applied, overflowPx, offenders, pageErrors: errors, axe, files });
+      out.push({ atmosphere, width, applied, nameplate, overflowPx, offenders, pageErrors: errors, axe, files });
       await ctx.close();
     }
   return out;
@@ -547,7 +567,7 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
   L.push('## Homepage atmospheres (Creative Slice 01)', '');
   for (const a of r.atmospheres)
     L.push(
-      `- ${a.applied && !a.axe.length && a.overflowPx <= 1 && !a.pageErrors.length ? '✅' : '❌'} ${a.atmosphere} @ ${a.width}px: ${a.applied ? 'applied' : 'NOT APPLIED'}; axe ${a.axe.length ? a.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${a.overflowPx}px${a.offenders.length ? ` (${a.offenders.join(', ')})` : ''}; errors ${a.pageErrors.length ? a.pageErrors.join(' / ') : 'none'} (${a.files.map((f) => `[${f}](${f})`).join(' · ')})`,
+      `- ${a.applied && a.nameplate.pass && !a.axe.length && a.overflowPx <= 1 && !a.pageErrors.length ? '✅' : '❌'} ${a.atmosphere} @ ${a.width}px: ${a.applied ? 'applied' : 'NOT APPLIED'}; nameplate ${a.nameplate.lines} line(s)${a.nameplate.broken.length ? `, BROKEN: ${a.nameplate.broken.join(', ')}` : ', no broken words'}; axe ${a.axe.length ? a.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${a.overflowPx}px${a.offenders.length ? ` (${a.offenders.join(', ')})` : ''}; errors ${a.pageErrors.length ? a.pageErrors.join(' / ') : 'none'} (${a.files.map((f) => `[${f}](${f})`).join(' · ')})`,
     );
   L.push('');
   L.push('## Cover headline', '');
@@ -596,7 +616,7 @@ async function run() {
       ) +
       motion.filter((m) => !m.pass).length +
       cover.filter((c) => !c.pass).length +
-      atmospheres.reduce((n, a) => n + (a.applied ? 0 : 1) + a.axe.length + (a.overflowPx > 1 ? 1 : 0) + a.pageErrors.length, 0) +
+      atmospheres.reduce((n, a) => n + (a.applied ? 0 : 1) + (a.nameplate.pass ? 0 : 1) + a.axe.length + (a.overflowPx > 1 ? 1 : 0) + a.pageErrors.length, 0) +
       (home.pass ? 0 : 1) +
       (b.entryReferencesCaveat ? 1 : 0) +
       (b.entryContainsStyleGuide ? 1 : 0) +
