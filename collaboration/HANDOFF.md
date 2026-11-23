@@ -1,6 +1,40 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R4: strict repository-name parsing)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R4 closeout: reliability closeout R1–R4 complete)
+
+- **R4 merge:** PR #45 was merged at the approved head `784ad82` as `49136fa567c79b57da19b3931cdb1541f5cb64c4` (parents `7ee7698`, `784ad82`). Both required checks were green before merging.
+- **Production verification on `49136fa`:**
+  - **Deploy 45252119246:** build 320/320 tests, none skipped, failed, cancelled or TODO. The ingest wrote 121 events from 6/7 sources (spaa HTTP 403, 18 carried over; no "Previous snapshot: left out" line).
+  - **Smoke:** passed against `49136fa` in ~13 s for the job, with `PipeWrap ×2` logged at exit again (an observation only).
+  - **Visual check 45252119205:** "Visual and browser tests" 27/27, including all 6 GitHub Sync scenarios: first sync, conflict, rejected token or public repo, privacy/network recovery, disconnect race and repository-change race.
+  - **Style guide evidence 45252119318:** 0 findings at 390 and 1280 px.
+  - **Publish visual results 45253042152:** tied to `49136fa` (run 45252119205).
+  - **Verify action pins:** didn't run, as it is path-filtered to `.github/**` and R4 changed no workflow files. The last run on `main` (45247566480, `183c395`) passed, and the pins haven't changed since.
+- **Sync configuration and privacy safeguards:** unaffected.
+  - **Stored configurations:** `parseRepo` is only called by the connect form (`SyncPanel`). Saved configurations are loaded by `loadConfig`, which was unchanged, so an existing connection keeps working.
+  - **Unchanged safeguards:** `verifyRepo` (fail-closed privacy, push permission), conflict handling, stale-round checks and R3's reply validation.
+- **Repository safeguards:** the ruleset "Protect main" is active with no bypass actors and requires `check` and `Visual and browser tests` (GitHub Actions 15368). `image-scout-results` is unchanged at `71efe69`.
+- **Reliability closeout summary:**
+
+  | Item | PR | Merge | Production-verified |
+  |---|---|---|---|
+  | R1: previous Pulse snapshot validation | #42 | `b06c203` | yes |
+  | R2: production smoke reliability | #43 | `183c395` | yes |
+  | R3: malformed GitHub responses | #44 | `7ee7698` | yes |
+  | R4: strict repository-name parsing | #45 | `49136fa` | yes |
+
+- **Outstanding issues (not part of the closeout, not acted on):**
+  - **SPAA:** HTTP 403 since ~2026-11-18; carried listings down to 18 and slowly expiring. Suggested step: contact the publisher.
+  - **Lowry:** intermittent "Not an iCalendar feed" earlier, healthy since; carry-over handled it correctly.
+  - **R2 diagnostic:** `PipeWrap ×2` at smoke exit on every run, closed by the explicit exit. The historical 10-minute tail's root cause isn't proven.
+  - **Backup UX:** a low-priority ambiguity; a valid backup stays offered after a malformed file is chosen.
+  - **Candidate fetch:** reports "vghf fetch failed". This is not part of Pulse.
+  - **Limitations already noted:** browser coverage is Chromium only; GitHub Enterprise hosts aren't supported.
+- **Next:** stop here. The owner and ChatGPT will prepare and approve Creative Brief v1 before the next implementation PR.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R4: strict repository-name parsing)
 
 Baseline: `main` at `7ee7698` (R3 merged and verified in production). This is the last item in the reliability closeout.
 

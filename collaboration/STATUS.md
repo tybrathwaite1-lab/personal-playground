@@ -1,4 +1,4 @@
-# Status — 2026-11-20 (Sprint 02 "The Newsstand Effect" in progress; M1 and M2 closed; essential reliability closeout R1–R4 in progress)
+# Status — 2026-11-23 (Sprint 02 "The Newsstand Effect" in progress; M1, M2 and the reliability closeout R1–R4 complete; Creative Brief v1 next)
 
 **Sprint 02, "The Newsstand Effect", is in progress** (authorized by the owner on 2026-11-18). Sprint 01 "Make discovery dependable" is complete; production was verified at `68186d8`.
 
@@ -24,7 +24,8 @@
   - **R1 is closed:** PR #42 merged as `b06c203`; production verified (ingest wrote `pulse.json`, previous snapshot validated with nothing left out, SPAA carry-over continuing).
   - **R2 is closed:** PR #43 merged as `183c395`; production smoke passed in ~1 s against `183c395` and exited promptly.
   - **R3 is closed:** PR #44 merged as `7ee7698`; production verified (deploy, smoke, visual, style guide and publish all passed).
-  - **R4 (strict repository-name parsing) is in review**, the last closeout item. See HANDOFF. Creative implementation waits until R4 is merged and verified.
+  - **R4 is closed:** PR #45 merged as `49136fa`; production verified.
+  - **The reliability closeout (R1–R4) is complete.** Creative implementation hasn't started; the owner and ChatGPT will prepare and approve Creative Brief v1 before the next implementation PR.
   - **Tracked separately:** low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
   - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
