@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowRight, Dices } from 'lucide-react';
 import { AtmospherePicker } from '../components/AtmospherePicker';
+import { CoverArt } from '../components/CoverArt';
 import { DropTeaser } from '../components/DropTeaser';
 import { EditorialImage } from '../components/EditorialImage';
 // Direct module imports: the graphic index also re-exports Annotation, which loads the Caveat
@@ -160,8 +161,16 @@ export default function Home() {
             {featured && (
               <article aria-labelledby="featured-title" className="relative min-w-0 md:pt-2" data-home-area="cover-star">
                 <div className="relative">
-                  <Tape tone="mustard" angle={-5} className="-top-3 left-6" />
-                  <EditorialImage subject={featured.id} fallbackTags={featured.interests} ratio="4/5" caption={false} priority className="cover-star-image" />
+                  <Tape tone="cream" angle={-5} className="-top-3 left-6" />
+                  <EditorialImage
+                    subject={featured.id}
+                    fallbackTags={featured.interests}
+                    ratio="4/5"
+                    caption={false}
+                    priority
+                    className="cover-star-image"
+                    fallback={<CoverArt exp={featured} />}
+                  />
                 </div>
                 <div className="mt-6">
                   {/* On the cover surface, not over the photo, so its contrast is always the tested pair. */}

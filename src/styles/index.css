@@ -279,6 +279,20 @@
     height: 2px;
     background: rgb(var(--pp-rust));
   }
+  /* Type cover (CoverArt): the cover star's artwork when there is no photo. A halftone dot field
+     fading in from one corner, and the experience's first word set huge and cropped. */
+  .cover-art-dots {
+    background-image: radial-gradient(circle, rgb(var(--fg) / 0.22) 1.6px, transparent 2px);
+    background-size: 9px 9px;
+    -webkit-mask-image: radial-gradient(120% 90% at 100% 0%, rgb(var(--fg)) 20%, transparent 70%);
+    mask-image: radial-gradient(120% 90% at 100% 0%, rgb(var(--fg)) 20%, transparent 70%);
+  }
+  .cover-art {
+    container-type: inline-size;
+  }
+  .cover-art-word {
+    line-height: 0.82;
+  }
   /* Atmosphere chips (AtmospherePicker): native radios underneath, surface-aware states. */
   .atmos-chip {
     @apply inline-flex min-h-[44px] items-center border border-control px-3 font-mono text-[0.75rem] uppercase tracking-wider text-fg transition-colors;

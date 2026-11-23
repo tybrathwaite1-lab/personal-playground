@@ -92,10 +92,10 @@ test('the atmosphere changes styling only: same content, links, order and data i
     page.evaluate(() => ({
       text: (() => {
         const m = document.querySelector('main')!.cloneNode(true) as HTMLElement;
-        m.querySelectorAll('figure, [role="img"], [data-atmosphere-picker] label > span > span').forEach((n) => n.remove());
+        m.querySelectorAll('figure, [role="img"], [role="presentation"], [data-atmosphere-picker] label > span > span').forEach((n) => n.remove());
         return m.textContent!.replace(/\s+/g, ' ');
       })(),
-      links: [...document.querySelectorAll('main a[href]')].filter((a) => !a.querySelector('figure')).map((a) => `${a.textContent?.trim()} → ${a.getAttribute('href')}`),
+      links: [...document.querySelectorAll('main a[href]')].filter((a) => !a.querySelector('figure, [role="presentation"]')).map((a) => `${a.textContent?.trim()} → ${a.getAttribute('href')}`),
       headings: [...document.querySelectorAll('main h1, main h2, main h3')].map((h) => h.textContent?.trim()),
       controls: [...document.querySelectorAll('main button, main input')].map((c) => c.getAttribute('aria-label') ?? (c as HTMLInputElement).value ?? c.textContent),
     }));
@@ -142,5 +142,29 @@ for (const [label, viewport] of [['desktop', undefined], ['phone', MOBILE]] as c
     await page.waitForFunction(() => location.hash === '#/collection');
     await page.getByText(title).first().waitFor();
     assert.ok(((await stored())!.saved as { title: string }[]).some((s) => s.title === title));
+  }));
+}
+
+for (const [label, viewport] of [['desktop', undefined], ['phone', MOBILE]] as const) {
+  test(`without a photo, the cover star gets a typographic cover, not a placeholder (${label})`, scenario({ viewport }, async ({ page, ctx, open }) => {
+    // No editorial photo can load (as when none matches, or offline before it was cached).
+    await ctx.route('**/images/editorial/**', (r) => r.fulfill({ status: 404, body: '' }));
+    await open('');
+    const star = page.locator('[data-home-area="cover-star"]');
+    const name = ((await star.getByRole('heading').textContent()) ?? '').trim();
+    const art = star.getByRole('img', { name: `Typographic cover for ${name}` });
+    await art.waitFor();
+    assert.equal(await star.locator('.stripe').count(), 0, 'no striped placeholder');
+    assert.match((await art.textContent()) ?? '', /Type cover/, 'it says it is a type cover, not a photo');
+    // The set word stays whole and inside the artwork at this width (it is sized to fit once laid out).
+    await page.waitForFunction(() => {
+      const w = document.querySelector<HTMLElement>('[data-cover-art] .cover-art-word');
+      return Boolean(w && w.scrollWidth > 0 && w.scrollWidth <= w.parentElement!.clientWidth);
+    });
+    // It follows the atmosphere like everything else on the cover: styling only.
+    for (const [a, tone] of [['Morning', 'orange'], ['After hours', 'mustard']] as const) {
+      await page.getByRole('radio', { name: new RegExp(`^${a}`) }).first().check();
+      assert.equal(await art.getAttribute('data-surface'), tone);
+    }
   }));
 }

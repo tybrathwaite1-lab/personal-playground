@@ -73,6 +73,14 @@ Baseline: `main` at `6e0fe78`. This implements Creative Brief v1 (approved 2026-
 - **Found and fixed during CI review:**
   - Importing the primitives through the graphic index put the Caveat face in the app entry; the strict check caught it, and the guard now prevents it.
   - The nameplate broke "Playground" on phones; it now has its own size, and the strict check above prevents a recurrence.
+- **Revision 1 (creative review): typographic cover art.** The cover star's fallback used to be the generic dark striped placeholder. That fallback shows when the featured experience has no editorial photo or it fails to load, and in the style-guide build, which has no photos. It is now a **type cover** (`CoverArt`), built only from existing pieces:
+  - **Surface:** a tested Newsstand surface, orange on the cream morning cover and mustard otherwise, with Grain and a CSS halftone dot field.
+  - **Type:** the experience's first word set huge, sized to fit and refitted if a different font is showing, then the rest of the name.
+  - **Details:** its interests, and its Japanese kicker (or 特集).
+  - **Disclosure:** a "Type cover" label, so it is never mistaken for a photo of the thing.
+  - **Accessibility and provenance:** one accessible name ("Typographic cover for …"). No images, so there is nothing to credit and no new sources.
+  - **Other changes:** `EditorialImage` gains an optional `fallback` (other callers unchanged), and the cover's tape is now cream.
+  - **Tests:** a new browser scenario (desktop and phone) forces the photo to fail and checks the type cover: its name, the disclosure, no stripes, the word fitting, and that it follows the atmosphere. Three mutations were caught: fallback removed, fit disabled, disclosure removed.
 - **Limitations:**
   - Secondary pages still use the Field Guide controls, so only the cover and Window band follow the atmosphere.
   - The cover star's editorial photo can be a generic illustrative image when no subject-specific one exists (existing image rules).
