@@ -21,7 +21,8 @@
   - **M2-5 (Pulse ingest tests) is closed:** PR #40 merged, `main` at `eaa636e`, post-merge checks passed (closeout independently verified). It confirmed one defect, tracked separately: a previous `pulse.json` of the wrong shape stops the whole ingest.
   - **M2-6 (browser behaviour tests) is closed:** PR #41 merged, `main` at `4c6d9be`, post-merge checks passed. **M2 is closed** (independently verified). Required checks: `check` and `Visual and browser tests`.
 - **Essential reliability closeout (not M3):** R1 previous Pulse snapshot validation → R2 production smoke reliability → R3 GitHub response validation → R4 repository-name parsing, one PR at a time.
-  - **R1 is in review.** See HANDOFF.
+  - **R1 is closed:** PR #42 merged as `b06c203`; production verified (ingest wrote `pulse.json`, previous snapshot validated with nothing left out, SPAA carry-over continuing).
+  - **R2 (production smoke reliability) is in review.** See HANDOFF.
   - **Tracked separately:** malformed GitHub responses and loose repo parsing (M2-4 defects 2 and 3); validation of the previous Pulse snapshot (M2-5); low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
   - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
 - **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
