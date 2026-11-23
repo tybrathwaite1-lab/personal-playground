@@ -1,6 +1,43 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-20 (R1: previous Pulse snapshot validation)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R2: production smoke reliability)
+
+Baseline: `main` at `b06c203` (R1 merged and verified in production).
+
+- **R1 production verification:** deploy run 45240667175 succeeded.
+  - The ingest wrote `pulse.json`: 121 events from 6/7 sources.
+  - No "Previous snapshot: left out" line, so the live snapshot passed validation unchanged.
+  - spaa: HTTP 403, 18 carried over (20 before; two more expired). lowry: read normally (5 in feed, 5 kept).
+  - Smoke passed against `b06c203`. Visual 27/27; publish tied to `b06c203`.
+- **Investigation:** across the last 42 deploy runs there are 26 completed smoke jobs (median 12 s). Two took ~10 min: 44382058317 (2026-11-18) and 44443334819 (2026-11-19).
+  - **What happened:** in both, every check passed and "Production smoke check passed." was printed within ~1 s of starting. The process then stayed alive for 599.9 s and 599.7 s before the step ended, still successfully.
+  - **So:** no request hung. Node didn't exit after the result was known.
+  - **Likely cause:** 600 s matches undici's default `keepAliveMaxTimeout` (10 min), which points at kept-alive connections from responses whose bodies were never read (the bundle, `sw.js`, the manifest).
+  - **Not reproduced exactly:** I couldn't reproduce the 10-minute tail locally (Node 22 here, Node 24 in CI; GitHub Pages not reachable from here).
+  - **Reproduced locally (HTTPS stand-in server):**
+    - the old script reported "✓ bundle … loads" and passed for a bundle whose body stalled after the first chunk, because "loads" meant headers only;
+    - requests had no deadline, and the smoke job had no `timeout-minutes` (GitHub's default is 6 h).
+- **Fix** (`scripts/smoke/prod.ts`, workflows):
+  - `fetchFull()` reads every body in full under one deadline per attempt (`REQUEST_MS` 30 s), keeping the existing 3 attempts and back-off. A stalled body is now a failure that names the URL ("did not finish within 30s (3 attempts)"). JSON is parsed from the read text, and invalid JSON is reported as a failure.
+  - After reporting, the script logs anything still open ("still open at exit …") as evidence if the tail recurs, then exits explicitly with 0 or 1. Exit codes and every assertion are unchanged.
+  - The smoke job has `timeout-minutes: 10`, and the informational smoke step in Check has `timeout-minutes: 5`.
+- **Tests:** `tests/smoke-fetch.test.ts`, against a local server on 127.0.0.1:
+  - a complete body is read in full;
+  - a 503 is retried;
+  - a final 404 is returned for reporting;
+  - a stalled body or a server that never answers fails within the deadline;
+  - structural: one fetch, no unbounded body reads, explicit exit with the result code.
+- **Local reproductions with the new script:**
+  - **Slow server:** passed and exited in 1 s. It logged "still open at exit: TCPSocketWrap", the kind of handle that can keep Node alive.
+  - **Stalled bundle:** failed after 106 s (3 × 30 s plus back-off) with exit 1. The old script passed this case.
+- **Limitations:**
+  - The exact 10-minute tail wasn't reproduced. The fix removes the likely cause and bounds the run regardless.
+  - A failure inside a request still stops the remaining checks ("unexpected error …"), as before.
+  - If the "still open at exit" line appears in production, it identifies what was holding the process.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-20 (R1: previous Pulse snapshot validation)
 
 Baseline: `main` at `4c6d9be` (M2 closed). This is the first of four reliability-closeout PRs (R1–R4), done one at a time.
 
