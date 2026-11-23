@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Annotation, Artwork, Grain, NEWSSTAND, FIELD_GUIDE, PaperEdge, Stamp, Surface, Tape, type SurfaceTone } from '../components/graphic';
+import { AtmospherePicker } from '../components/AtmospherePicker';
 import { InPageLink } from '../components/InPageLink';
+import { ATMOSPHERE_SURFACES, ATMOSPHERES } from '../utils/atmosphere';
 import { HarborSun, Peaks, RecordNight } from './SampleArt';
 
 /**
@@ -44,6 +46,7 @@ export default function StyleGuide() {
 
         <Compositions />
         <Surfaces />
+        <Atmospheres />
         <Typography />
         <Primitives />
         <Controls />
@@ -258,6 +261,40 @@ function Surfaces() {
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {NEWSSTAND.map((t) => (
           <SurfaceTile key={t} tone={t} />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── 2b. Atmosphere (Creative Slice 01) ────────────────────────────────────
+function Atmospheres() {
+  return (
+    <Section
+      id="sg-atmosphere"
+      title="Atmosphere"
+      intro="The homepage cover and the Window band in each atmosphere: tested surfaces only. The selector is live (it changes the whole app); its chips are checked on every cover surface."
+    >
+      <div className="grid gap-4 lg:grid-cols-3">
+        {ATMOSPHERES.map((a) => (
+          <div key={a.id} className="min-w-0">
+            <Surface tone={ATMOSPHERE_SURFACES[a.id].cover} className="cover-container px-4 pb-5 pt-4">
+              <p className="ui-label">
+                {a.label} · {a.hours}
+              </p>
+              <p className="mt-3 font-display text-heading uppercase leading-none">
+                Personal Playground<span className="text-accent">.</span>
+              </p>
+              <p className="mt-3 border-t border-rule pt-2">
+                <span className="ui-label text-accent">Today near you</span>
+                <span className="cover-line-title mt-1 block">Sample cover line</span>
+              </p>
+              <AtmospherePicker className="mt-4" />
+            </Surface>
+            <Surface tone={ATMOSPHERE_SURFACES[a.id].band} className="px-4 py-2">
+              <p className="ui-label">The Local Pulse · band</p>
+            </Surface>
+          </div>
         ))}
       </div>
     </Section>

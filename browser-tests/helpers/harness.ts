@@ -50,6 +50,10 @@ export interface ScenarioOptions {
   github?: FakeGitHub;
   /** Replace Math.random with a constant, for screens that pick at random (Plan a Day). */
   random?: number;
+  /** The frozen time (ISO); defaults to FROZEN_TIME. */
+  time?: string;
+  /** Fake timers too (Playwright clock.install), so a scenario can fast-forward minutes. */
+  fakeTimers?: boolean;
 }
 
 export interface Session {
@@ -151,7 +155,8 @@ export function scenario(opts: ScenarioOptions, fn: (s: Session) => Promise<void
       dismiss = false;
       void act.catch(() => undefined);
     });
-    await page.clock.setFixedTime(new Date(FROZEN_TIME));
+    if (opts.fakeTimers) await page.clock.install({ time: new Date(opts.time ?? FROZEN_TIME) });
+    else await page.clock.setFixedTime(new Date(opts.time ?? FROZEN_TIME));
 
     const s: Session = {
       page,
