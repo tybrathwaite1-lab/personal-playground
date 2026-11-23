@@ -5,12 +5,15 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SEED_EXPERIENCES } from '../src/data/experiences.ts';
 import { INTERESTS, SAMPLE, SAMPLE_IDS, arrange, feedback, sampleCount } from '../src/prototype/make-it-yours/sample.ts';
 import { INITIAL, LOOKS, customOf, parsePlace, placeHref, reduce, type Choices } from '../src/prototype/make-it-yours/journey.ts';
+import { UNDERGROUND_TONES } from '../src/prototype/make-it-yours/looks/Underground.tsx';
+import { SURFACES } from '../src/components/graphic/Surface.tsx';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (p: string) => readFileSync(join(root, p), 'utf8');
@@ -72,7 +75,7 @@ test('feedback is honest: counts from the sample, zero matches said plainly, no 
   const all = [[], ['walks'], ['film'], ['music', 'film'], INTERESTS.map((i) => i.id)].map((p) => feedback(arrange(p))).join(' ');
   assert.doesNotMatch(all, /for you|recommend|personalised|perfect|you'll love/i);
   // The prototype's copy keeps to the same rule.
-  const copy = ['Arrival.tsx', 'InterestsStep.tsx', 'LookStep.tsx', 'covers/Studio.tsx', 'covers/Fallback.tsx'].map((f) => read(`src/prototype/make-it-yours/${f}`)).join('\n');
+  const copy = ['Arrival.tsx', 'InterestsStep.tsx', 'LookStep.tsx', 'SampleDiscovery.tsx', 'looks/Studio.tsx', 'looks/Fallback.tsx', 'looks/QuietRoom.tsx', 'looks/Underground.tsx'].map((f) => read(`src/prototype/make-it-yours/${f}`)).join('\n');
   assert.doesNotMatch(copy, /picked for you|recommended for you|just for you|we think you/i);
 });
 
@@ -83,7 +86,7 @@ test('the URL holds where you are, never what you chose', () => {
   // Anything unrecognised falls back to the start; a sample only opens where one can be shown.
   assert.deepEqual(parsePlace(q('step=nope&look=nope')), { step: 'look', view: 'studio', sample: null });
   assert.equal(parsePlace(q('step=look&look=studio&sample=exp-not-in-sample')).sample, null);
-  assert.equal(parsePlace(q('step=look&look=underground&sample=exp-home-cafe')).sample, null, 'not on an unbuilt look');
+  assert.equal(parsePlace(q('step=look&look=underground&sample=exp-home-cafe')).sample, 'exp-home-cafe', 'every look can open one');
   assert.equal(parsePlace(q('step=interests&sample=exp-home-cafe')).sample, null);
   // Round trip.
   for (const p of [
@@ -122,18 +125,19 @@ test('choices: Skip is an explicit "no aesthetic preference", distinct from any 
   s = reduce(s, { type: 'toggle-save', id: 'exp-home-cafe' });
   assert.deepEqual(s.saved, ['exp-home-cafe']);
   assert.deepEqual(reduce(s, { type: 'toggle-save', id: 'exp-home-cafe' }).saved, []);
+  // Every look offers the same kind of optional customisation: three colour sets, two type pairings.
   assert.deepEqual(
-    LOOKS.map((l) => [l.id, l.built]),
+    LOOKS.map((l) => [l.id, l.palettes.length, l.types.length]),
     [
-      ['studio', true],
-      ['quiet-room', false],
-      ['underground', false],
+      ['studio', 3, 2],
+      ['quiet-room', 3, 2],
+      ['underground', 3, 2],
     ],
-    'B1 builds the Studio; B2 the other two',
   );
+  for (const l of LOOKS) assert.deepEqual(customOf(INITIAL, l.id), { palette: l.palettes[0].id, type: l.types[0].id });
 });
 
-// ─── The Studio's colour sets ────────────────────────────────────────────
+// ─── Colour sets ─────────────────────────────────────────────────────────
 type RGB = [number, number, number];
 const lum = (c: RGB) => {
   const [r, g, b] = c.map((x) => {
@@ -148,47 +152,85 @@ const contrast = (a: RGB, b: RGB) => {
 };
 const over = (fg: RGB, a: number, bg: RGB) => fg.map((c, i) => c * a + bg[i] * (1 - a)) as RGB;
 
-test('every Studio colour set meets WCAG AA for every pair the prototype uses', () => {
+test('every Studio and Quiet Room colour set meets WCAG AA for every pair the prototype uses', () => {
   const css = read('src/prototype/make-it-yours/tokens.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  const sets = new Map<string, Map<string, string>>();
-  for (const m of css.matchAll(/\[data-miy-look='studio'\]\[data-miy-palette='([\w-]+)'\]\s*\{([^}]*)\}/g)) {
-    sets.set(m[1], new Map([...m[2].matchAll(/--miy-([\w-]+):\s*([^;]+);/g)].map((v) => [v[1], v[2].trim()])));
-  }
-  const studio = LOOKS.find((l) => l.id === 'studio')!;
-  assert.deepEqual([...sets.keys()], studio.palettes.map((p) => p.id), 'one colour set per palette on offer');
-  for (const [name, v] of sets) {
-    const get = (k: string, depth = 0): RGB => {
-      const raw = v.get(k);
-      assert.ok(raw && depth < 4, `${name}: --miy-${k} missing`);
-      const ref = /^var\(--miy-([\w-]+)\)$/.exec(raw!);
-      if (ref) return get(ref[1], depth + 1);
-      const m = /^(\d{1,3}) (\d{1,3}) (\d{1,3})$/.exec(raw!);
-      assert.ok(m, `${name}: --miy-${k} is not an RGB triplet`);
-      return [Number(m![1]), Number(m![2]), Number(m![3])];
-    };
-    const paper = get('paper');
-    const ink = get('ink');
-    const text: [string, RGB, RGB][] = [
-      ['ink on paper', ink, paper],
-      ['muted on paper', get('muted'), paper],
-      ['primary button text (paper on ink)', paper, ink],
-      ['primary button hover (paper on ink/88)', paper, over(ink, 0.88, paper)],
-      ['hover text (ink on ink/10)', ink, over(ink, 0.1, paper)],
-      ['picked chip (paper on ink)', paper, ink],
-      ...(['a', 'b', 'c', 'd'] as const).map((s) => [`on-${s} on ${s}`, get(`on-${s}`), get(s)] as [string, RGB, RGB]),
-    ];
-    for (const [label, fg, bg] of text) assert.ok(contrast(fg, bg) >= 4.5, `${name}: ${label} ${contrast(fg, bg).toFixed(2)}:1`);
-    const nonText: [string, RGB, RGB][] = [
-      ['focus ring on paper', get('focus'), paper],
-      ['control boundary (ink) on paper', ink, paper],
-      ['pressed save (d) against paper', get('d'), paper],
-    ];
-    for (const [label, fg, bg] of nonText) {
-      // The pressed save keeps its ink border, so its boundary is ink on paper either way.
-      const ratio = label.startsWith('pressed') ? Math.max(contrast(fg, bg), contrast(ink, paper)) : contrast(fg, bg);
-      assert.ok(ratio >= 3, `${name}: ${label} ${ratio.toFixed(2)}:1`);
+  for (const look of ['studio', 'quiet-room'] as const) {
+    const sets = new Map<string, Map<string, string>>();
+    for (const m of css.matchAll(/\[data-miy-look='([\w-]+)'\]\[data-miy-palette='([\w-]+)'\]\s*\{([^}]*)\}/g)) {
+      if (m[1] === look) sets.set(m[2], new Map([...m[3].matchAll(/--miy-([\w-]+):\s*([^;]+);/g)].map((v) => [v[1], v[2].trim()])));
+    }
+    const def = LOOKS.find((l) => l.id === look)!;
+    assert.deepEqual([...sets.keys()], def.palettes.map((p) => p.id), `${look}: one colour set per palette on offer`);
+    for (const [name, v] of sets) {
+      const get = (k: string, depth = 0): RGB => {
+        const raw = v.get(k);
+        assert.ok(raw && depth < 4, `${name}: --miy-${k} missing`);
+        const ref = /^var\(--miy-([\w-]+)\)$/.exec(raw!);
+        if (ref) return get(ref[1], depth + 1);
+        const m = /^(\d{1,3}) (\d{1,3}) (\d{1,3})$/.exec(raw!);
+        assert.ok(m, `${name}: --miy-${k} is not an RGB triplet`);
+        return [Number(m![1]), Number(m![2]), Number(m![3])];
+      };
+      const paper = get('paper');
+      const ink = get('ink');
+      const text: [string, RGB, RGB][] = [
+        ['ink on paper', ink, paper],
+        ['muted on paper', get('muted'), paper],
+        ['accent (a) on paper: notes, matches', get('a'), paper],
+        ['primary button text (paper on ink)', paper, ink],
+        ['primary button hover (paper on ink/88)', paper, over(ink, 0.88, paper)],
+        ['hover text (ink on ink/10)', ink, over(ink, 0.1, paper)],
+        ['picked chip (paper on ink)', paper, ink],
+        ...(['a', 'b', 'c', 'd'] as const).map((x) => [`on-${x} on ${x}`, get(`on-${x}`), get(x)] as [string, RGB, RGB]),
+      ];
+      // The Studio sets text on its four shape colours; its accent (a) is a shape, never text on paper.
+      for (const [label, fg, bg] of text) {
+        if (look === 'studio' && label.startsWith('accent')) continue;
+        assert.ok(contrast(fg, bg) >= 4.5, `${look}/${name}: ${label} ${contrast(fg, bg).toFixed(2)}:1`);
+      }
+      const nonText: [string, number][] = [
+        ['focus ring on paper', contrast(get('focus'), paper)],
+        ['control boundary (ink) on paper', contrast(ink, paper)],
+        // The pressed save keeps its ink border, so its boundary is ink on paper either way.
+        ['pressed save (d) against paper', Math.max(contrast(get('d'), paper), contrast(ink, paper))],
+      ];
+      for (const [label, ratio] of nonText) assert.ok(ratio >= 3, `${look}/${name}: ${label} ${ratio.toFixed(2)}:1`);
     }
   }
+});
+
+test('the Underground colour sets are made only of tested surfaces', () => {
+  const def = LOOKS.find((l) => l.id === 'underground')!;
+  assert.deepEqual(Object.keys(UNDERGROUND_TONES), def.palettes.map((p) => p.id));
+  for (const [name, t] of Object.entries(UNDERGROUND_TONES)) {
+    for (const tone of [t.page, t.cover, t.star, ...t.cards]) assert.ok((SURFACES as readonly string[]).includes(tone), `${name}: ${tone}`);
+    assert.notEqual(t.cover, t.page, `${name}: the cover stands off the page`);
+    assert.ok(t.cards.length >= 4 && new Set(t.cards).size === t.cards.length, `${name}: varied card stock`);
+  }
+  // Its controls and text follow the surface they sit on, like the app's own .ui-* controls.
+  const css = read('src/prototype/make-it-yours/prototype.css');
+  assert.match(css, /\.miy-root\[data-miy-look='underground'\] \{\s*--miy-paper: var\(--surface\);\s*--miy-ink: var\(--fg\);\s*--miy-muted: var\(--fg-muted\);\s*--miy-focus: var\(--focus\);/);
+});
+
+test('the one serif is self-hosted, licensed, unmodified and loaded only by the prototype', () => {
+  const dir = 'src/prototype/make-it-yours/fonts';
+  const readme = read(`${dir}/README.md`);
+  const woff = readdirSync(join(root, dir)).filter((f) => f.endsWith('.woff2')).sort();
+  assert.deepEqual(woff, ['newsreader-latin-400-italic.woff2', 'newsreader-latin-400-normal.woff2', 'newsreader-latin-500-normal.woff2']);
+  for (const f of woff) {
+    const bytes = readFileSync(join(root, dir, f));
+    const sha = createHash('sha256').update(bytes).digest('hex');
+    assert.match(readme, new RegExp(`\\| ${f.replace(/\./g, '\\.')} \\| ${bytes.length} \\| ${sha} \\|`), `${f}: size and hash as recorded`);
+    assert.equal(bytes.subarray(0, 4).toString('latin1'), 'wOF2', `${f}: a WOFF2 file`);
+  }
+  assert.match(read(`${dir}/OFL.txt`), /SIL Open Font License, Version 1\.1/);
+  // Only the prototype declares it; nothing else in the app names the face.
+  const users = files('src').filter((f) => /\.(tsx?|css)$/.test(f) && /Newsreader/.test(read(f)));
+  assert.ok(users.every((f) => f.startsWith('src/prototype/')), users.join(', '));
+  assert.match(read('src/prototype/make-it-yours/MakeItYours.tsx'), /import '\.\/fonts\.css';/);
+  const declared = [...read('src/prototype/make-it-yours/fonts.css').matchAll(/url\('\.\/fonts\/([^']+)'\)/g)].map((m) => m[1]).sort();
+  assert.deepEqual(declared, woff);
+  assert.doesNotMatch(read('package.json'), /newsreader/i, 'no package dependency');
 });
 
 // ─── Isolation ───────────────────────────────────────────────────────────

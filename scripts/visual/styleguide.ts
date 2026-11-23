@@ -12,7 +12,7 @@
  * transfer size (loaded by the style guide, never by the app shell).
  * Creative Slice 01: the homepage in each atmosphere (atmosphere/<state>-<w>.jpg and -fold.jpg),
  * with the same axe, overflow and page-error checks, counted as findings in strict mode.
- * Creative Slice 02 (B1): the Make It Yours prototype (#/preview/make-it-yours) in each state a
+ * Creative Slice 02: the Make It Yours prototype (#/preview/make-it-yours) in each state a
  * reviewer needs to see (prototype/<state>-<w>.jpg and -fold.jpg), with axe, overflow, broken
  * words in headings and page errors, counted as findings; and a bundle check that the prototype
  * is its own chunk.
@@ -521,68 +521,72 @@ async function atmosphereChecks(browser: Browser, origin: string, blocked: Set<s
  * Creative Slice 02 prototype states. Each is reached the way a person would (clicks from the
  * first look), since choices live only in memory and a link can't carry them.
  */
-const PROTOTYPE_STATES: { name: string; label: string; steps: (page: Page) => Promise<void> }[] = [
-  { name: 'look-studio', label: 'Look 1 of 3: Studio', steps: async () => undefined },
-  {
-    name: 'look-unbuilt',
-    label: 'Look 2 of 3: The Quiet Room (not built in B1)',
-    steps: async (page) => {
-      await page.getByRole('button', { name: /^Next look/ }).click();
-      await page.locator('[data-miy-unbuilt]').waitFor();
+const LOOK_NAMES = { studio: 'Studio', 'quiet-room': 'The Quiet Room', underground: 'The Underground' } as const;
+type LookKey = keyof typeof LOOK_NAMES;
+const lookUrl = (look: LookKey, extra = '') => `#/preview/make-it-yours?step=look&look=${look}${extra}`;
+/** Choose a look (optionally changing colour and type first), pick interests, enter. */
+const arrive =
+  (opts: { palette?: string; type?: string; interests?: RegExp[]; save?: boolean } = {}) =>
+  async (page: Page) => {
+    if (opts.palette || opts.type) {
+      await page.getByText('Adjust colour and type').click();
+      if (opts.palette) await page.getByRole('radio', { name: opts.palette }).check();
+      if (opts.type) await page.getByRole('radio', { name: opts.type }).check();
+    }
+    await page.getByRole('button', { name: /^Choose/ }).click();
+    for (const i of opts.interests ?? []) await page.getByRole('checkbox', { name: i }).check();
+    await page.getByRole('button', { name: 'Enter the Playground' }).click();
+    await page.locator('[data-miy-arrival]').waitFor();
+    if (opts.save) await page.locator('[data-miy-save]').click();
+    await page.evaluate(() => window.scrollTo(0, 0));
+  };
+/**
+ * Creative Slice 02 prototype states: every look, its sample idea, interests and arrival, an
+ * alternative colour and type for each, and the arrival after Skip. Choices live only in memory,
+ * so each state is reached by clicking through, as a person would.
+ */
+const PROTOTYPE_STATES: { name: string; label: string; url: string; steps: (page: Page) => Promise<void> }[] = [
+  ...(Object.keys(LOOK_NAMES) as LookKey[]).flatMap((look) => [
+    { name: `look-${look}`, label: `Look: ${LOOK_NAMES[look]}`, url: lookUrl(look), steps: async () => undefined },
+    {
+      name: `sample-${look}`,
+      label: `${LOOK_NAMES[look]}: a sample idea`,
+      url: lookUrl(look),
+      steps: async (page: Page) => {
+        await page.getByRole('link', { name: 'Open a sample idea' }).click();
+        await page.locator('[data-miy-sample]').waitFor();
+      },
     },
-  },
+    {
+      name: `interests-${look}`,
+      label: `${LOOK_NAMES[look]}: interests, Walks and Film picked (one with matches, one without)`,
+      url: lookUrl(look),
+      steps: async (page: Page) => {
+        await page.getByRole('button', { name: /^Choose/ }).click();
+        await page.getByRole('checkbox', { name: /^Walks/ }).check();
+        await page.getByRole('checkbox', { name: /^Film/ }).check();
+      },
+    },
+    { name: `arrival-${look}`, label: `${LOOK_NAMES[look]}: arrival, Walks picked`, url: lookUrl(look), steps: arrive({ interests: [/^Walks/] }) },
+  ]),
   {
     name: 'look-customise',
     label: 'Studio with colour and type open (Sherbet)',
+    url: lookUrl('studio'),
     steps: async (page) => {
       await page.getByText('Adjust colour and type').click();
       await page.getByRole('radio', { name: 'Sherbet' }).check();
     },
   },
-  {
-    name: 'sample',
-    label: 'A sample idea, opened from the Studio cover',
-    steps: async (page) => {
-      await page.getByRole('link', { name: 'Open a sample idea' }).click();
-      await page.locator('[data-miy-sample]').waitFor();
-    },
-  },
-  {
-    name: 'interests',
-    label: 'Interests: Walks and Film picked (one with matches, one without)',
-    steps: async (page) => {
-      await page.getByRole('button', { name: 'Choose Studio' }).click();
-      await page.getByRole('checkbox', { name: /^Walks/ }).check();
-      await page.getByRole('checkbox', { name: /^Film/ }).check();
-    },
-  },
-  {
-    name: 'arrival-studio',
-    label: 'Arrival: Studio (Poster, Bold sans), Walks picked',
-    steps: async (page) => {
-      await page.getByRole('button', { name: 'Choose Studio' }).click();
-      await page.getByRole('checkbox', { name: /^Walks/ }).check();
-      await page.getByRole('button', { name: 'Enter the Playground' }).click();
-      await page.locator('[data-miy-arrival]').waitFor();
-    },
-  },
-  {
-    name: 'arrival-night',
-    label: 'Arrival: Studio (Night studio, Typewriter), saved in the preview',
-    steps: async (page) => {
-      await page.getByRole('button', { name: 'Choose Studio' }).click();
-      await page.getByRole('button', { name: 'Enter the Playground' }).click();
-      await page.locator('[data-miy-arrival]').waitFor();
-      await page.getByText('Adjust colour and type').click();
-      await page.getByRole('radio', { name: 'Night studio' }).check();
-      await page.getByRole('radio', { name: 'Typewriter' }).check();
-      await page.locator('[data-miy-save]').click();
-      await page.evaluate(() => window.scrollTo(0, 0));
-    },
-  },
+  { name: 'arrival-studio-night', label: 'Studio arrival: Night studio, Typewriter, saved in the preview', url: lookUrl('studio'), steps: arrive({ palette: 'Night studio', type: 'Typewriter', save: true }) },
+  { name: 'arrival-quiet-room-lamplight', label: 'Quiet Room arrival: Lamplight, Serif and sans, saved in the preview', url: lookUrl('quiet-room'), steps: arrive({ palette: 'Lamplight', type: 'Serif and sans', save: true }) },
+  { name: 'arrival-quiet-room-sage', label: 'Quiet Room arrival: Sage', url: lookUrl('quiet-room'), steps: arrive({ palette: 'Sage', interests: [/^Music/] }) },
+  { name: 'arrival-underground-daylight', label: 'Underground arrival: Daylight, saved in the preview', url: lookUrl('underground'), steps: arrive({ palette: 'Daylight', save: true }) },
+  { name: 'arrival-underground-forest', label: 'Underground arrival: Forest, Zine mono', url: lookUrl('underground'), steps: arrive({ palette: 'Forest', type: 'Zine mono', interests: [/^Games/] }) },
   {
     name: 'arrival-skipped',
     label: 'Arrival after Skip: no look chosen (fallback style)',
+    url: lookUrl('studio'),
     steps: async (page) => {
       await page.getByRole('button', { name: 'Skip for now' }).click();
       await page.locator('[data-miy-arrival]').waitFor();
@@ -596,7 +600,7 @@ async function prototypeChecks(browser: Browser, origin: string, blocked: Set<st
   for (const width of Object.keys(WIDTHS).map(Number))
     for (const st of PROTOTYPE_STATES) {
       const ctx = await newContext(browser, origin, width, 'reduce', blocked);
-      const { page, errors } = await open(ctx, origin, '#/preview/make-it-yours');
+      const { page, errors } = await open(ctx, origin, st.url);
       await page.locator('[data-miy]').waitFor();
       await st.steps(page);
       // Under reduced motion every property has a 0.01 ms transition: let frames pass.
@@ -667,6 +671,9 @@ async function bundle() {
     entryContainsStyleGuide: /Skip to style guide/.test(entryText),
     styleGuideChunks: guide,
     entryContainsPrototype: /Prototype preview: nothing here is saved|miy-root/.test(entryText),
+    // The Quiet Room's serif is declared only in the prototype's own CSS chunk.
+    entryReferencesNewsreader: /newsreader/i.test(entryText),
+    newsreaderFiles: assets.filter((f) => /newsreader/i.test(f)),
     prototypeChunks: prototype,
   };
 }
@@ -694,7 +701,7 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
       `- ${a.applied && a.nameplate.pass && !a.axe.length && a.overflowPx <= 1 && !a.pageErrors.length ? '✅' : '❌'} ${a.atmosphere} @ ${a.width}px: ${a.applied ? 'applied' : 'NOT APPLIED'}; nameplate ${a.nameplate.lines} line(s)${a.nameplate.broken.length ? `, BROKEN: ${a.nameplate.broken.join(', ')}` : ', no broken words'}; axe ${a.axe.length ? a.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${a.overflowPx}px${a.offenders.length ? ` (${a.offenders.join(', ')})` : ''}; errors ${a.pageErrors.length ? a.pageErrors.join(' / ') : 'none'} (${a.files.map((f) => `[${f}](${f})`).join(' · ')})`,
     );
   L.push('');
-  L.push('## Make It Yours prototype (Creative Slice 02, B1)', '');
+  L.push('## Make It Yours prototype (Creative Slice 02)', '');
   for (const p of r.prototype)
     L.push(
       `- ${!p.broken.length && !p.axe.length && p.overflowPx <= 1 && !p.pageErrors.length ? '✅' : '❌'} ${p.label} @ ${p.width}px: axe ${p.axe.length ? p.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${p.overflowPx}px${p.offenders.length ? ` (${p.offenders.join(', ')})` : ''}; ${p.broken.length ? `BROKEN words: ${p.broken.join(', ')}` : 'no broken words'}; errors ${p.pageErrors.length ? p.pageErrors.join(' / ') : 'none'} (${p.files.map((f) => `[${f}](${f})`).join(' · ')})`,
@@ -708,6 +715,7 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
   L.push('', '## Fonts and bundle', '');
   L.push(`- ${r.home.pass ? '✅' : '❌'} The app shell (#/) requests no Caveat files (${r.home.requests} requests, loaded: ${r.home.loaded})`);
   L.push(`- ${r.bundle.entryReferencesCaveat ? '❌' : '✅'} App entry files (${r.bundle.entryFiles.join(', ')}) declare no Caveat font files`);
+  L.push(`- ${r.bundle.entryReferencesNewsreader || r.bundle.newsreaderFiles.length !== 3 ? '❌' : '✅'} The Quiet Room's serif (Newsreader) is self-hosted and declared only by the prototype chunk: ${r.bundle.newsreaderFiles.join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsPrototype || !r.bundle.prototypeChunks.length ? '❌' : '✅'} The prototype is a separate chunk: ${r.bundle.prototypeChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsStyleGuide ? '❌' : '✅'} The style guide is a separate chunk: ${r.bundle.styleGuideChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ')}`);
   L.push(`- Caveat Bold, Latin: ${r.bundle.caveatLatinBold.map((c) => `${c.file} ${c.bytes} B`).join(', ')} (budget ${FONT_BUDGET} B; WOFF2 is already compressed)`);
@@ -754,6 +762,7 @@ async function run() {
       (b.entryContainsStyleGuide ? 1 : 0) +
       prototype.reduce((n, p) => n + p.broken.length + p.axe.length + (p.overflowPx > 1 ? 1 : 0) + p.pageErrors.length, 0) +
       (b.entryContainsPrototype || !b.prototypeChunks.length ? 1 : 0) +
+      (b.entryReferencesNewsreader || b.newsreaderFiles.length !== 3 ? 1 : 0) +
       (fontOk ? 0 : 1);
     return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, prototype, home, bundle: b, blockedHosts: [...blocked].sort() };
   } finally {

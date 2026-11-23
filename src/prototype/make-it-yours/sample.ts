@@ -112,3 +112,9 @@ export function feedback(a: Arrangement): string {
   if (!a.matched) return `Nothing in this sample matches ${list(a.picked.map((i) => i.label))} yet. The cover keeps a mix instead.`;
   return `${a.matched} of ${total} sample ideas match. ${a.featured.exp.name} now leads the cover.${none}`;
 }
+
+/** "Matches Walks, History": what an idea matches, or nothing. */
+export const matchText = (x: Idea) => (x.matches.length ? `Matches ${x.matches.map((m) => m.label).join(', ')}` : '');
+
+/** The sample idea that takes the least time (for the arrival's "short on time?" line). */
+export const quickest = () => SAMPLE.reduce((q, e) => (e.duration.max < q.duration.max ? e : q), SAMPLE[0]);

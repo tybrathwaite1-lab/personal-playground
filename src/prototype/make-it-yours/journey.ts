@@ -15,8 +15,6 @@ export interface Look {
   id: LookId;
   name: string;
   line: string;
-  /** Built in this prototype build (B1 builds the Studio; B2 the other two). */
-  built: boolean;
   palettes: { id: string; name: string }[];
   types: { id: string; name: string }[];
 }
@@ -26,7 +24,6 @@ export const LOOKS: Look[] = [
     id: 'studio',
     name: 'Studio',
     line: 'Curious, playful and colourful.',
-    built: true,
     palettes: [
       { id: 'poster', name: 'Poster' },
       { id: 'sherbet', name: 'Sherbet' },
@@ -37,8 +34,34 @@ export const LOOKS: Look[] = [
       { id: 'mono', name: 'Typewriter' },
     ],
   },
-  { id: 'quiet-room', name: 'The Quiet Room', line: 'Warm, spacious and unhurried.', built: false, palettes: [], types: [] },
-  { id: 'underground', name: 'The Underground', line: 'Expressive, tactile and eclectic.', built: false, palettes: [], types: [] },
+  {
+    id: 'quiet-room',
+    name: 'The Quiet Room',
+    line: 'Warm, spacious and unhurried.',
+    palettes: [
+      { id: 'linen', name: 'Linen' },
+      { id: 'sage', name: 'Sage' },
+      { id: 'lamplight', name: 'Lamplight' },
+    ],
+    types: [
+      { id: 'book', name: 'Book serif' },
+      { id: 'serif-sans', name: 'Serif and sans' },
+    ],
+  },
+  {
+    id: 'underground',
+    name: 'The Underground',
+    line: 'Expressive, tactile and eclectic.',
+    palettes: [
+      { id: 'newsstand', name: 'Newsstand' },
+      { id: 'daylight', name: 'Daylight' },
+      { id: 'forest', name: 'Forest' },
+    ],
+    types: [
+      { id: 'poster', name: 'Poster condensed' },
+      { id: 'zine', name: 'Zine mono' },
+    ],
+  },
 ];
 
 export const lookById = (id: LookId) => LOOKS.find((l) => l.id === id)!;
@@ -61,7 +84,7 @@ export function parsePlace(params: URLSearchParams): Place {
   const step = (STEPS as string[]).includes(params.get('step') ?? '') ? (params.get('step') as Step) : 'look';
   const view = isLook(params.get('look')) ? (params.get('look') as LookId) : LOOKS[0].id;
   const s = params.get('sample');
-  const sample = step !== 'interests' && s && (SAMPLE_IDS as readonly string[]).includes(s) && (step === 'arrival' || lookById(view).built) ? s : null;
+  const sample = step !== 'interests' && s && (SAMPLE_IDS as readonly string[]).includes(s) ? s : null;
   return { step, view, sample };
 }
 

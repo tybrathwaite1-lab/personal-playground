@@ -25,15 +25,7 @@ export function LookStep({ journey }: { journey: Journey }) {
 
       <div className="miy-look-body">
         <figure className="miy-stage" aria-label={`Sample cover in the ${look.name} look`}>
-          {look.built ? (
-            <Cover look={look.id} a={a} mode="preview" />
-          ) : (
-            <div className="miy-unbuilt" data-miy-unbuilt="">
-              <p className="miy-unbuilt-name">{look.name}</p>
-              <p>This look isn’t built in this prototype yet. It arrives in the next build.</p>
-              <p className="miy-small">Use Next or Previous to keep browsing, or skip for now.</p>
-            </div>
-          )}
+          <Cover look={look.id} palette={journey.custom?.palette} a={a} mode="preview" />
         </figure>
 
         <div className="miy-look-controls">
@@ -45,20 +37,22 @@ export function LookStep({ journey }: { journey: Journey }) {
               Next look<span className="sr-only">: {next.name}</span>
             </button>
           </nav>
-          {look.built && (
-            <div className="miy-actions">
-              <button type="button" className="miy-button miy-button-primary" onClick={() => {
-                  dispatch({ type: 'choose-look', look: look.id });
-                  go({ step: 'interests' });
-                }}>
-                Choose {look.name}
-              </button>
-              <a className="miy-button" href={placeHref({ step: 'look', view: look.id, sample: a.featured.exp.id })} data-miy-open-sample="">
-                Open a sample idea
-              </a>
-            </div>
-          )}
-          {look.built && <Customise journey={journey} look={look.id} />}
+          <div className="miy-actions">
+            <button
+              type="button"
+              className="miy-button miy-button-primary"
+              onClick={() => {
+                dispatch({ type: 'choose-look', look: look.id });
+                go({ step: 'interests' });
+              }}
+            >
+              Choose {look.name}
+            </button>
+            <a className="miy-button" href={placeHref({ step: 'look', view: look.id, sample: a.featured.exp.id })} data-miy-open-sample="">
+              Open a sample idea
+            </a>
+          </div>
+          <Customise journey={journey} look={look.id} />
           <div className="miy-skip-row">
             <button
               type="button"
