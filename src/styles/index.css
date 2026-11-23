@@ -201,6 +201,7 @@
      (≈ 8.6em for "Personal Playground."), sized from the column, so it never wraps or overflows. */
   .nameplate {
     font-size: clamp(2.75rem, 12vw, 10rem);
+    line-height: 0.92; /* stacked lines of caps need a breath more than the 0.85 cover leading */
   }
   @supports (width: 1cqi) {
     .nameplate {
