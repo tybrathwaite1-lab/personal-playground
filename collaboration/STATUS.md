@@ -1,4 +1,6 @@
-# Status — 2026-11-20 (Sprint 02 "The Newsstand Effect" in progress; M1 and M2 closed; essential reliability closeout R1–R4 in progress)
+# Status — 2026-11-23 (Sprint 02 "The Newsstand Effect" in progress; M1, M2 and the reliability closeout R1–R4 complete; Creative Brief v1 next)
+
+**Current verified baseline:** `main` at `49136fa` (R4 merged 2026-11-23). Production deploy, smoke (`--expect-commit 49136fa`), Visual and browser tests (27/27), strict style guide and visual publication all passed, with **320/320** unit and integration tests. Commits and test counts further down are historical baselines unless marked current.
 
 **Sprint 02, "The Newsstand Effect", is in progress** (authorized by the owner on 2026-11-18). Sprint 01 "Make discovery dependable" is complete; production was verified at `68186d8`.
 
@@ -8,10 +10,10 @@
 - **Done:** PR 2 / #29 (graphic primitives, surface-aware controls, hidden `#/styleguide`, Caveat Bold accent). Owner-accepted at `2115aca` (zero manual defects), merged at `b8b39bc`, verified in production.
 - **Done:** M1 security and reproducibility maintenance (#31), merged at `6efcd88` and verified in production (app byte-identical).
 - **Done:** M1 closeout (#32): image scout artifact boundary, structural workflow tests, editorial image test.
-- **M1 is closed** (ChatGPT's independent post-merge verification). Baseline `main` is `483ae64`: deploy, smoke (`--expect-commit`), visual, strict style guide, action pins and the publisher all passed; 230/230 tests.
+- **M1 is closed** (ChatGPT's independent post-merge verification). The M1 baseline (historical) was `main` at `483ae64`: deploy, smoke (`--expect-commit`), visual, strict style guide, action pins and the publisher all passed; 230/230 tests.
   - The owner deleted the legacy `image-scout` branch (`cb6b8fe`); no image-scout run followed. `image-scout-results` is preserved at `71efe69`.
   - The hardened image-scout workflow has not run for real; that waits for owner authorization.
-- **M2 test harness (in progress):** the plan is approved; the order is M2-1 → M2-2 → M2-7 → M2-3 → M2-4 → M2-5 → M2-6.
+- **M2 test harness (closed):** the approved order was M2-1 → M2-2 → M2-7 → M2-3 → M2-4 → M2-5 → M2-6; all are merged and verified.
   - **M2-1 (test integrity) is closed:** PR #34 merged, `main` at `168f514`, post-merge checks passed.
   - **M2-2 (workflow security tests) is closed:** PR #35 merged, `main` at `4571b5b`, post-merge checks passed.
   - **M2-7 (blocking lint) is closed:** PR #36 merged, `main` at `f499a5b`, post-merge checks passed.
@@ -24,10 +26,10 @@
   - **R1 is closed:** PR #42 merged as `b06c203`; production verified (ingest wrote `pulse.json`, previous snapshot validated with nothing left out, SPAA carry-over continuing).
   - **R2 is closed:** PR #43 merged as `183c395`; production smoke passed in ~1 s against `183c395` and exited promptly.
   - **R3 is closed:** PR #44 merged as `7ee7698`; production verified (deploy, smoke, visual, style guide and publish all passed).
-  - **R4 (strict repository-name parsing) is in review**, the last closeout item. See HANDOFF. Creative implementation waits until R4 is merged and verified.
+  - **R4 is closed:** PR #45 merged as `49136fa`; production verified.
+  - **The reliability closeout (R1–R4) is complete.** Creative implementation hasn't started; the owner and ChatGPT will prepare and approve Creative Brief v1 before the next implementation PR.
   - **Tracked separately:** low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
-  - **Separate reliability follow-up (not started):** the informational production smoke step in Check has no fetch or job timeout and has hung for 10 minutes twice.
-- **Next:** not started; awaiting authorization. Per the approved sequence, the thin Explore hub comes before the navigation switch. Browser-based PR previews are approved in principle and deferred (see DECISIONS).
+- **Next:** Creative Brief v1, prepared and approved by the owner and ChatGPT before the next implementation PR. Nothing has started. Earlier sequencing notes still stand: the thin Explore hub comes before the navigation switch, and browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
 ## Sprint 01 — engineering (Claude): all merged
@@ -41,10 +43,12 @@
 | PP-003 Venue proximity | #4 closed | Publisher venue coordinates when plausible, precision per stop, straight-line labels, no unverified "easy walk" | [#21](https://github.com/tybrathwaite1-lab/personal-playground/pull/21) · `7265213` |
 | PP-004 Outing budget and timing | #5 closed | Combined budget, no overlaps, plan clock (overnight, same-day), drop-in vs fixed, scope disclosure, warnings vs neutral info | [#22](https://github.com/tybrathwaite1-lab/personal-playground/pull/22) · `68186d8` |
 
-**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** at Sprint 01 close (`68186d8`). **Current count on main: 230** (all passing, at `483ae64`). Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
+**Automated tests:** 24 at Sprint 01 start (`28607a2`) → **142** at Sprint 01 close (`68186d8`) → 230 at the M1 baseline (`483ae64`). **Current on main (`49136fa`): 320 unit and integration tests plus 27 browser scenarios, all passing.** Every Sprint 01 safeguard was mutation-checked: removing it makes at least one test fail.
 
 ## Production (verified)
-Latest: deploy of main `483ae64` (PR #32, run 44438959858): build ✅ (230/230), deploy ✅, smoke ✅ (`--expect-commit 483ae64`; bundle `index-BCRZKX9R.js`, unchanged since PR #29). Pulse 6/7 sources (SPAA 403, carried over).
+**Current:** deploy of main `49136fa` (PR #45, run 45252119246): build ✅ (320/320), deploy ✅, smoke ✅ (`--expect-commit 49136fa`). Visual check 45252119205 (27/27 browser scenarios), style guide 45252119318 (0 findings) and publish 45253042152 all passed. Pulse 121 events from 6/7 sources (SPAA HTTP 403, 18 carried over). Branch protection now also requires `Visual and browser tests` alongside `check`.
+
+Historical, M1 baseline: deploy of main `483ae64` (PR #32, run 44438959858): build ✅ (230/230), deploy ✅, smoke ✅ (`--expect-commit 483ae64`; bundle `index-BCRZKX9R.js`, unchanged since PR #29). Pulse 6/7 sources (SPAA 403, carried over).
 
 Earlier: deploy of main `b8b39bc` (PR #29, [run 44410662810](https://github.com/tybrathwaite1-lab/personal-playground/actions/runs/44410662810)):
 - **Branch protection:** the active "Protect main" ruleset (#27562180) requires a pull request and the `check` CI job, blocks deletion and non-fast-forward updates, and has no bypass actors. `check` passed on the accepted commit `2115aca`. ChatGPT inspected the ruleset on 2026-11-18.
@@ -72,7 +76,7 @@ Open issues: PP-005 #6, PP-006 #7, PP-007 #8, PP-009 #10, PP-010 #11, PP-011 #12
 - PR 2 style guide: manual Safari (macOS and iOS, real device), zoom and reduced-motion acceptance **done** (owner, 2026-11-18).
 - Real-device mobile/offline behavior, real-device sync, and visual review of the new planner and Pulse copy (PP-010).
 - Reproducible-build lockfile (PP-011): done (#27). Follow-ups (Node metadata, authenticated action SHAs) were done in M1 (#31).
-- **Pulse source degradation (SPAA):** the St. Petersburg Arts Alliance calendar has returned HTTP 403 to CI since about 19:19 UTC on 2026-11-18 (3 consecutive deploys). Its last listings are carried over, marked stale, and drop off as they expire. Reassess around 2026-11-20. The source's access restrictions will not be circumvented; if it persists, contact the publisher.
+- **Pulse source degradation (SPAA):** the St. Petersburg Arts Alliance calendar has returned HTTP 403 to CI since about 19:19 UTC on 2026-11-18. It was reassessed on 2026-11-20 and is still 403 as of the `49136fa` deploy. Its listings are carried over, marked stale, and drop off as they expire: 23, then 20, now 18. The source's access restrictions will not be circumvented; the suggested next step is contacting the publisher.
 - Recurrence expansion (PP-007).
 - The React sync hook's stale-state guard is code-reviewed only.
 
