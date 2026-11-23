@@ -30,7 +30,7 @@ Baseline: `main` at `7ee7698` (R3 merged and verified in production). This is th
   - **Rejected:** everything else. That includes other hosts and look-alikes, extra path segments, queries, fragments, credentials, ports, spaces and empty parts. The form shows its existing "Enter the repository as owner/name" message.
 - **Tests:** the old test with its loose-parsing characterization is replaced by:
   - 18 accepted forms;
-  - 41 rejected inputs (incomplete, foreign or look-alike hosts, extra paths, query, fragment, credentials, port, invalid names, length limits);
+  - 39 rejected inputs (incomplete, foreign or look-alike hosts, extra paths, query, fragment, credentials, port, invalid names, length limits);
   - `sameConfig`, unchanged.
 - **Mutations:** 6 caught, each reverted:
   - URL host not anchored;
