@@ -1,6 +1,40 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R2: production smoke reliability)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R3: malformed GitHub responses)
+
+Baseline: `main` at `183c395` (R2 merged and verified in production).
+
+- **R2 production verification:** deploy run 45247566445 for `183c395` succeeded.
+  - The smoke step took ~1 s (job 16 s). It reported the deployed commit `183c395`, matching, and passed.
+  - **Exit:** the process exited promptly.
+  - **Open-resource diagnostics (recorded as an observation):** both runs of the new script against the live site logged `still open at exit (closed by exiting): PipeWrap, PipeWrap`: the informational Check run on 2026-11-23 and this deploy. These are pipes, most likely the parent/child process link from running under `npx tsx`, not HTTP sockets. The explicit exit now closes them.
+  - **Root cause still not proven:** the historical ~10-minute tail wasn't reproduced, so this is consistent with, but not proof of, the old tail being held by those pipes or by kept-alive connections.
+  - **Failure path:** failures still exit non-zero, with exit 1 for a stalled bundle locally and in the unit tests. The `timeout-minutes` limits (smoke job 10, informational Check step 5) are in the workflows on `main`.
+- **Issue confirmed** (M2-4 defect 2). `readRemote`/`writeRemote` parsed reply bodies outside their error handling:
+  - **Malformed 200** (a proxy's HTML page, `null`): escaped as a raw `SyntaxError`/`TypeError`.
+  - **Read without a `sha`:** returned as usable content with `sha: undefined`. The next write is based on that sha, so it would have been sent without one.
+  - **Write reply without the new `sha`:** returned `''` as if saved.
+  - `verifyRepo` already failed closed on malformed replies (unchanged).
+- **Fix** (`src/utils/github.ts`):
+  - **`replyObject()`:** an unreadable or non-object reply is a typed `SyncError` (kind `network`), never a raw exception.
+  - **`readRemote`:** requires a non-empty string `sha`. Content of the wrong type is "too large or unreadable" (`format`), as empty content already was.
+  - **`writeRemote`:** requires the new file's `sha`. Otherwise it reports "GitHub's reply to the save couldn't be read, so it isn't confirmed. Nothing on this device was changed" (`network`).
+  - **Effect of an unconfirmed write:** the round stops without applying anything locally and isn't retried as a conflict. The next round re-reads and reconciles (a write that did land is then merged as remote data).
+  - **Unchanged:** privacy checks, conflict handling (409/422), stale-round checks and local-data safeguards.
+- **Tests** (`tests/github-sync-utils.test.ts`): the two defect characterizations are replaced by 3 regression tests:
+  - 8 malformed read replies are typed errors, and wrong-type content is a `format` error;
+  - 9 malformed write replies are "not confirmed";
+  - through `syncOnce`, an unconfirmed write stops the round with one write attempt and nothing applied.
+- **Mutation evidence:**
+  - Caught (4): read sha not required; write confirmation not required; parse errors escaping raw; unconfirmed write treated as a conflict.
+  - Equivalent (1): accepting arrays or strings as replies is observably identical, because such replies have no usable `sha` and are rejected by the field checks with the same error. The object check stays as a clear first guard.
+- **Limitations:**
+  - An unconfirmed write may in fact have been saved; the next sync reconciles it.
+  - The user sees an error for that round, by design: nothing is assumed saved without GitHub's confirmation.
+
+---
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (R2: production smoke reliability)
 
 Baseline: `main` at `b06c203` (R1 merged and verified in production).
 

@@ -2,10 +2,13 @@
  * M2-4: GitHub sync utilities (src/utils/github.ts) against mocked responses. Synthetic
  * credentials only; `fetch` is replaced for each call, so no request leaves the process.
  * (verifyRepo's privacy checks are covered in sync-safeguards.test.ts.)
+ * R3: malformed replies (unreadable JSON, missing sha, unexpected structure) are typed errors.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadConfig, parseRepo, readRemote, sameConfig, saveConfig, SyncError, writeRemote, type SyncConfig } from '../src/utils/github.ts';
+import { syncOnce } from '../src/utils/syncRun.ts';
+import { EMPTY_META } from '../src/utils/sync.ts';
 import type { RemoteFile } from '../src/utils/sync.ts';
 import { MemoryStorage, withStorage } from './helpers/memory-storage.ts';
 
@@ -109,14 +112,26 @@ test('readRemote: unreadable or foreign file content is a "format" error', async
   }
 });
 
-test('characterization (defect): a malformed 200 response escapes as a raw error, not a SyncError', async () => {
-  // readRemote parses the response body outside its try/catch. Sync still stops (nothing is
-  // written), but the user sees the raw parser message instead of a typed, explained error.
-  const html = await withFetch(() => new Response('<html>proxy error</html>', { status: 200 }), () => readRemote(CFG));
-  assert.equal(html.result.ok, false);
-  assert.ok(html.result.ok === false && html.result.e instanceof SyntaxError && !(html.result.e instanceof SyncError));
-  const nul = await withFetch(() => json(null), () => readRemote(CFG));
-  assert.ok(nul.result.ok === false && nul.result.e instanceof TypeError);
+test('readRemote: a malformed reply is a typed error, never a raw exception (R3)', async () => {
+  const good = wrapped(JSON.stringify(FILE));
+  const cases: [string, () => Response][] = [
+    ['HTML from a proxy', () => new Response('<html>proxy error</html>', { status: 200 })],
+    ['empty body', () => new Response('', { status: 200 })],
+    ['JSON null', () => json(null)],
+    ['JSON array', () => json([{ sha: 's', content: good }])],
+    ['JSON string', () => json('ok')],
+    ['no sha', () => json({ content: good })],
+    ['empty sha', () => json({ sha: '', content: good })],
+    ['non-string sha', () => json({ sha: 42, content: good })],
+  ];
+  for (const [name, respond] of cases) {
+    const { result } = await withFetch(respond, () => readRemote(CFG));
+    assert.equal(result.ok, false, name);
+    syncErr(result, 'network', /reply about the data file that couldn’t be read/);
+  }
+  // Content of the wrong type is unreadable content, as an empty one already was.
+  const { result } = await withFetch(() => json({ sha: 's', content: 42 }), () => readRemote(CFG));
+  syncErr(result, 'format', /too large or unreadable/);
 });
 
 // ─── writeRemote ─────────────────────────────────────────────────────
@@ -166,13 +181,47 @@ test('writeRemote: authorization, missing repo, server and network failures are 
   syncErr(offline.result, 'network');
 });
 
-test('characterization (defect): a successful write with an unreadable response reports failure', async () => {
-  // The file was written, but parsing the confirmation throws a raw SyntaxError, so this round
-  // reports an error; the next sync reconciles. A missing sha in the reply returns ''.
-  const bad = await withFetch(() => new Response('not json', { status: 200 }), () => writeRemote(CFG, FILE, 'sha'));
-  assert.ok(bad.result.ok === false && bad.result.e instanceof SyntaxError);
-  const noSha = await withFetch(() => json({}), () => writeRemote(CFG, FILE, 'sha'));
-  assert.ok(noSha.result.ok && noSha.result.v === '');
+test('writeRemote: a 2xx without a readable confirmation is a typed "not confirmed" error (R3)', async () => {
+  const cases: [string, () => Response][] = [
+    ['not JSON', () => new Response('not json', { status: 200 })],
+    ['empty body', () => new Response('', { status: 201 })],
+    ['JSON null', () => json(null)],
+    ['JSON array', () => json([])],
+    ['no content', () => json({})],
+    ['content null', () => json({ content: null })],
+    ['no sha', () => json({ content: {} })],
+    ['empty sha', () => json({ content: { sha: '' } })],
+    ['non-string sha', () => json({ content: { sha: 7 } })],
+  ];
+  for (const [name, respond] of cases) {
+    const { result } = await withFetch(respond, () => writeRemote(CFG, FILE, 'sha'));
+    assert.equal(result.ok, false, name);
+    syncErr(result, 'network', /isn’t confirmed/);
+  }
+});
+
+test('an unconfirmed write stops the round without applying anything, and is not retried as a conflict', async () => {
+  let applied = 0;
+  let writes = 0;
+  const run = withFetch(
+    () => {
+      writes++;
+      return new Response('<html>gateway</html>', { status: 200 });
+    },
+    () =>
+      syncOnce(CFG, {
+        verify: async () => undefined,
+        read: async () => ({ file: null, sha: null }),
+        write: (c, f, sha) => writeRemote(c, f, sha),
+        getLocal: () => ({ entries: { 'fieldNotes:fn-1': { id: 'fn-1' } }, meta: { ...EMPTY_META, stamps: { 'fieldNotes:fn-1': 1 } }, version: 1 }),
+        apply: () => (applied++, true),
+        stillCurrent: () => true,
+      }),
+  );
+  const { result } = await run;
+  syncErr(result, 'network', /isn’t confirmed/);
+  assert.equal(writes, 1, 'one write attempt; not looped as a conflict');
+  assert.equal(applied, 0, 'local data is not replaced by an unconfirmed round');
 });
 
 // ─── Configuration ───────────────────────────────────────────────────

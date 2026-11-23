@@ -113,6 +113,24 @@ export async function verifyRepo(c: SyncConfig): Promise<void> {
   }
 }
 
+/**
+ * A GitHub API reply as a JSON object. Anything else (an HTML page from a proxy, `null`, an
+ * array) is a typed error, never a raw parser exception: nothing is applied or assumed.
+ */
+async function replyObject(res: Response, message: string): Promise<Record<string, unknown>> {
+  let v: unknown;
+  try {
+    v = await res.json();
+  } catch {
+    v = undefined;
+  }
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new SyncError(message, 'network');
+  return v as Record<string, unknown>;
+}
+const nonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
+const UNREADABLE_READ = 'GitHub sent a reply about the data file that couldn’t be read. Nothing was changed — try Sync now in a moment.';
+const UNCONFIRMED_WRITE = 'GitHub’s reply to the save couldn’t be read, so it isn’t confirmed. Nothing on this device was changed — tap Sync now to check.';
+
 const toB64 = (s: string) => {
   const bytes = new TextEncoder().encode(s);
   let bin = '';
@@ -128,8 +146,10 @@ export async function readRemote(c: SyncConfig): Promise<{ file: RemoteFile | nu
     return { file: null, sha: null };
   }
   if (!res.ok) throw explain(res.status, 'read the data file');
-  const j = (await res.json()) as { content?: string; sha: string };
-  if (!j.content) throw new SyncError('The data file on GitHub is too large or unreadable.', 'format');
+  const j = await replyObject(res, UNREADABLE_READ);
+  // The sha is what the next write is based on; without it a write can't be made safely.
+  if (!nonEmptyString(j.sha)) throw new SyncError(UNREADABLE_READ, 'network');
+  if (!nonEmptyString(j.content)) throw new SyncError('The data file on GitHub is too large or unreadable.', 'format');
   let parsed: unknown;
   try {
     parsed = JSON.parse(fromB64(j.content));
@@ -152,6 +172,9 @@ export async function writeRemote(c: SyncConfig, file: RemoteFile, sha: string |
     body: JSON.stringify(body),
   });
   if (!res.ok) throw explain(res.status, 'write the data file');
-  const j = (await res.json()) as { content?: { sha?: string } };
-  return j.content?.sha ?? '';
+  // A 2xx without a readable confirmation (the new file's sha) is not treated as saved.
+  const j = await replyObject(res, UNCONFIRMED_WRITE);
+  const newSha = j.content && typeof j.content === 'object' ? (j.content as { sha?: unknown }).sha : undefined;
+  if (!nonEmptyString(newSha)) throw new SyncError(UNCONFIRMED_WRITE, 'network');
+  return newSha;
 }
