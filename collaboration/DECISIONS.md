@@ -227,3 +227,8 @@ Earlier decisions stay in force where compatible. Nothing below is silently reco
 - **Publishing gates.** Image rights, verified content and relationship quality are acceptance gates. Link failures get a human decision rather than an indiscriminate automatic block.
 - **Security maintenance.** The `ThreadPanel` node-URL hardening is a separate maintenance candidate. It is not a confirmed exploit, since all current URLs are https.
 
+## 2026-11-24 — D-N authorised: thread-node URL hardening (security maintenance)
+- The owner authorised D-N as a standalone, preventive maintenance PR. It is not the discovery foundation or Phase 3.4.
+- Thread nodes are now validated at build (required fields; https URLs passing `isSafeUrl`), and invalid ones are left out of `drop.json`. `ThreadPanel` renders node links only when `isSafeUrl` passes.
+- Link *availability* checks and the content gate (D-D) are unchanged and still open.
+

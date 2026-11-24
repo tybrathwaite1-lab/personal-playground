@@ -4,6 +4,7 @@
  */
 import type { DropEdition, ThreadNode } from '../types/drop';
 import { COLUMN_META } from '../types/drop';
+import { isSafeUrl } from './helpers';
 
 export interface Issue {
   path: string;
@@ -20,6 +21,20 @@ const PERSONAL = /\byour (favou?rite|era|list)\b|\bon your list\b|\byou already 
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
+
+/** An absolute https URL with no whitespace that also passes the app's URL safety check. */
+function isHttpsUrl(v: unknown): v is string {
+  return typeof v === 'string' && /^https:\/\/[^\s]+$/.test(v) && isSafeUrl(v) && new URL(v).protocol === 'https:';
+}
+
+/** Relations (on items and thread nodes): each needs to, relation, note and a fact/editorial basis. */
+function checkRelations(related: unknown[], p: string, err: (path: string, message: string) => void) {
+  related.forEach((r, j) => {
+    const rp = `${p}.related[${j}]`;
+    if (!isObj(r) || !str(r.to) || !str(r.relation) || !str(r.note)) return err(rp, 'needs to, relation and note');
+    if (!['fact', 'editorial'].includes(r.basis as string)) err(`${rp}.basis`, 'must be fact or editorial');
+  });
+}
 
 function validDate(s: unknown): boolean {
   if (typeof s !== 'string' || !YMD.test(s)) return false;
@@ -91,12 +106,7 @@ export function validateEdition(raw: unknown, ctx: { knownImages?: Set<string>; 
     if (item.exploreMinutes !== undefined && !(Number.isInteger(item.exploreMinutes) && (item.exploreMinutes as number) > 0))
       err(`${p}.exploreMinutes`, 'must be a positive whole number');
     if (item.image !== undefined && ctx.knownImages && !ctx.knownImages.has(item.image as string)) warn(`${p}.image`, `image "${item.image}" isn't in the image registry — a typographic placeholder will show`);
-    if (Array.isArray(item.related))
-      (item.related as unknown[]).forEach((r, j) => {
-        const rp = `${p}.related[${j}]`;
-        if (!isObj(r) || !str(r.to) || !str(r.relation) || !str(r.note)) return err(rp, 'needs to, relation and note');
-        if (!['fact', 'editorial'].includes(r.basis as string)) err(`${rp}.basis`, 'must be fact or editorial');
-      });
+    if (Array.isArray(item.related)) checkRelations(item.related as unknown[], p, err);
     if (isObj(item.local)) {
       const l = item.local as { placeId?: string; communityId?: string };
       if (l.placeId && ctx.knownPlaces && !ctx.knownPlaces.has(l.placeId)) err(`${p}.local.placeId`, `unknown place "${l.placeId}"`);
@@ -110,6 +120,58 @@ export function validateEdition(raw: unknown, ctx: { knownImages?: Set<string>; 
       if (!isObj(c) || !validDate(c.date) || !str(c.note)) err(`corrections[${i}]`, 'needs date (YYYY-MM-DD) and note');
     });
   return { errors, warnings };
+}
+
+// ─── Thread nodes ────────────────────────────────────────────────────
+/** Every ThreadNode type; the Record makes the compiler insist the list stays complete. */
+const NODE_TYPES: Record<ThreadNode['type'], true> = {
+  artist: true,
+  album: true,
+  game: true,
+  film: true,
+  anime: true,
+  manga: true,
+  brand: true,
+  designer: true,
+  person: true,
+  studio: true,
+  event: true,
+  website: true,
+  project: true,
+  hardware: true,
+  movement: true,
+  book: true,
+};
+
+/**
+ * Validates content/drop/nodes.json (the thread library). Returns only the nodes that pass, so
+ * the build never ships a malformed or unsafe one; each failure is an error (blocking with
+ * --strict). Required: kebab-case id, title, a known type and a summary. Optional: year (text),
+ * url (absolute https only, also passing isSafeUrl) and related (as on items). Unknown extra
+ * fields are left alone. Id collisions are checked by validateLibrary.
+ */
+export function validateNodes(raw: unknown): ValidationResult & { nodes: ThreadNode[] } {
+  const errors: Issue[] = [];
+  const warnings: Issue[] = [];
+  if (!Array.isArray(raw)) return { errors: [{ path: 'nodes', message: 'must be an array of thread nodes' }], warnings, nodes: [] };
+  const nodes: ThreadNode[] = [];
+  raw.forEach((n: unknown, i: number) => {
+    const before = errors.length;
+    const err = (path: string, message: string) => void errors.push({ path, message });
+    const p = `nodes[${i}]${isObj(n) && typeof n.id === 'string' ? ` (${n.id})` : ''}`;
+    if (!isObj(n)) return err(p, 'must be an object');
+    if (!str(n.id) || !KEBAB.test(n.id as string)) err(`${p}.id`, 'must be kebab-case');
+    for (const k of ['title', 'summary']) if (!str(n[k])) err(`${p}.${k}`, 'is required');
+    if (typeof n.type !== 'string' || !Object.prototype.hasOwnProperty.call(NODE_TYPES, n.type)) err(`${p}.type`, `unknown type "${String(n.type)}"`);
+    if (n.year !== undefined && !str(n.year)) err(`${p}.year`, 'must be text when present');
+    if (n.url !== undefined && !isHttpsUrl(n.url)) err(`${p}.url`, 'must be an https URL');
+    if (n.related !== undefined) {
+      if (!Array.isArray(n.related)) err(`${p}.related`, 'must be an array');
+      else checkRelations(n.related as unknown[], p, err);
+    }
+    if (errors.length === before) nodes.push(n as unknown as ThreadNode);
+  });
+  return { errors, warnings, nodes };
 }
 
 /** Checks across all editions + thread nodes: unique issues/slugs/ids and resolvable relations. */

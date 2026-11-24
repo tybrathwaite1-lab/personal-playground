@@ -89,7 +89,6 @@ const BUILDERS = new Set(['href', 'directionsLink', 'mapsLink', 'placeHref']);
 const REVIEWED: Record<string, string> = {
   'src/components/EditorialImage.tsx: meta.sourceUrl': 'bundled: editorial image credits in src/data/images.ts',
   'src/pages/Drop.tsx: s.url': 'bundled: Drop sources, https-only per the Drop validator',
-  'src/pages/Drop.tsx: current.url': 'bundled: Drop items, https-only per the Drop validator',
   'src/pages/Drop.tsx: c.url': 'bundled: Drop items, https-only per the Drop validator',
   'src/pages/Pulse.tsx: s.homepage': 'bundled: Pulse source list (src/data/pulseSources.ts) mirrored into pulse.json by CI',
   'src/pages/Pulse.tsx: c.website': 'bundled: communities (src/data/communities.ts)',
@@ -218,6 +217,7 @@ test('every JSX href is a constant, a trusted builder, guarded by isSafeUrl, or 
     'src/components/ExperienceCard.tsx: l.url',
     'src/components/PlaceCard.tsx: place.website',
     ...PERSONAL_DATA_BOUNDARIES.map((b) => `${b.file}: ${b.expr}`),
+    ...CONTENT_BOUNDARIES.map((b) => `${b.file}: ${b.expr}`),
     'src/pages/Pulse.tsx: e.url',
   ].sort());
   assert.ok(!Object.values(REVIEWED).some((why) => /DEFECT|personal/i.test(why)), 'no personal-data URL is a reviewed exception');
@@ -238,8 +238,15 @@ const PERSONAL_DATA_BOUNDARIES = [
   { file: 'src/pages/Plan.tsx', expr: 'e.links[0].url', guard: '(isSafeUrl(e.links[0].url) ? (', unguarded: '(e.links[0].url ? (' },
 ];
 
-test('the four personal-data URL boundaries are guarded, and removing any guard is caught', () => {
-  for (const b of PERSONAL_DATA_BOUNDARIES) {
+/**
+ * Content boundaries guarded as defence in depth: the URL comes from the published Drop data,
+ * already validated at build, but the link is still rendered only when isSafeUrl passes. The
+ * thread panel shows thread nodes too (content/drop/nodes.json).
+ */
+const CONTENT_BOUNDARIES = [{ file: 'src/pages/Drop.tsx', expr: 'current.url', guard: '{isSafeUrl(current.url) && (', unguarded: '{current.url && (' }];
+
+test('the four personal-data URL boundaries and the thread panel are guarded, and removing any guard is caught', () => {
+  for (const b of [...PERSONAL_DATA_BOUNDARIES, ...CONTENT_BOUNDARIES]) {
     const src = readFileSync(b.file, 'utf8');
     assert.equal(src.split(b.guard).length - 1, 1, `${b.file}: guard text found exactly once`);
     const now = scanSource(b.file, src).filter((h) => h.expr === b.expr);
