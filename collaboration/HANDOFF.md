@@ -1,6 +1,37 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 02 B1: Make It Yours prototype)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 02 B2: The Quiet Room and The Underground)
+
+Baseline: `main` at `ff89cc6` (B1 merged). This completes Creative Slice 02 as authorised for B2. It stays inside the prototype: production onboarding, the homepage, every route, personal storage, Sync, ranking, Pulse, the planner and the visual publisher's policy are untouched. No tracking, APIs or remote assets; no npm dependency (see the serif note).
+
+### The two new looks
+
+- **The Quiet Room** (warm, spacious, literary): one centred column in Newsreader, sentence case, fine rules instead of boxes, italic notes in one deep accent instead of badges. The arrival's ideas are a reading list (name beside its description, separated by hairlines) with every fourth idea set as a centred pull quote. Its sample idea reads like a short essay: an italic lede, the activities, the facts under a rule. Colour: Linen, Sage, Lamplight (dark). Type: Book serif (serif throughout) or Serif and sans (Plex Sans body).
+- **The Underground** (expressive, tactile): the app's own editorial language pushed further. Anton nameplate, the cover on a different tested surface from the page with a torn paper edge, the cover star taped on at an angle with a stamp, and ideas as a pasted-up wall of cards on varied paper stocks and angles, some taped, the first set as a poster. Its sample idea is a spread: a poster panel, a taped note, stamped fact boxes. Colour sets are choices of tested surfaces (Newsstand, Daylight, Forest), so every pair is already proven. Type: Poster condensed (Anton) or Zine mono (Plex Mono).
+- **Studio and the B1 journey are unchanged**, apart from the shared refinements below. The fallback style after Skip is unchanged too; per D3 it stays a default, never presented as a chosen look.
+
+### Same product in every look
+
+All three offer the same content (the same ten ideas, featured idea, cover lines), the same interactions (browse, sample idea, choose, interests, arrival, preview save, change look or interests), the same optional customisation (three colour sets, two type pairings) and the same accessibility checks. The browser test now compares all three arrivals and the fallback: identical landmarks, headings, destinations, actions, ideas and invitation; and no two looks may share a cover composition, heading face or page colour. A second test opens the same idea in each look and requires the same facts, each look's own layout and three different heading faces.
+
+### Creative refinements (kept small)
+
+- **Discovery variety:** three distinct idea presentations (Studio's colour cards, the Quiet Room's reading list with pull quotes, the Underground's taped wall) and three distinct sample-idea layouts.
+- **Interest feedback on phones:** the sticky bar now leads with a large count ("3 of 10 match") beside the idea now leading the cover, with the full sentence (the one announced) below. The count gives a short pop when it changes, only when motion is allowed; the text change is the real signal.
+- **A curious arrival:** one honest line under the ideas' introduction, from the data: "Short on time? Ten Quick Sketches takes 20–30 min. Or open whichever name makes you curious."
+
+### The serif (D1)
+
+Newsreader (Production Type, SIL OFL 1.1). Three Latin WOFF2 files (400, 400 italic, 500; about 70 KB together) are committed under `src/prototype/make-it-yours/fonts/` with the licence and a README recording their source (Fontsource's published files at a pinned commit, the same files as the `@fontsource/newsreader` 5.3.0 package), sizes and SHA-256 hashes. I used the files rather than the npm package because this environment couldn't reach the npm registry; it also means no dependency or lockfile change. Tests check the hashes, the licence, that only the prototype's CSS declares the face, that the app shell never requests it, and that the build emits exactly three Newsreader files outside the entry chunk. If you'd rather have it as the npm package, that's a small follow-up once someone can run `npm install`.
+
+### Evidence
+
+- Unit `tests/make-it-yours.test.ts` (10 tests): adds contrast for every Quiet Room colour set, the Underground sets as tested surfaces only, and the serif's provenance and isolation.
+- Browser `browser-tests/make-it-yours.test.ts` (13 scenarios): the keyboard journey through all three looks, all-look functional equivalence (desktop and phone), the sample idea in each look, colour and type in each look, the serif loaded only by the prototype, plus B1's feedback, Skip, hash-route and isolation scenarios.
+- Strict style guide: 19 prototype states at 390 and 1280 px (each look, its sample idea, interests and arrival; an alternative colour and type for each; the skipped arrival) with axe, overflow, broken heading words and page errors as findings; plus the serif bundle check.
+- Mutations, each caught and restored: the serif declared from elsewhere, an untested Underground surface, one look reusing another's discovery layout, a type pairing that does nothing, and the Quiet Room losing its own cover.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 02 B1: Make It Yours prototype)
 
 Baseline: `main` at `983a371` (Slice 01 merged). This implements Phase B1 of Creative Slice 02 as approved on 2026-11-23 (D1–D7 verdicts and three required refinements). It is a prototype, not production onboarding: the homepage, every existing route, personal storage, Sync, discovery ranking, Pulse and the planner are untouched. No dependencies, remote assets, tracking or APIs were added.
 

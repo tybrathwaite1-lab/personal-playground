@@ -26,11 +26,13 @@
   color-scheme: light;
 }
 .miy-root[data-miy-look='default'],
-.miy-root[data-miy-palette='night'] {
+.miy-root[data-miy-look='underground'],
+.miy-root[data-miy-palette='night'],
+.miy-root[data-miy-palette='lamplight'] {
   color-scheme: dark;
 }
-/* The app's film grain belongs to its own style, not the Studio's flat colour. */
-body:has(.miy-root[data-miy-look='studio'])::before {
+/* The app's film grain belongs to its own style, not the Studio's or the Quiet Room's. */
+body:has(.miy-root:is([data-miy-look='studio'], [data-miy-look='quiet-room']))::before {
   display: none;
 }
 /* Reduced motion: changes of look, colour and type are instant (the app's global rule only
@@ -45,7 +47,7 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   outline: 3px solid rgb(var(--miy-focus));
   outline-offset: 3px;
 }
-.miy-root[data-miy-look='default'] :focus-visible {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) :focus-visible {
   outline: 2px solid rgb(var(--focus));
   outline-offset: 2px;
 }
@@ -167,7 +169,7 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   text-transform: uppercase;
   letter-spacing: -0.04em;
 }
-.miy-root[data-miy-look='default'] :is(.miy-h1, .miy-h2) {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) :is(.miy-h1, .miy-h2) {
   font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
   font-weight: 400;
   text-transform: uppercase;
@@ -229,7 +231,7 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   cursor: pointer;
 }
 /* The fallback style's controls follow the surface they sit on, as the app's .ui-button does. */
-.miy-root[data-miy-look='default'] .miy-button {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-button {
   border-radius: 0;
   border-color: rgb(var(--fg));
   color: rgb(var(--fg));
@@ -238,17 +240,17 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
-.miy-root[data-miy-look='default'] .miy-button:hover {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-button:hover {
   background: rgb(var(--fg) / 0.1);
 }
-.miy-root[data-miy-look='default'] .miy-button-primary {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-button-primary {
   background: rgb(var(--fg));
   color: rgb(var(--surface));
 }
-.miy-root[data-miy-look='default'] .miy-button-primary:hover {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-button-primary:hover {
   background: rgb(var(--fg) / 0.9);
 }
-.miy-root[data-miy-look='default'] .miy-button[aria-pressed='true'] {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-button[aria-pressed='true'] {
   background: rgb(var(--accent));
   border-color: rgb(var(--accent));
   color: rgb(var(--surface));
@@ -276,24 +278,6 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-}
-.miy-unbuilt {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 20rem;
-  padding: 2rem;
-  border: 2px dashed currentColor;
-}
-.miy-unbuilt p {
-  margin: 0;
-  max-width: 50ch;
-}
-.miy-unbuilt-name {
-  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
-  font-size: 2rem;
-  text-transform: uppercase;
 }
 .miy-skip-row p {
   margin-top: 0;
@@ -360,22 +344,32 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   width: 0.85rem;
   height: 1.35rem;
 }
-.miy-swatch > span:nth-child(1) {
+.miy-swatch-vars > span:nth-child(1) {
   background: rgb(var(--miy-a));
 }
-.miy-swatch > span:nth-child(2) {
+.miy-swatch-vars > span:nth-child(2) {
   background: rgb(var(--miy-b));
 }
-.miy-swatch > span:nth-child(3) {
+.miy-swatch-vars > span:nth-child(3) {
   background: rgb(var(--miy-paper));
 }
 .miy-type-sample {
   width: 2.25rem;
   font-weight: 600;
 }
-.miy-type-mono {
+.miy-type-mono,
+.miy-type-zine {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-weight: 500;
+}
+.miy-type-book,
+.miy-type-serif-sans {
+  font-family: 'Newsreader', Georgia, serif;
+  font-weight: 500;
+}
+.miy-type-poster {
+  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 400;
 }
 
 /* ── Step 2: interests ───────────────────────────────────────────────── */
@@ -442,7 +436,7 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.75rem;
 }
-.miy-root[data-miy-look='default'] .miy-chip {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-chip {
   border-radius: 0;
 }
 .miy-interests-preview {
@@ -453,7 +447,58 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   line-height: 1.5;
 }
 .miy-leads {
-  margin: 0.5rem 0 1rem;
+  margin: 0;
+}
+.miy-tally-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0.75rem 0 1rem;
+}
+.miy-tally {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.25rem;
+  margin: 0;
+  padding: 0.45rem 0.5rem;
+  border: 2px solid rgb(var(--miy-ink));
+  border-radius: 0.9rem;
+  line-height: 1;
+}
+.miy-tally strong {
+  font-size: 1.9rem;
+  font-weight: 600;
+}
+.miy-tally span {
+  margin-top: 0.25rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+}
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground'], [data-miy-look='quiet-room']) .miy-tally {
+  border-radius: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .miy-tally {
+    animation: miy-pop 280ms ease-out;
+  }
+  @keyframes miy-pop {
+    from {
+      transform: scale(0.85);
+    }
+  }
+}
+.miy-curious {
+  margin: -0.75rem 0 1.75rem;
+  max-width: 60ch;
+}
+.miy-curious a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 /* On phones the preview becomes a compact bar that stays in view while you pick. */
 @media (max-width: 1023.98px) {
@@ -469,12 +514,15 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   .miy-interests-preview .miy-h2 {
     font-size: 1rem;
   }
+  .miy-tally-row {
+    margin: 0.4rem 0 0;
+  }
   .miy-feedback {
-    margin-top: 0.25rem;
-    font-size: 0.9375rem;
+    margin-top: 0.2rem;
+    font-size: 0.875rem;
+    color: rgb(var(--miy-muted));
   }
   .miy-leads {
-    margin: 0.25rem 0 0;
     font-size: 0.9375rem;
   }
   .miy-mini {
@@ -854,7 +902,7 @@ body:has(.miy-root[data-miy-look='studio'])::before {
   background: rgb(var(--miy-d));
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
-.miy-root[data-miy-look='default'] .studio-art {
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .studio-art {
   border-radius: 0;
   border-color: rgb(var(--pp-control));
 }
@@ -866,4 +914,517 @@ body:has(.miy-root[data-miy-look='studio'])::before {
 }
 .fallback-cover-mini .fallback-title {
   font-size: 2.5rem;
+}
+
+/* ── The Quiet Room ──────────────────────────────────────────────────── */
+.miy-root[data-miy-look='quiet-room'][data-miy-type='book'] {
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-size: 1.0625rem;
+}
+.miy-root[data-miy-look='quiet-room'] :is(.miy-h1, .miy-h2, .quiet-title, .quiet-star-title, .quiet-idea-name, .quiet-sample-title, .quiet-sample-h2, .quiet-also-title) {
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-button {
+  border-width: 1px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+.miy-root[data-miy-look='quiet-room'] :is(.miy-chip, .miy-customise) {
+  border-width: 1px;
+  border-radius: 2px;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-header {
+  border-bottom-width: 1px;
+}
+.miy-root[data-miy-look='quiet-room'] :is(.miy-section > .miy-h2, .miy-subline, .miy-curious) {
+  margin-inline: auto;
+  text-align: center;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-section > .miy-h2 {
+  font-size: 2rem;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-yours {
+  text-align: center;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-yours .miy-actions {
+  justify-content: center;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-yours .miy-customise {
+  margin-inline: auto;
+  text-align: left;
+}
+.quiet-cover {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 5vw, 3.5rem);
+  border-top: 1px solid rgb(var(--miy-ink));
+  border-bottom: 1px solid rgb(var(--miy-ink));
+  text-align: center;
+}
+.quiet-overline {
+  margin: 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  color: rgb(var(--miy-muted));
+}
+.quiet-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(2.6rem, 2rem + 3vw, 4.5rem);
+  line-height: 1.05;
+}
+.quiet-ornament {
+  display: block;
+  width: 3rem;
+  height: 1px;
+  margin: 2rem auto;
+  background: rgb(var(--miy-ink));
+}
+.quiet-star {
+  max-width: 32rem;
+  margin: 0 auto;
+}
+.quiet-note,
+.quiet-match {
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  color: rgb(var(--miy-a));
+}
+.quiet-note {
+  margin: 0;
+}
+.quiet-star-title {
+  margin: 0.4rem 0 0.75rem;
+  font-size: clamp(1.85rem, 1.4rem + 1.4vw, 2.6rem);
+  line-height: 1.1;
+}
+.quiet-star-text {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+.quiet-star .miy-actions {
+  justify-content: center;
+}
+.quiet-also {
+  margin-top: 2.5rem;
+}
+.quiet-also-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.0625rem;
+  font-style: italic;
+  color: rgb(var(--miy-muted));
+}
+.quiet-also ul {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.quiet-also li {
+  font-size: 1.125rem;
+}
+.quiet-also a,
+.quiet-sample a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.quiet-match {
+  display: block;
+  font-size: 0.9375rem;
+}
+.quiet-cover-mini {
+  padding: 1.5rem 1rem;
+}
+.quiet-cover-mini .quiet-title {
+  font-size: 2.1rem;
+}
+.quiet-cover-mini .quiet-ornament {
+  margin: 1rem auto;
+}
+.quiet-cover-mini .quiet-also {
+  margin-top: 1.25rem;
+}
+.quiet-ideas {
+  max-width: 50rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgb(var(--miy-ink));
+}
+.quiet-idea {
+  border-bottom: 1px solid rgb(var(--miy-ink) / 0.3);
+}
+.quiet-idea-link {
+  display: grid;
+  gap: 0.4rem 2.5rem;
+  padding: 1.6rem 0;
+  color: inherit;
+  text-decoration: none;
+}
+@media (min-width: 768px) {
+  .quiet-idea-link {
+    grid-template-columns: 16rem minmax(0, 1fr);
+  }
+  .quiet-idea-link .quiet-match {
+    grid-column: 2;
+  }
+}
+.quiet-idea-name {
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+.quiet-idea-text {
+  line-height: 1.6;
+}
+.quiet-idea-link:hover .quiet-idea-name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+.quiet-idea-quote .quiet-idea-link {
+  display: block;
+  padding: 2.75rem 1rem;
+  text-align: center;
+}
+.quiet-idea-quote .quiet-idea-text {
+  display: block;
+  max-width: 34ch;
+  margin: 0.9rem auto 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: clamp(1.35rem, 1.1rem + 1vw, 1.85rem);
+  font-style: italic;
+  line-height: 1.4;
+}
+.quiet-idea-quote .quiet-idea-text::before {
+  content: '“' / '';
+}
+.quiet-idea-quote .quiet-idea-text::after {
+  content: '”' / '';
+}
+.quiet-sample {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+.quiet-sample > .quiet-overline,
+.quiet-sample-title,
+.quiet-centre {
+  text-align: center;
+}
+.quiet-sample-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(2.5rem, 1.9rem + 3vw, 4rem);
+  line-height: 1.08;
+}
+.quiet-sample-lede {
+  margin: 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1.375rem;
+  font-style: italic;
+  line-height: 1.55;
+}
+.quiet-sample-h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.6rem;
+}
+.quiet-sample-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.75;
+}
+.quiet-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2.5rem 0 0;
+  padding: 1.25rem 0;
+  border-top: 1px solid rgb(var(--miy-ink));
+  border-bottom: 1px solid rgb(var(--miy-ink));
+  text-align: center;
+}
+.quiet-facts dt {
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  color: rgb(var(--miy-muted));
+}
+.quiet-facts dd {
+  margin: 0.25rem 0 0;
+}
+.miy-root[data-miy-look='quiet-room'] .miy-sample-note,
+.miy-root[data-miy-look='quiet-room'] .miy-back {
+  display: block;
+  margin-inline: auto;
+  max-width: 40rem;
+  text-align: center;
+}
+.miy-sample-note {
+  margin-top: 2.5rem;
+}
+
+/* ── The Underground ─────────────────────────────────────────────────── */
+/* Secondary text follows the surface it sits on (the cover star, cards), like its controls. */
+.miy-root:is([data-miy-look='default'], [data-miy-look='underground']) .miy-small {
+  color: rgb(var(--fg-muted));
+}
+/* Its page is a tested surface (the root carries surface-<tone>), so controls follow it. */
+.miy-root[data-miy-look='underground'] {
+  --miy-paper: var(--surface);
+  --miy-ink: var(--fg);
+  --miy-muted: var(--fg-muted);
+  --miy-focus: var(--focus);
+  --miy-d: var(--accent);
+  --miy-on-d: var(--surface);
+}
+.miy-root[data-miy-look='underground'] :is(.miy-customise, .miy-chip, .miy-tally) {
+  border-radius: 0;
+}
+.miy-root[data-miy-look='underground'][data-miy-type='zine'] :is(.miy-h1, .miy-h2, .ug-title, .ug-star-title, .ug-card-name, .ug-sample-title, .ug-sample-h2, .ug-also li) {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+.ug-cover {
+  container: ug / inline-size;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.25rem 2.25rem;
+  border: 2px solid rgb(var(--fg));
+}
+.ug-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.75rem;
+}
+.ug-label {
+  margin: 0;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.ug-title,
+.ug-star-title,
+.ug-card-name,
+.ug-sample-title,
+.ug-sample-h2,
+.ug-also li {
+  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.ug-title {
+  margin: 0.5rem 0 0;
+  font-size: clamp(3rem, 10.5cqi, 8rem);
+  line-height: 0.88;
+}
+.ug-title > span {
+  white-space: nowrap;
+}
+.ug-star {
+  padding: 1.75rem 1.25rem 1.25rem;
+  border: 2px solid rgb(var(--fg));
+}
+.ug-stamp {
+  margin-bottom: 0.9rem;
+}
+.ug-star-title {
+  margin: 0 0 0.6rem;
+  font-size: clamp(2rem, 1.4rem + 3cqi, 3.25rem);
+  line-height: 0.95;
+}
+.ug-star-text {
+  margin: 0;
+  line-height: 1.5;
+}
+.ug-also ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ug-also li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+.ug-also a,
+.ug-card-link,
+.ug-sample a {
+  color: inherit;
+}
+.ug-also a {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
+}
+.ug-match,
+.ug-card-match {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@container ug (min-width: 720px) {
+  .ug-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 2rem 1.5rem;
+    padding: 0.75rem;
+  }
+  .ug-masthead,
+  .ug-also {
+    grid-column: 1 / 8;
+  }
+  .ug-star {
+    grid-column: 8 / 13;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+}
+.ug-cover-mini .ug-title {
+  font-size: 2.75rem;
+}
+.ug-cover-mini .ug-also li {
+  font-size: 1.25rem;
+}
+.ug-ideas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  grid-auto-flow: dense;
+  gap: 2rem 1.5rem;
+  margin: 0;
+  padding: 0.75rem 0 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .ug-idea-0 {
+    grid-column: span 2;
+  }
+}
+.ug-card {
+  height: 100%;
+  border: 2px solid rgb(var(--fg));
+}
+.ug-card-link {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+  height: 100%;
+  padding: 1.6rem 1.25rem 1.25rem;
+  text-decoration: none;
+}
+.ug-card-name {
+  font-size: 1.85rem;
+  line-height: 0.95;
+}
+.ug-card-poster {
+  font-size: clamp(2.5rem, 1.8rem + 3vw, 4.75rem);
+  line-height: 0.88;
+}
+.ug-card-text {
+  line-height: 1.5;
+  color: rgb(var(--fg-muted));
+}
+.ug-card-match {
+  padding: 0.15rem 0.5rem;
+  border: 3px double rgb(var(--accent));
+  color: rgb(var(--accent));
+  transform: rotate(-3deg);
+}
+.ug-card-link:hover .ug-card-name {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
+}
+.ug-sample-poster {
+  margin-bottom: 2.75rem;
+  padding: 2rem 1.25rem 2.75rem;
+  border: 2px solid rgb(var(--fg));
+}
+.ug-sample-poster > :not(.pp-grain, [data-decor]) {
+  position: relative;
+  z-index: 1;
+}
+.ug-sample-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(3rem, 1.8rem + 6vw, 7rem);
+  line-height: 0.9;
+}
+.ug-sample-jp {
+  margin: 0.9rem 0 0;
+  letter-spacing: 0.4em;
+}
+.ug-sample-body {
+  display: grid;
+  gap: 2.5rem;
+}
+@media (min-width: 1024px) {
+  .ug-sample-body {
+    grid-template-columns: 24rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.ug-note {
+  padding: 1.75rem 1.25rem 1.25rem;
+  border: 2px solid rgb(var(--fg));
+}
+.ug-sample-lede {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+.ug-sample-h2 {
+  margin: 0;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+.ug-sample-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ug-sample-list li {
+  padding-left: 1.5rem;
+  text-indent: -1.5rem;
+  line-height: 1.5;
+}
+.ug-sample-list li::before {
+  content: '→  ' / '';
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+.ug-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1.75rem 0 0;
+}
+.ug-facts > div {
+  padding: 0.6rem 0.75rem;
+  border: 2px solid rgb(var(--fg));
+}
+.ug-facts dt {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ug-facts dd {
+  margin: 0.3rem 0 0;
+  font-family: Anton, 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-size: 1.25rem;
+  text-transform: uppercase;
 }

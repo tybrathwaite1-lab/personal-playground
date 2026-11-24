@@ -1,7 +1,7 @@
 import { placeHref } from './journey';
 import type { Journey } from './MakeItYours';
 import { Cover } from './parts';
-import { INTERESTS, arrange, feedback, sampleCount } from './sample';
+import { INTERESTS, SAMPLE, arrange, feedback, sampleCount } from './sample';
 
 /** Step 2 (optional): pick a few interests and watch the cover respond. None are required. */
 export function InterestsStep({ journey }: { journey: Journey }) {
@@ -54,14 +54,23 @@ export function InterestsStep({ journey }: { journey: Journey }) {
         <h2 id="miy-preview-title" className="miy-h2">
           Your cover so far
         </h2>
-        <p className="miy-feedback" aria-live="polite" data-miy-feedback="">
-          {feedback(a)}
-        </p>
-        <p className="miy-leads" data-miy-leads="">
-          Leading the cover: <strong>{a.featured.exp.name}</strong>
-        </p>
+        <div className="miy-tally-row">
+          {/* A glanceable summary of the sentence below (which is the one announced). */}
+          <p className="miy-tally" aria-hidden key={`${a.matched}-${a.featured.exp.id}`}>
+            <strong>{a.matched}</strong>
+            <span>of {SAMPLE.length} match</span>
+          </p>
+          <div>
+            <p className="miy-leads" data-miy-leads="">
+              Leading the cover: <strong>{a.featured.exp.name}</strong>
+            </p>
+            <p className="miy-feedback" aria-live="polite" data-miy-feedback="">
+              {feedback(a)}
+            </p>
+          </div>
+        </div>
         <div className="miy-mini" aria-hidden>
-          <Cover look={choices.look} a={a} mode="mini" />
+          <Cover look={choices.look} palette={journey.custom?.palette} a={a} mode="mini" />
         </div>
       </aside>
     </section>

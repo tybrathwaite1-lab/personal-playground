@@ -33,15 +33,21 @@ for (const [label, viewport] of [['desktop', undefined], ['phone', MOBILE]] as c
     assert.match(await page.locator('main').innerText(), /Look 1 of 3/);
     assert.equal((await root(page)).look, 'studio');
 
-    // Browse: Next goes to a look that isn't built yet, and says so; it can't be chosen.
+    // Browse: Next and Previous step through all three looks, each fully styled and choosable.
     await page.getByRole('button', { name: /^Next look/ }).focus();
     await page.keyboard.press('Enter');
     await atHeading(page, 'The Quiet Room');
     assert.equal(await focused(page), 'The Quiet Room', 'focus moves to the new look');
-    assert.match(await page.locator('main').innerText(), /Look 2 of 3[\s\S]*isn’t built in this prototype yet/);
-    assert.equal(await page.getByRole('button', { name: /^Choose/ }).count(), 0);
-    assert.equal((await root(page)).look, 'default');
+    assert.match(await page.locator('main').innerText(), /Look 2 of 3/);
+    assert.equal((await root(page)).look, 'quiet-room');
+    assert.equal(await page.getByRole('button', { name: 'Choose The Quiet Room' }).count(), 1);
     await page.getByRole('button', { name: /^Next look/ }).press('Enter');
+    await atHeading(page, 'The Underground');
+    assert.equal((await root(page)).look, 'underground');
+    assert.equal(await page.getByRole('button', { name: 'Choose The Underground' }).count(), 1);
+    await page.getByRole('button', { name: /^Next look\W+Studio$/ }).press('Enter');
+    await atHeading(page, 'Studio');
+    await page.getByRole('button', { name: /^Previous look\W+The Underground$/ }).press('Enter');
     await atHeading(page, 'The Underground');
     await page.getByRole('button', { name: /^Next look\W+Studio$/ }).press('Enter');
     await atHeading(page, 'Studio');
@@ -195,7 +201,8 @@ const functions = (page: Page) =>
       landmarks: ['header', 'main'].map((t) => document.querySelectorAll(`[data-miy] ${t}`).length),
       h1: [...main.querySelectorAll('h1')].map((h) => (h.textContent ?? '').replace(/\s+/g, ' ').trim().toLowerCase()),
       headings: [...main.querySelectorAll('h2')].map((h) => (h.textContent ?? '').replace(/\s+/g, ' ').trim().toLowerCase()).sort(),
-      links: [...main.querySelectorAll('a[href]')].map((a) => a.getAttribute('href')).sort(),
+      // The way back to the looks opens on the chosen look; the destination is the same step.
+      links: [...main.querySelectorAll('a[href]')].map((a) => (a.getAttribute('href') ?? '').replace(/look=[\w-]+/, 'look=*')).sort(),
       buttons: [...main.querySelectorAll('button')]
         .map((b) => (b.getAttribute('aria-label') ?? b.textContent ?? '').replace(/\s+/g, ' ').trim().toLowerCase())
         .filter((n) => n)
@@ -219,55 +226,111 @@ const appearance = async (page: Page) => {
   });
 };
 
+/** Arrives in a look (by choosing it from the first look onwards) or, for null, by skipping. */
+async function arriveIn(page: Page, open: (r: string) => Promise<void>, look: 'studio' | 'quiet-room' | 'underground' | null) {
+  await open(look ? `${P}?step=look&look=${look}` : P);
+  if (look) await page.getByRole('button', { name: /^Choose/ }).click();
+  else await page.getByRole('button', { name: 'Skip for now' }).click();
+  if (look) await page.getByRole('button', { name: 'Enter the Playground' }).click();
+  await page.locator('[data-miy-arrival]').waitFor();
+}
+
 for (const [label, viewport] of [['desktop', undefined], ['phone', MOBILE]] as const) {
-  test(`looks are functionally equivalent without sharing a composition (${label})`, scenario({ viewport }, async ({ page, open }) => {
-    await open(P);
-    await page.getByRole('button', { name: 'Choose Studio' }).click();
-    await page.getByRole('button', { name: 'Enter the Playground' }).click();
-    await page.locator('[data-miy-arrival]').waitFor();
-    const studio = { does: await functions(page), looks: await appearance(page) };
-
-    await open(P);
-    await page.getByRole('button', { name: 'Skip for now' }).click();
-    await page.locator('[data-miy-arrival]').waitFor();
-    const fallback = { does: await functions(page), looks: await appearance(page) };
-
-    // Same product: landmarks, headings, destinations, actions, content and the one invitation.
-    const { buttons: sb, links: sl, ...sRest } = studio.does;
-    const { buttons: fb, links: fl, ...fRest } = fallback.does;
-    assert.deepEqual(sRest, fRest);
-    assert.deepEqual(sl, fl, 'same destinations');
-    assert.deepEqual(sb, fb, 'same actions');
-    assert.equal(studio.does.ideas.length, 10);
-    assert.deepEqual(studio.does.landmarks, [1, 1]);
-    // …in a genuinely different form.
-    assert.notEqual(studio.looks.cover, fallback.looks.cover);
-    assert.notEqual(studio.looks.font, fallback.looks.font);
-    assert.notEqual(studio.looks.transform, fallback.looks.transform);
-    assert.notEqual(studio.looks.background, fallback.looks.background);
+  test(`all three looks are functionally equivalent without sharing a composition (${label})`, scenario({ viewport }, async ({ page, open }) => {
+    const seen: Record<string, { does: Awaited<ReturnType<typeof functions>>; looks: Awaited<ReturnType<typeof appearance>> }> = {};
+    for (const look of ['studio', 'quiet-room', 'underground', null] as const) {
+      await arriveIn(page, open, look);
+      seen[look ?? 'none'] = { does: await functions(page), looks: await appearance(page) };
+    }
+    const base = seen.studio.does;
+    assert.equal(base.ideas.length, 10);
+    assert.deepEqual(base.landmarks, [1, 1]);
+    for (const [name, { does }] of Object.entries(seen)) {
+      // Same product: landmarks, headings, destinations, actions, content and the one invitation.
+      assert.deepEqual(does, base, `${name}: same functions as the Studio`);
+    }
+    // …each in a genuinely different form: no two looks share a cover, a heading face or a page
+    // colour. (With no look chosen the fallback style may resemble the Underground, per D3, but
+    // its cover is its own.)
+    const looks = ['studio', 'quiet-room', 'underground'];
+    for (const [i, x] of looks.entries())
+      for (const y of looks.slice(i + 1)) for (const k of ['cover', 'font', 'background'] as const) assert.notEqual(seen[x].looks[k], seen[y].looks[k], `${x} vs ${y}: ${k}`);
+    for (const x of looks) assert.notEqual(seen[x].looks.cover, seen.none.looks.cover);
+    assert.deepEqual(
+      looks.map((n) => seen[n].looks.font.replace(/"/g, '')),
+      ['IBM Plex Sans', 'Newsreader', 'Anton'],
+    );
   }));
 }
 
-test('colour and type are optional, apply at once, and can be revisited', scenario({ viewport: MOBILE }, async ({ page, open }) => {
-  await open(P);
-  const details = page.locator('[data-miy-customise]');
-  assert.equal(await details.evaluate((d) => (d as HTMLDetailsElement).open), false, 'closed by default');
-  await page.getByText('Adjust colour and type').click();
-  await page.getByRole('radio', { name: 'Night studio' }).check();
-  assert.equal((await root(page)).palette, 'night', 'the preview recolours at once');
-  await page.getByRole('button', { name: 'Choose Studio' }).click();
-  await page.getByRole('button', { name: 'Enter the Playground' }).click();
-  await page.locator('[data-miy-arrival]').waitFor();
-  assert.deepEqual(await root(page), { look: 'studio', palette: 'night', type: 'sans', step: 'arrival' });
-  await page.getByText('Adjust colour and type').click();
-  assert.equal(await page.getByRole('radio', { name: 'Night studio' }).isChecked(), true);
-  await page.getByRole('radio', { name: 'Typewriter' }).check();
-  assert.equal((await root(page)).type, 'mono');
-  assert.match((await page.locator('[data-miy-summary]').textContent()) ?? '', /Look: Studio \(Night studio, Typewriter\)/);
-  // Revisit the looks: the choice is still there.
-  await page.getByRole('link', { name: 'Change look' }).click();
-  await atHeading(page, 'Studio');
-  assert.deepEqual(await root(page), { look: 'studio', palette: 'night', type: 'mono', step: 'look' });
+test('each look presents a sample idea in its own way, with the same facts', scenario({}, async ({ page, open }) => {
+  const facts: string[] = [];
+  const fonts = new Set<string>();
+  for (const look of ['studio', 'quiet-room', 'underground'] as const) {
+    await open(`${P}?step=look&look=${look}&sample=exp-street-photo`);
+    await atHeading(page, 'Street Photography Walk');
+    assert.equal((await root(page)).look, look);
+    assert.equal(await page.locator('[data-miy-sample] [data-miy-layout]').getAttribute('data-miy-layout'), look, 'its own layout');
+    facts.push(
+      await page.evaluate(() =>
+        [...document.querySelectorAll('main dl div')].map((d) => `${d.querySelector('dt')?.textContent}: ${d.querySelector('dd')?.textContent}`).join(' | '),
+      ),
+    );
+    fonts.add(await page.evaluate(() => getComputedStyle(document.querySelector('main h1')!).fontFamily.split(',')[0]));
+    assert.equal(await page.locator('main li').count(), 4, 'all four activities');
+    assert.match(await page.locator('main').innerText(), /isn’t a live listing or a recommendation/);
+  }
+  assert.equal(new Set(facts).size, 1, 'the same time, cost and energy in every look');
+  assert.equal(fonts.size, 3, 'three different heading faces');
+}));
+
+for (const [look, name, palette, type, summary] of [
+  ['studio', 'Studio', ['Night studio', 'night'], ['Typewriter', 'mono'], 'Studio (Night studio, Typewriter)'],
+  ['quiet-room', 'The Quiet Room', ['Lamplight', 'lamplight'], ['Serif and sans', 'serif-sans'], 'The Quiet Room (Lamplight, Serif and sans)'],
+  ['underground', 'The Underground', ['Forest', 'forest'], ['Zine mono', 'zine'], 'The Underground (Forest, Zine mono)'],
+] as const) {
+  test(`colour and type are optional, apply at once, and can be revisited (${name})`, scenario({ viewport: MOBILE }, async ({ page, open }) => {
+    await open(`${P}?step=look&look=${look}`);
+    await atHeading(page, name);
+    const details = page.locator('[data-miy-customise]');
+    assert.equal(await details.evaluate((d) => (d as HTMLDetailsElement).open), false, 'closed by default');
+    const before = await page.evaluate(() => getComputedStyle(document.querySelector('[data-miy]')!).backgroundColor);
+    await page.getByText('Adjust colour and type').click();
+    await page.getByRole('radio', { name: palette[0] }).check();
+    assert.equal((await root(page)).palette, palette[1], 'the preview recolours at once');
+    assert.notEqual(await page.evaluate(() => getComputedStyle(document.querySelector('[data-miy]')!).backgroundColor), before);
+    await page.getByRole('button', { name: `Choose ${name}` }).click();
+    await page.getByRole('button', { name: 'Enter the Playground' }).click();
+    await page.locator('[data-miy-arrival]').waitFor();
+    assert.equal((await root(page)).palette, palette[1]);
+    await page.getByText('Adjust colour and type').click();
+    assert.equal(await page.getByRole('radio', { name: palette[0] }).isChecked(), true);
+    const faces = () =>
+      page.evaluate(() => ['main h2', '[data-miy-subline]'].map((q) => getComputedStyle(document.querySelector(q)!).fontFamily).join(' | '));
+    const facesBefore = await faces();
+    await page.getByRole('radio', { name: type[0] }).check();
+    assert.equal((await root(page)).type, type[1]);
+    assert.notEqual(await faces(), facesBefore, 'the type pairing changes the type on screen');
+    assert.match((await page.locator('[data-miy-summary]').textContent()) ?? '', new RegExp(`Look: ${summary.replace(/[()]/g, '\\$&')}`));
+    // Revisit the looks: the choice is still there.
+    await page.getByRole('link', { name: 'Change look' }).click();
+    await atHeading(page, name);
+    assert.deepEqual(await root(page), { look, palette: palette[1], type: type[1], step: 'look' });
+  }));
+}
+
+test('the Quiet Room serif is self-hosted and loaded only by the prototype', scenario({}, async ({ page, open }) => {
+  const fontRequests: string[] = [];
+  page.on('request', (r) => /newsreader/i.test(r.url()) && fontRequests.push(new URL(r.url()).pathname));
+  await open('');
+  await page.locator('[data-home-area="cover"]').waitFor();
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  assert.deepEqual(fontRequests, [], 'the app shell never requests it');
+  await open(`${P}?step=look&look=quiet-room`);
+  await atHeading(page, 'The Quiet Room');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  assert.ok(await page.evaluate(() => document.fonts.check('400 16px Newsreader')), 'Newsreader is available in the Quiet Room');
+  assert.ok(fontRequests.length > 0 && fontRequests.every((u) => u.startsWith('/personal-playground/')), `same-origin font files: ${fontRequests.join(', ')}`);
 }));
 
 test('isolation: a full journey leaves personal data and settings untouched and makes no outside request', scenario(

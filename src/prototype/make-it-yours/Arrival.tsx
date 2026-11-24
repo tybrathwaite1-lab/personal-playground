@@ -1,7 +1,8 @@
 import { customOf, lookById, placeHref } from './journey';
 import type { Journey } from './MakeItYours';
 import { Cover, Customise, Ideas } from './parts';
-import { arrange } from './sample';
+import { formatDuration } from '../../utils/discovery';
+import { arrange, quickest } from './sample';
 
 /**
  * The soft landing: the Playground itself, already populated. One gentle invitation (save the
@@ -10,6 +11,7 @@ import { arrange } from './sample';
 export function Arrival({ journey }: { journey: Journey }) {
   const { choices, dispatch } = journey;
   const a = arrange(choices.interests);
+  const q = quickest();
   const look = choices.look;
   const f = a.featured.exp;
   const saved = choices.saved.includes(f.id);
@@ -44,7 +46,7 @@ export function Arrival({ journey }: { journey: Journey }) {
 
   return (
     <div className="miy-arrival" data-miy-arrival="">
-      <Cover look={look} a={a} mode="arrival" star={star} />
+      <Cover look={look} palette={custom?.palette} a={a} mode="arrival" star={star} />
 
       <section className="miy-section" aria-labelledby="miy-ideas-title">
         <h2 id="miy-ideas-title" className="miy-h2">
@@ -53,7 +55,10 @@ export function Arrival({ journey }: { journey: Journey }) {
         <p className="miy-lede miy-subline" data-miy-subline="">
           {subline}
         </p>
-        <Ideas look={look} a={a} />
+        <p className="miy-curious" data-miy-curious="">
+          Short on time? <a href={placeHref({ step: 'arrival', sample: q.id })}>{q.name}</a> takes {formatDuration(q.duration)}. Or open whichever name makes you curious.
+        </p>
+        <Ideas look={look} palette={custom?.palette} a={a} />
       </section>
 
       <section className="miy-section miy-yours" aria-labelledby="miy-yours-title">

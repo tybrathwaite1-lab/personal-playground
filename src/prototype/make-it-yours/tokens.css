@@ -1,5 +1,6 @@
 /*
- * Creative Slice 02 prototype: the Studio's curated colour sets. Loaded only by the prototype's
+ * Creative Slice 02 prototype: the Studio's and the Quiet Room's curated colour sets (the
+ * Underground's are tested app surfaces: looks/Underground.tsx). Loaded only by the prototype's
  * own chunk and scoped to its root, so nothing here reaches the production app.
  *
  * Each set is RGB triplets: paper (the page), ink (text), muted (secondary text), four shape
@@ -49,4 +50,54 @@
   --miy-on-c: var(--miy-paper);
   --miy-on-d: var(--miy-paper);
   --miy-focus: 255 213 74;
+}
+
+/*
+ * The Quiet Room's colour sets: two warm neutrals and one deep accent (a), used for italic
+ * notes, links and the focus ring. b and c only appear in the colour swatches and the pressed
+ * save button (d is the accent). Same checks as the Studio's.
+ */
+[data-miy-look='quiet-room'][data-miy-palette='linen'] {
+  --miy-paper: 246 240 230;
+  --miy-ink: 43 36 32;
+  --miy-muted: 99 89 80;
+  --miy-a: 122 46 58;
+  --miy-b: 201 168 119;
+  --miy-c: 217 199 174;
+  --miy-d: var(--miy-a);
+  --miy-on-a: var(--miy-paper);
+  --miy-on-b: var(--miy-ink);
+  --miy-on-c: var(--miy-ink);
+  --miy-on-d: var(--miy-paper);
+  --miy-focus: var(--miy-a);
+}
+
+[data-miy-look='quiet-room'][data-miy-palette='sage'] {
+  --miy-paper: 235 239 230;
+  --miy-ink: 31 43 36;
+  --miy-muted: 79 92 83;
+  --miy-a: 61 90 44;
+  --miy-b: 169 185 154;
+  --miy-c: 203 213 192;
+  --miy-d: var(--miy-a);
+  --miy-on-a: var(--miy-paper);
+  --miy-on-b: var(--miy-ink);
+  --miy-on-c: var(--miy-ink);
+  --miy-on-d: var(--miy-paper);
+  --miy-focus: var(--miy-a);
+}
+
+[data-miy-look='quiet-room'][data-miy-palette='lamplight'] {
+  --miy-paper: 33 27 23;
+  --miy-ink: 240 230 214;
+  --miy-muted: 191 177 158;
+  --miy-a: 224 174 110;
+  --miy-b: 142 91 58;
+  --miy-c: 74 59 47;
+  --miy-d: var(--miy-a);
+  --miy-on-a: var(--miy-paper);
+  --miy-on-b: var(--miy-ink);
+  --miy-on-c: var(--miy-ink);
+  --miy-on-d: var(--miy-paper);
+  --miy-focus: var(--miy-a);
 }
