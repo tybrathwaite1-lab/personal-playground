@@ -31,7 +31,8 @@
   - **Tracked separately:** low-priority UX ambiguity: a pending valid backup stays offered after a malformed file is chosen (M2-6).
 - **Creative Brief v1 is approved** (owner and ChatGPT, 2026-11-23). **Creative Slice 01, "The Living Cover", is merged:** PR #47 as `983a371` (Deploy, Visual check, Style guide evidence and Publish visual results all succeeded on that commit).
 - **Creative Slice 02, "Make It Yours":** Phase A approved with three refinements (2026-11-23). **B1 is merged** (PR #48 as `ff89cc6`): the isolated prototype at `#/preview/make-it-yours` with the journey shell and the Studio. **B2 is in review:** The Quiet Room (with its one self-hosted serif, Newsreader) and The Underground, completing all three looks. See HANDOFF.
-- **Next:** waiting on independent review and the owner's approval of B2. Earlier sequencing notes still stand: the thin Explore hub comes before the navigation switch, and browser-based PR previews are approved in principle and deferred (see DECISIONS).
+- **Creative Slice 02 is merged** (PR #49 as `66110e5`). **Creative Slice 03, "From Prototype to Personal Playground":** the read-only architecture assessment is accepted with decisions D1–D6 (2026-11-24). **Phase 3.1 (safety net: tests, inventories and baseline evidence only) is in review.** Later phases are not authorised. See HANDOFF.
+- **Next:** waiting on independent review of Phase 3.1. Phase 3.2 needs separate authorisation. Earlier sequencing notes still stand: the thin Explore hub comes before the navigation switch, and browser-based PR previews are approved in principle and deferred (see DECISIONS).
 - The Issue 09 creative package stays in draft until its integration phase. The current homepage stays until the Newsstand preview is approved.
 
 ## Sprint 01 — engineering (Claude): all merged

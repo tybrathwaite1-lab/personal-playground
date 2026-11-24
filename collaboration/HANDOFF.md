@@ -1,6 +1,34 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 02 B2: The Quiet Room and The Underground)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.1: safety net)
+
+Baseline: `main` at `66110e5`. Tests, an inventory and a comparison script only: no file under `src/`, no workflow and no visual harness file changes, so production behaviour, storage, Sync, ranking, Pulse, the Weekly Drop, the planner, the prototype and the visual publisher are untouched.
+
+### A. Mixed-version Sync
+
+`tests/sync-forward-compat.test.ts` runs this version's real sync code as the older client against an in-memory GitHub and a simulated newer client. `browser-tests/sync-forward-compat.test.ts` does the same with the real app in a browser.
+
+- An unknown `settings:*` field and unknown entry kinds (per-look customisation, visitor interests) survive this version's syncs, local edits and restarts with the same value and stamp. Later changes and deletions from the newer client still win; nothing deleted comes back.
+- This version keeps those entries only on the remote: its own data, localStorage and backups hold no trace of them. Its sync metadata keeps their stamps, which is what stops it deleting them.
+- **Finding (reported, not fixed):** if a newer version also puts a new setting into the legacy `settings` mirror, the two versions rewrite that mirror differently on every sync. Nothing is lost, but every quiet sync becomes a write (a commit in the private repository): 6 of 6 in the test. A newer version that keeps new settings out of the mirror, or uses its own entry kind, settles with no extra writes. Both behaviours are pinned by tests so a future design can't miss it.
+
+### B. Legacy colour inventory
+
+`scripts/inventory/legacy-colours.ts` counts fixed Field Guide colour uses in `src/`. Utilities built on the `--pp-*` palette are counted as tokens (variants, `!` and `/opacity` included, comments excluded), with legacy `var(--pp-…)` in CSS; the palette itself is read from `tailwind.config.js`. Baseline: **471 uses in 28 files** (`tests/fixtures/legacy-colours.json`). `tests/legacy-colours.test.ts` fails if any file goes up or a new file starts using them, and asks for the baseline to be lowered when a count goes down. Update with `npx tsx scripts/inventory/legacy-colours.ts --write`.
+
+### C. Default appearance baseline
+
+`scripts/visual/compare-published.ts` compares two branches' published Visual check screenshots pixel by pixel: every standard route at 390 and 1280 px (full page and first screen) plus the open menu, 49 images. Verdicts are identical, known noise or changed. It is read-only (git fetch of `visual-results`) and touches no harness file, so publication is unaffected.
+
+- Two runs of the same code (PR #49's head and `main`) gave 44 identical and 5 within noise. The noise is the phone tab bar, fixed to the viewport, landing a few pixels differently in full-page 390 px captures.
+- An older branch gave 48 changed, so it does detect real change.
+
+### Limitations
+
+- The comparison runs after publication, by hand or by a later PR's author. It is not yet a CI gate, because adding it to `visual.yml` would change a harness path and stop the publisher publishing that branch.
+- Its "noise" allowance could hide a change smaller than 0.5 % of a long page. First-screen images are expected to be identical, so any noise there deserves a look.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-23 (Creative Slice 02 B2: The Quiet Room and The Underground)
 
 Baseline: `main` at `ff89cc6` (B1 merged). This completes Creative Slice 02 as authorised for B2. It stays inside the prototype: production onboarding, the homepage, every route, personal storage, Sync, ranking, Pulse, the planner and the visual publisher's policy are untouched. No tracking, APIs or remote assets; no npm dependency (see the serif note).
 
