@@ -138,3 +138,9 @@ Context: Claude's read-only assessment of the approved creative direction (share
   5. Check that `image-scout-results` is still listed at `71efe69`, and that the **Actions** tab shows no new "Image scout" run. Deleting a branch isn't expected to start one; if one appears, cancel it and report it.
   - GitHub offers **Restore** right after deletion if the wrong branch was removed.
 
+## 2026-11-24 — Creative direction consolidated: Editorial Strategy v1 and Living Cover Specification v1
+- The owner and ChatGPT approved [Editorial Strategy v1](EDITORIAL_STRATEGY_V1.md) ("The library has shelves. Curiosity doesn't.") and [Living Cover Specification v1](LIVING_COVER_SPEC_V1.md) ("One Playground. Many personalities.") as product direction.
+- They are direction, not implementation authorisation: Phase 3.4 and any change to application code, data models, ranking, publishing, Sync or workflows still need their own scoped authorisation. Undecided algorithms and privacy policies (for example lead selection, recent-thread continuity) stay undecided.
+- `EDITORIAL.md` remains the operational publishing guide for The Weekly Drop; where it differs from Editorial Strategy v1 (listed in HANDOFF, 2026-11-24), the difference is open for an owner decision, not silently reconciled.
+- Phase 3.3 (shell atmospheres, PR #52 as `8f3c41e`) verified in production the same day.
+
