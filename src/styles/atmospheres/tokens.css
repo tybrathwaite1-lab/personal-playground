@@ -1,0 +1,183 @@
+/*
+ * Atmosphere colour sets (Creative Slice 03, Phase 3.3: shell atmospheres).
+ *
+ * With no atmosphere chosen nothing here applies: every selector needs data-look on <html>,
+ * which only the appearance provider (and its pre-paint twin in index.html) sets.
+ *
+ * One shared token system, re-pointed: each colour set gives new values to the same Field
+ * Guide palette roles (--pp-ink, --pp-paper, --pp-rust …) that the shell and every existing
+ * page already draw with, so pages stay consistent with the shell without being restyled one
+ * by one. Roles keep their meaning, not their hue: --pp-ink is the page, --pp-paper the text on
+ * it, --pp-rust the accent. On a light set the page is light and the text dark.
+ *
+ * Every pair the pages and the surface-aware controls rely on is checked for each set by
+ * tests/atmospheres.test.ts, against the same list tests/design-tokens.test.ts applies to the
+ * default (tests/helpers/contrast.ts). The Newsstand surfaces (Living Cover, editions) keep
+ * their approved colours in every atmosphere.
+ *
+ * --look-duo   how duotone artwork sits on this set's page (multiply on light, screen on dark)
+ * --look-a..d  Studio's four decorative colours: stripes and marks only, never text or state
+ */
+
+/* ── studio ────────────────────────────────────────────────────── */
+html[data-look='studio'][data-look-palette='poster'] {
+  /* Poster: light */
+  color-scheme: light;
+  --pp-ink: 251 246 236; /* #FBF6EC */
+  --pp-ink-2: 255 255 255; /* #FFFFFF */
+  --pp-paper: 18 16 38; /* #121026 */
+  --pp-muted: 70 66 94; /* #46425E */
+  --pp-hunter: 238 233 247; /* #EEE9F7 */
+  --pp-line: 220 212 196; /* #DCD4C4 */
+  --pp-control: 119 115 143; /* #77738F */
+  --pp-rust: 47 91 234; /* #2F5BEA */
+  --pp-rust-hover: 36 80 214; /* #2450D6 */
+  --look-duo: multiply;
+  --look-a: 242 84 45; /* #F2542D (decorative only) */
+  --look-b: 47 91 234; /* #2F5BEA (decorative only) */
+  --look-c: 255 197 61; /* #FFC53D (decorative only) */
+  --look-d: 46 173 135; /* #2EAD87 (decorative only) */
+}
+html[data-look='studio'][data-look-palette='sherbet'] {
+  /* Sherbet: light */
+  color-scheme: light;
+  --pp-ink: 255 243 238; /* #FFF3EE */
+  --pp-ink-2: 255 255 255; /* #FFFFFF */
+  --pp-paper: 30 15 41; /* #1E0F29 */
+  --pp-muted: 79 61 89; /* #4F3D59 */
+  --pp-hunter: 246 225 236; /* #F6E1EC */
+  --pp-line: 235 211 218; /* #EBD3DA */
+  --pp-control: 140 122 146; /* #8C7A92 */
+  --pp-rust: 106 63 214; /* #6A3FD6 */
+  --pp-rust-hover: 92 51 196; /* #5C33C4 */
+  --look-duo: multiply;
+  --look-a: 255 119 174; /* #FF77AE (decorative only) */
+  --look-b: 142 125 255; /* #8E7DFF (decorative only) */
+  --look-c: 200 238 90; /* #C8EE5A (decorative only) */
+  --look-d: 255 155 69; /* #FF9B45 (decorative only) */
+}
+html[data-look='studio'][data-look-palette='night'] {
+  /* Night studio: dark */
+  color-scheme: dark;
+  --pp-ink: 23 24 46; /* #17182E */
+  --pp-ink-2: 33 35 66; /* #212342 */
+  --pp-paper: 247 241 230; /* #F7F1E6 */
+  --pp-muted: 189 184 214; /* #BDB8D6 */
+  --pp-hunter: 45 47 87; /* #2D2F57 */
+  --pp-line: 52 54 90; /* #34365A */
+  --pp-control: 141 138 174; /* #8D8AAE */
+  --pp-rust: 255 213 74; /* #FFD54A */
+  --pp-rust-hover: 255 222 110; /* #FFDE6E */
+  --look-duo: screen;
+  --look-a: 255 110 94; /* #FF6E5E (decorative only) */
+  --look-b: 69 207 194; /* #45CFC2 (decorative only) */
+  --look-c: 255 213 74; /* #FFD54A (decorative only) */
+  --look-d: 156 139 255; /* #9C8BFF (decorative only) */
+}
+
+/* ── quiet-room ────────────────────────────────────────────────── */
+html[data-look='quiet-room'][data-look-palette='linen'] {
+  /* Linen: light */
+  color-scheme: light;
+  --pp-ink: 248 243 234; /* #F8F3EA */
+  --pp-ink-2: 252 250 245; /* #FCFAF5 */
+  --pp-paper: 18 15 12; /* #120F0C */
+  --pp-muted: 78 70 63; /* #4E463F */
+  --pp-hunter: 239 230 216; /* #EFE6D8 */
+  --pp-line: 220 207 188; /* #DCCFBC */
+  --pp-control: 126 114 101; /* #7E7265 */
+  --pp-rust: 122 46 58; /* #7A2E3A */
+  --pp-rust-hover: 106 37 50; /* #6A2532 */
+  --look-duo: multiply;
+}
+html[data-look='quiet-room'][data-look-palette='sage'] {
+  /* Sage: light */
+  color-scheme: light;
+  --pp-ink: 239 242 234; /* #EFF2EA */
+  --pp-ink-2: 246 248 242; /* #F6F8F2 */
+  --pp-paper: 11 18 13; /* #0B120D */
+  --pp-muted: 60 71 63; /* #3C473F */
+  --pp-hunter: 226 233 218; /* #E2E9DA */
+  --pp-line: 203 213 192; /* #CBD5C0 */
+  --pp-control: 110 123 111; /* #6E7B6F */
+  --pp-rust: 61 90 44; /* #3D5A2C */
+  --pp-rust-hover: 50 77 35; /* #324D23 */
+  --look-duo: multiply;
+}
+html[data-look='quiet-room'][data-look-palette='lamplight'] {
+  /* Lamplight: dark */
+  color-scheme: dark;
+  --pp-ink: 33 27 23; /* #211B17 */
+  --pp-ink-2: 43 36 31; /* #2B241F */
+  --pp-paper: 240 230 214; /* #F0E6D6 */
+  --pp-muted: 191 177 158; /* #BFB19E */
+  --pp-hunter: 58 46 35; /* #3A2E23 */
+  --pp-line: 62 52 44; /* #3E342C */
+  --pp-control: 143 129 112; /* #8F8170 */
+  --pp-rust: 224 174 110; /* #E0AE6E */
+  --pp-rust-hover: 232 188 130; /* #E8BC82 */
+  --look-duo: screen;
+}
+
+/* ── underground ───────────────────────────────────────────────── */
+html[data-look='underground'][data-look-palette='newsstand'] {
+  /* Newsstand: dark */
+  color-scheme: dark;
+  --pp-ink: 32 37 31; /* #20251F */
+  --pp-ink-2: 42 48 41; /* #2A3029 */
+  --pp-paper: 255 244 219; /* #FFF4DB */
+  --pp-muted: 196 200 183; /* #C4C8B7 */
+  --pp-hunter: 32 78 63; /* #204E3F */
+  --pp-line: 63 69 58; /* #3F453A */
+  --pp-control: 142 148 131; /* #8E9483 */
+  --pp-rust: 244 198 50; /* #F4C632 */
+  --pp-rust-hover: 247 210 90; /* #F7D25A */
+  --look-duo: screen;
+}
+html[data-look='underground'][data-look-palette='daylight'] {
+  /* Daylight: light */
+  color-scheme: light;
+  --pp-ink: 244 232 207; /* #F4E8CF */
+  --pp-ink-2: 250 241 222; /* #FAF1DE */
+  --pp-paper: 13 16 12; /* #0D100C */
+  --pp-muted: 63 68 57; /* #3F4439 */
+  --pp-hunter: 235 218 186; /* #EBDABA */
+  --pp-line: 205 187 151; /* #CDBB97 */
+  --pp-control: 110 108 92; /* #6E6C5C */
+  --pp-rust: 146 50 25; /* #923219 */
+  --pp-rust-hover: 127 41 19; /* #7F2913 */
+  --look-duo: multiply;
+}
+html[data-look='underground'][data-look-palette='forest'] {
+  /* Forest: dark */
+  color-scheme: dark;
+  --pp-ink: 30 74 60; /* #1E4A3C */
+  --pp-ink-2: 37 85 69; /* #255545 */
+  --pp-paper: 255 253 248; /* #FFFDF8 */
+  --pp-muted: 211 226 213; /* #D3E2D5 */
+  --pp-hunter: 23 60 48; /* #173C30 */
+  --pp-line: 62 106 90; /* #3E6A5A */
+  --pp-control: 154 179 166; /* #9AB3A6 */
+  --pp-rust: 244 198 50; /* #F4C632 */
+  --pp-rust-hover: 247 210 90; /* #F7D25A */
+  --look-duo: screen;
+}
+
+/* ── Every set ────────────────────────────────────────────────────────── */
+/* The Field Guide surfaces follow the set. The hunter surface's own fixed values become the
+   set's roles (its focus ring stays the text colour, as in the default). */
+html[data-look] {
+  --duo-art: var(--look-duo);
+}
+html[data-look] .surface-ink,
+html[data-look] .surface-raised {
+  --duo-art: var(--look-duo);
+}
+html[data-look] .surface-hunter {
+  --fg-muted: var(--pp-muted);
+  --accent: var(--pp-rust);
+  --focus: var(--pp-paper);
+  --control: var(--pp-control);
+  --rule: var(--pp-line);
+  --duo-art: var(--look-duo);
+}

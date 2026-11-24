@@ -7,7 +7,7 @@ import { matchText, type Arrangement } from '../sample';
 
 /**
  * The Quiet Room: warm, spacious, intimate, editorially restrained. One centred column set in
- * Newsreader (the prototype's one self-hosted serif), generous margins, fine rules, italic
+ * Newsreader (the app's one self-hosted serif), generous margins, fine rules, italic
  * notes instead of badges. Nothing is decorative except the rules.
  */
 export function QuietCover({ a, mode, star }: { a: Arrangement; mode: 'preview' | 'mini' | 'arrival'; star?: ReactNode }) {

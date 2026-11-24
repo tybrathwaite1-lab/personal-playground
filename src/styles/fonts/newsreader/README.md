@@ -1,8 +1,10 @@
-# Newsreader (prototype only)
+# Newsreader
 
-The one self-hosted serif approved for The Quiet Room (Creative Slice 02, decision D1). Loaded
-only by the Make It Yours prototype's own CSS chunk; the app shell never requests it
-(tests/make-it-yours.test.ts and the strict style-guide check).
+The one self-hosted serif approved for The Quiet Room (Creative Slice 02, decision D1), first
+for the Make It Yours prototype and, since Creative Slice 03 Phase 3.3, for the shell's Quiet
+Room setting. Declared in `src/styles/newsreader.css` with the app's styles; browsers fetch a
+declared face only when text on screen uses it, so only The Quiet Room requests these files
+(tests/atmospheres.test.ts, browser-tests/atmospheres.test.ts and the strict style-guide check).
 
 - Typeface: Newsreader, Production Type. Licence: SIL Open Font License 1.1 (`OFL.txt`).
 - Source: Fontsource's published font files, `fontsource/font-files` at commit

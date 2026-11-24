@@ -6,7 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { NOISE_MAX_MEAN, NOISE_MAX_RATIO, compareRaw, decode, imagesFor, type Raw } from '../scripts/visual/compare-published.ts';
+import { NOISE_MAX_MEAN, NOISE_MAX_RATIO, PHONE_VIEWPORT_HEIGHT, TAB_BAR_BAND, TAB_BAR_HEIGHT, compareRaw, decode, excludedRows, imagesFor, type Raw } from '../scripts/visual/compare-published.ts';
+import { readFileSync } from 'node:fs';
 import { STANDARD_ROUTES } from '../scripts/visual/publish/policy.mjs';
 
 /** A w×h RGB image filled with one colour, optionally with a band of rows painted another. */
@@ -65,4 +66,53 @@ test('the comparison covers every standard route, full page and first screen, pl
   assert.equal(imagesFor(1280).length, STANDARD_ROUTES.length * 2);
   assert.equal(imagesFor(390).length, STANDARD_ROUTES.length * 2 + 1);
   assert.ok(imagesFor(390).includes('390/home.jpg') && imagesFor(390).includes('390/home-fold.jpg') && imagesFor(390).includes('states/menu-390.jpg'));
+});
+
+// ─── Phase 3.3: the phone tab bar in full-page captures ─────────────────
+const bar = (from = 792, to = 831) => ({ from, to, rgb: [233, 223, 201] as [number, number, number] });
+
+test('the Phase 3.2 false positive: the tab bar half-drawn in a short full page is no longer "changed"', () => {
+  // A short page (as 390/plan.jpg) where the bar was drawn in one run only: over the noise limit…
+  const base = image(390, 1200, [20, 22, 20]);
+  const head = image(390, 1200, [20, 22, 20], bar());
+  assert.equal(compareRaw(base, head).verdict, 'changed', 'without the band rule');
+  // …and identical outside the band, with what differed inside it reported.
+  const d = compareRaw(base, head, excludedRows('390/plan.jpg'));
+  assert.equal(d.verdict, 'identical');
+  assert.deepEqual(d.excluded, { rows: TAB_BAR_BAND, changedPixels: 390 * 40 });
+  assert.match(d.detail, /rows 779–843 \(tab-bar band\) not compared, 15600 px differed there/);
+});
+
+test('the band is narrow: changes outside it, even right next to it, still count', () => {
+  const base = image(390, 1200, [20, 22, 20]);
+  for (const [from, to] of [[740, 778], [844, 900], [770, 790], [830, 860], [100, 140]]) {
+    const d = compareRaw(base, image(390, 1200, [20, 22, 20], bar(from, to)), excludedRows('390/plan.jpg'));
+    assert.equal(d.verdict, 'changed', `rows ${from}–${to}`);
+    assert.ok(d.rows![0] < TAB_BAR_BAND[0] || d.rows![1] > TAB_BAR_BAND[1], `rows ${from}–${to} reported outside the band`);
+  }
+  // A page that changed size is still "changed", band or not.
+  assert.equal(compareRaw(image(390, 1200, [0, 0, 0]), image(390, 1210, [0, 0, 0]), TAB_BAR_BAND).verdict, 'changed');
+});
+
+test('the tab bar itself is still compared: first screens, the menu and other widths are never banded', () => {
+  for (const f of ['390/plan-fold.jpg', '390/home-fold.jpg', 'states/menu-390.jpg', '1280/plan.jpg', '1280/plan-fold.jpg']) assert.equal(excludedRows(f), null, f);
+  for (const f of ['390/plan.jpg', '390/home.jpg', '390/collection.jpg']) assert.deepEqual(excludedRows(f), TAB_BAR_BAND, f);
+  // Every 390 px first screen and the menu are compared whole, so a navigation regression there
+  // (here: the bar recoloured in the first screen) is "changed".
+  const fold = (rgb: [number, number, number]) => image(390, PHONE_VIEWPORT_HEIGHT, [20, 22, 20], { from: TAB_BAR_BAND[0], to: TAB_BAR_BAND[1], rgb });
+  assert.equal(compareRaw(fold([20, 22, 20]), fold([212, 126, 71]), excludedRows('390/plan-fold.jpg')).verdict, 'changed');
+  const banded = imagesFor(390).filter((f) => excludedRows(f));
+  assert.equal(banded.length, STANDARD_ROUTES.length, 'only the full pages');
+});
+
+test('the band is derived from the harness viewport and the tab bar\'s height', () => {
+  // scripts/visual/run.ts (a protected harness file, read only here) captures phones at 390 × 844.
+  assert.match(readFileSync(new URL('../scripts/visual/run.ts', import.meta.url), 'utf8'), /HEIGHTS[^=]*= \{[^}]*\b390: 844\b/);
+  // The bar: 64 px tall (h-16) with a 1 px top border, fixed to the bottom.
+  const layout = readFileSync(new URL('../src/components/Layout.tsx', import.meta.url), 'utf8');
+  const tabbar = /<nav aria-label="Primary"[^>]*className="([^"]*)"/.exec(layout)![1];
+  for (const c of ['fixed', 'bottom-0', 'border-t']) assert.ok(tabbar.split(' ').includes(c), c);
+  assert.match(layout, /tab-link relative flex h-16/);
+  assert.equal(TAB_BAR_HEIGHT, 64 + 1);
+  assert.deepEqual(TAB_BAR_BAND, [PHONE_VIEWPORT_HEIGHT - TAB_BAR_HEIGHT, PHONE_VIEWPORT_HEIGHT - 1]);
 });

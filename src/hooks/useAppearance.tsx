@@ -38,8 +38,8 @@ const Ctx = createContext<AppearanceContext | null>(null);
  * Holds the visitor's appearance (Creative Slice 03, Phase 3.2). Device-local and separate
  * from personal data and Sync. With nothing chosen it does nothing at all: the default
  * Playground, unchanged. When an atmosphere is shown it is mirrored onto <html> as
- * data-look / data-look-palette / data-look-type for the styles of later phases; no styles use
- * those attributes yet, and no controls can set them yet.
+ * data-look / data-look-palette / data-look-type, which the shell atmospheres use (Phase 3.3:
+ * src/styles/atmospheres/tokens.css and shell.css). No controls can set them yet.
  */
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reduceAppearance, undefined, () => initialAppearanceState(loadAppearance()));
@@ -73,7 +73,9 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // Mirror what's shown onto <html>; the default Playground leaves no attributes at all.
+  // Mirror what's shown onto <html>; the default Playground leaves no attributes at all. The
+  // saved appearance is already there before the first paint (the inline script in index.html);
+  // this keeps it in step with previews and changes from here on.
   const look = resolved?.look;
   const palette = resolved?.palette;
   const type = resolved?.type;
@@ -88,6 +90,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       delete el.dataset.lookPalette;
       delete el.dataset.lookType;
     }
+    syncBrowserColours();
   }, [look, palette, type]);
 
   const previewLook = useCallback((l: LookId | null) => dispatch({ type: 'preview-look', look: l }), []);
@@ -100,6 +103,30 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     [state, shown, resolved, persisted, previewLook, previewCustom, commit, cancel],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/**
+ * The browser's own chrome (address bar, status bar, scrollbars, form controls) follows the
+ * page: theme-color is the page colour now on screen (--pp-ink, which each colour set re-points)
+ * and color-scheme says whether that page is light or dark. Read from the applied styles, so
+ * there is one source of truth; nothing is written while they already match, so the default
+ * Playground keeps index.html's static #141614 and "dark" untouched.
+ */
+export function syncBrowserColours() {
+  const cs = getComputedStyle(document.documentElement);
+  const ink = /^(\d+) (\d+) (\d+)$/.exec(cs.getPropertyValue('--pp-ink').trim());
+  if (!ink) return; // styles not applied (tests without CSS): leave the metas alone
+  const hex = `#${ink
+    .slice(1)
+    .map((c) => Number(c).toString(16).padStart(2, '0'))
+    .join('')}`.toUpperCase();
+  const scheme = cs.getPropertyValue('color-scheme').trim() === 'light' ? 'light' : 'dark';
+  const set = (name: string, value: string) => {
+    const m = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+    if (m && m.content !== value) m.content = value;
+  };
+  set('theme-color', hex);
+  set('color-scheme', scheme);
 }
 
 export function useAppearance(): AppearanceContext {

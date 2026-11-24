@@ -16,6 +16,9 @@
  * reviewer needs to see (prototype/<state>-<w>.jpg and -fold.jpg), with axe, overflow, broken
  * words in headings and page errors, counted as findings; and a bundle check that the prototype
  * is its own chunk.
+ * Creative Slice 03 Phase 3.3: the shell in the default and every atmosphere colour set
+ * (shell/<state>-<view>-<w>.jpg) with axe, overflow, page errors, the applied colours and the
+ * Quiet Room serif's requests, counted as findings.
  *
  * Usage: npm run build && npx tsx scripts/visual/styleguide.ts [--out dir] [--strict]
  */
@@ -91,6 +94,8 @@ async function open(ctx: BrowserContext, origin: string, hash: string) {
   const page = await ctx.newPage();
   const errors: string[] = [];
   const fontRequests: { url: string; bytes: number }[] = [];
+  const serifRequests: string[] = [];
+  page.on('request', (r) => /newsreader/i.test(r.url()) && serifRequests.push(r.url().replace(/^.*\//, '')));
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
     const t = m.text();
@@ -103,7 +108,7 @@ async function open(ctx: BrowserContext, origin: string, hash: string) {
   await page.goto(`${origin}${BASE}${hash}`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   await page.waitForTimeout(700); // let entrance and stamp animations finish
-  return { page, errors, fontRequests };
+  return { page, errors, fontRequests, serifRequests };
 }
 
 /** Hide the app's fixed full-page grain so full-page screenshots aren't streaked. */
@@ -638,13 +643,99 @@ async function prototypeChecks(browser: Browser, origin: string, blocked: Set<st
   return out;
 }
 
-/** The app shell must not load the handwritten face. */
+/** The default app shell must not load the handwritten face, nor The Quiet Room's serif. */
 async function homeLoadsNoCaveat(browser: Browser, origin: string, blocked: Set<string>) {
   const ctx = await newContext(browser, origin, 390, 'reduce', blocked);
-  const { page, fontRequests } = await open(ctx, origin, '#/');
+  const { page, fontRequests, serifRequests } = await open(ctx, origin, '#/');
   const caveat = await page.evaluate(() => Array.from(document.fonts).some((f) => /caveat/i.test(f.family) && f.status === 'loaded'));
   await ctx.close();
-  return { requests: fontRequests.length, loaded: caveat, pass: fontRequests.length === 0 && !caveat };
+  return { requests: fontRequests.length, loaded: caveat, serifRequests: serifRequests.length, pass: fontRequests.length === 0 && !caveat && serifRequests.length === 0 };
+}
+
+/**
+ * Creative Slice 03, Phase 3.3: the shell in the default Playground and in every colour set
+ * (each atmosphere's other type pairing once), on an ordinary page (#/plan), on the homepage,
+ * and with the menu open on phones. A saved appearance is seeded as a future build would store
+ * it. Checks: applied before and after the app runs (attributes, page and browser colour), the
+ * Quiet Room's serif requested only there, plus axe, overflow and page errors, all findings.
+ */
+const SHELL_STATES: { name: string; look: string | null; palette?: string; type?: string; page?: string; scheme?: string }[] = [
+  { name: 'default', look: null },
+  { name: 'studio-poster-sans', look: 'studio', palette: 'poster', type: 'sans' },
+  { name: 'studio-sherbet-mono', look: 'studio', palette: 'sherbet', type: 'mono' },
+  { name: 'studio-night-sans', look: 'studio', palette: 'night', type: 'sans' },
+  { name: 'quiet-room-linen-book', look: 'quiet-room', palette: 'linen', type: 'book' },
+  { name: 'quiet-room-sage-serif-sans', look: 'quiet-room', palette: 'sage', type: 'serif-sans' },
+  { name: 'quiet-room-lamplight-book', look: 'quiet-room', palette: 'lamplight', type: 'book' },
+  { name: 'underground-newsstand-poster', look: 'underground', palette: 'newsstand', type: 'poster' },
+  { name: 'underground-daylight-zine', look: 'underground', palette: 'daylight', type: 'zine' },
+  { name: 'underground-forest-poster', look: 'underground', palette: 'forest', type: 'poster' },
+];
+interface ShellResult {
+  state: string;
+  width: number;
+  view: string;
+  applied: boolean;
+  detail: string;
+  serifOk: boolean;
+  overflowPx: number;
+  offenders: string[];
+  pageErrors: string[];
+  axe: WidthResult['axe'];
+  file: string;
+}
+async function shellChecks(browser: Browser, origin: string, blocked: Set<string>) {
+  const out: ShellResult[] = [];
+  await mkdir(join(OUT, 'shell'), { recursive: true });
+  for (const width of Object.keys(WIDTHS).map(Number))
+    for (const st of SHELL_STATES)
+      for (const view of width < 768 ? ['plan', 'home', 'menu'] : ['plan', 'home']) {
+        const ctx = await newContext(browser, origin, width, 'reduce', blocked);
+        if (st.look) {
+          const value = JSON.stringify({ v: 1, look: st.look, custom: { [st.look]: { palette: st.palette, type: st.type } } });
+          await ctx.addInitScript((v) => localStorage.setItem('personal-playground:appearance', v), value);
+        }
+        const { page, errors, serifRequests } = await open(ctx, origin, view === 'home' ? '#/' : '#/plan');
+        await hideBodyGrain(page);
+        if (view === 'menu') {
+          await page.locator('[data-shell="tabbar"]').getByRole('button', { name: 'More' }).click();
+          await page.locator('[data-shell="menu"]').waitFor();
+        }
+        await page.waitForTimeout(150); // reduced motion still leaves 0.01 ms transitions
+        const got = await page.evaluate(() => ({
+          look: document.documentElement.dataset.look ?? null,
+          palette: document.documentElement.dataset.lookPalette ?? null,
+          type: document.documentElement.dataset.lookType ?? null,
+          body: getComputedStyle(document.body).backgroundColor,
+          theme: document.querySelector('meta[name="theme-color"]')?.getAttribute('content') ?? null,
+          ink: getComputedStyle(document.documentElement).getPropertyValue('--pp-ink').trim(),
+        }));
+        const inkHex = `#${got.ink
+          .split(' ')
+          .map((c) => Number(c).toString(16).padStart(2, '0'))
+          .join('')}`.toUpperCase();
+        const applied =
+          got.look === st.look &&
+          got.palette === (st.palette ?? null) &&
+          got.type === (st.type ?? null) &&
+          got.body === `rgb(${got.ink.split(' ').join(', ')})` &&
+          got.theme === inkHex &&
+          (st.look !== null || got.theme === '#141614');
+        // Newsreader is requested by The Quiet Room only (and there by its serif text).
+        const serifOk = st.look === 'quiet-room' ? serifRequests.length > 0 : serifRequests.length === 0;
+        const axe = (await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()).violations.map((v) => ({
+          id: v.id,
+          impact: v.impact ?? null,
+          nodes: v.nodes.length,
+          targets: v.nodes.slice(0, 4).map((n) => n.target.join(' ')),
+        }));
+        const { overflowPx, offenders } = await measureOverflow(page);
+        const file = `shell/${st.name}-${view}-${width}.jpg`;
+        await page.screenshot({ path: join(OUT, file), type: 'jpeg', quality: 78 });
+        out.push({ state: st.name, width, view, applied, detail: `${got.look ?? 'default'}/${got.palette ?? '-'}/${got.type ?? '-'}, page ${got.body}, theme-color ${got.theme}`, serifOk, overflowPx, offenders, pageErrors: errors, axe, file });
+        await ctx.close();
+      }
+  return out;
 }
 
 /** Bundle facts from dist/: font files, the style guide chunk, and the app entry. */
@@ -671,8 +762,9 @@ async function bundle() {
     entryContainsStyleGuide: /Skip to style guide/.test(entryText),
     styleGuideChunks: guide,
     entryContainsPrototype: /Prototype preview: nothing here is saved|miy-root/.test(entryText),
-    // The Quiet Room's serif is declared only in the prototype's own CSS chunk.
-    entryReferencesNewsreader: /newsreader/i.test(entryText),
+    // The Quiet Room's serif: since Phase 3.3 declared with the app's styles (fetched only when
+    // used; homeLoadsNoCaveat and shellChecks check the requests), in exactly three files.
+    entryDeclaresNewsreader: /@font-face\s*\{[^}]*Newsreader/i.test(entryText),
     newsreaderFiles: assets.filter((f) => /newsreader/i.test(f)),
     prototypeChunks: prototype,
   };
@@ -707,15 +799,21 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
       `- ${!p.broken.length && !p.axe.length && p.overflowPx <= 1 && !p.pageErrors.length ? '✅' : '❌'} ${p.label} @ ${p.width}px: axe ${p.axe.length ? p.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${p.overflowPx}px${p.offenders.length ? ` (${p.offenders.join(', ')})` : ''}; ${p.broken.length ? `BROKEN words: ${p.broken.join(', ')}` : 'no broken words'}; errors ${p.pageErrors.length ? p.pageErrors.join(' / ') : 'none'} (${p.files.map((f) => `[${f}](${f})`).join(' · ')})`,
     );
   L.push('');
+  L.push('## Shell atmospheres (Creative Slice 03, Phase 3.3)', '');
+  for (const x of r.shell)
+    L.push(
+      `- ${x.applied && x.serifOk && !x.axe.length && x.overflowPx <= 1 && !x.pageErrors.length ? '✅' : '❌'} ${x.state}, ${x.view} @ ${x.width}px: ${x.applied ? 'applied' : 'NOT APPLIED'} (${x.detail}); Newsreader ${x.serifOk ? 'as expected' : 'UNEXPECTED'}; axe ${x.axe.length ? x.axe.map((a) => `\`${a.id}\` (${a.impact}, ${a.nodes}) ${a.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${x.overflowPx}px${x.offenders.length ? ` (${x.offenders.join(', ')})` : ''}; errors ${x.pageErrors.length ? x.pageErrors.join(' / ') : 'none'} ([${x.file}](${x.file}))`,
+    );
+  L.push('');
   L.push('## Cover headline', '');
   for (const c of r.cover) L.push(`- ${c.pass ? '✅' : '❌'} ${c.width}px: ${c.fontSize}, ${c.lines} line(s), ${c.brokenWords.length ? `BROKEN: ${c.brokenWords.join(', ')}` : 'no broken words'}${c.overflow ? ', OVERFLOW' : ''} ([${c.file}](${c.file}))`);
   L.push('');
   L.push('## Reduced motion', '');
   for (const m of r.reducedMotion) L.push(`- ${m.pass ? '✅' : '❌'} ${m.width}px: "${m.status}", stamp animation-duration ${m.animationDuration} ([${m.file}](${m.file}))`);
   L.push('', '## Fonts and bundle', '');
-  L.push(`- ${r.home.pass ? '✅' : '❌'} The app shell (#/) requests no Caveat files (${r.home.requests} requests, loaded: ${r.home.loaded})`);
+  L.push(`- ${r.home.pass ? '✅' : '❌'} The default app shell (#/) requests no Caveat files (${r.home.requests} requests, loaded: ${r.home.loaded}) and no Newsreader files (${r.home.serifRequests} requests)`);
   L.push(`- ${r.bundle.entryReferencesCaveat ? '❌' : '✅'} App entry files (${r.bundle.entryFiles.join(', ')}) declare no Caveat font files`);
-  L.push(`- ${r.bundle.entryReferencesNewsreader || r.bundle.newsreaderFiles.length !== 3 ? '❌' : '✅'} The Quiet Room's serif (Newsreader) is self-hosted and declared only by the prototype chunk: ${r.bundle.newsreaderFiles.join(', ') || 'NOT FOUND'}`);
+  L.push(`- ${!r.bundle.entryDeclaresNewsreader || r.bundle.newsreaderFiles.length !== 3 ? '❌' : '✅'} The Quiet Room's serif (Newsreader) is self-hosted, declared once with the app's styles and fetched only when used: ${r.bundle.newsreaderFiles.join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsPrototype || !r.bundle.prototypeChunks.length ? '❌' : '✅'} The prototype is a separate chunk: ${r.bundle.prototypeChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsStyleGuide ? '❌' : '✅'} The style guide is a separate chunk: ${r.bundle.styleGuideChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ')}`);
   L.push(`- Caveat Bold, Latin: ${r.bundle.caveatLatinBold.map((c) => `${c.file} ${c.bytes} B`).join(', ')} (budget ${FONT_BUDGET} B; WOFF2 is already compressed)`);
@@ -740,6 +838,7 @@ async function run() {
     const cover = await coverChecks(browser, origin, blocked);
     const atmospheres = await atmosphereChecks(browser, origin, blocked);
     const prototype = await prototypeChecks(browser, origin, blocked);
+    const shell = await shellChecks(browser, origin, blocked);
     const b = await bundle();
     const fontOk = b.caveatLatinBold.length === 1 && b.caveatLatinBold.every((c) => c.bytes <= FONT_BUDGET);
     const findings =
@@ -762,9 +861,10 @@ async function run() {
       (b.entryContainsStyleGuide ? 1 : 0) +
       prototype.reduce((n, p) => n + p.broken.length + p.axe.length + (p.overflowPx > 1 ? 1 : 0) + p.pageErrors.length, 0) +
       (b.entryContainsPrototype || !b.prototypeChunks.length ? 1 : 0) +
-      (b.entryReferencesNewsreader || b.newsreaderFiles.length !== 3 ? 1 : 0) +
+      (!b.entryDeclaresNewsreader || b.newsreaderFiles.length !== 3 ? 1 : 0) +
+      shell.reduce((n, x) => n + (x.applied ? 0 : 1) + (x.serifOk ? 0 : 1) + x.axe.length + (x.overflowPx > 1 ? 1 : 0) + x.pageErrors.length, 0) +
       (fontOk ? 0 : 1);
-    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, prototype, home, bundle: b, blockedHosts: [...blocked].sort() };
+    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, prototype, shell, home, bundle: b, blockedHosts: [...blocked].sort() };
   } finally {
     await browser.close();
     server.close();

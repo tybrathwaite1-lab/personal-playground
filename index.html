@@ -14,6 +14,46 @@
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%icons/favicon.svg" />
     <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
     <title>Personal Playground</title>
+    <script>
+      /*
+       * Appearance before first paint (Creative Slice 03, Phase 3.3). Applies a saved
+       * atmosphere to <html> before the stylesheet paints anything, so the page never flashes
+       * the default first, and gives the browser's chrome the same page colour. With nothing
+       * saved, or anything unreadable, it does nothing: the default Playground as before.
+       * A mirror of resolve(parseAppearance(...)) in src/appearance, checked against it, and
+       * against each colour set's page colour in src/styles/atmospheres/tokens.css, by
+       * tests/atmospheres.test.ts. The provider takes over once the app runs.
+       */
+      (function () {
+        var LOOKS = {
+          studio: [['poster', 'sherbet', 'night'], ['sans', 'mono']],
+          'quiet-room': [['linen', 'sage', 'lamplight'], ['book', 'serif-sans']],
+          underground: [['newsstand', 'daylight', 'forest'], ['poster', 'zine']]
+        };
+        var PAGE = {
+          poster: ['#FBF6EC', 'light'], sherbet: ['#FFF3EE', 'light'], night: ['#17182E', 'dark'],
+          linen: ['#F8F3EA', 'light'], sage: ['#EFF2EA', 'light'], lamplight: ['#211B17', 'dark'],
+          newsstand: ['#20251F', 'dark'], daylight: ['#F4E8CF', 'light'], forest: ['#1E4A3C', 'dark']
+        };
+        var isObj = function (v) { return typeof v === 'object' && v !== null && !Array.isArray(v); };
+        try {
+          var a = JSON.parse(localStorage.getItem('personal-playground:appearance'));
+          if (!isObj(a) || a.v !== 1 || typeof a.look !== 'string' || !Object.prototype.hasOwnProperty.call(LOOKS, a.look)) return;
+          var sets = LOOKS[a.look];
+          var c = isObj(a.custom) && isObj(a.custom[a.look]) ? a.custom[a.look] : {};
+          var palette = sets[0].indexOf(c.palette) >= 0 ? c.palette : sets[0][0];
+          var type = sets[1].indexOf(c.type) >= 0 ? c.type : sets[1][0];
+          var html = document.documentElement;
+          html.setAttribute('data-look', a.look);
+          html.setAttribute('data-look-palette', palette);
+          html.setAttribute('data-look-type', type);
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', PAGE[palette][0]);
+          document.querySelector('meta[name="color-scheme"]').setAttribute('content', PAGE[palette][1]);
+        } catch (e) {
+          /* storage blocked or unreadable: the default Playground */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

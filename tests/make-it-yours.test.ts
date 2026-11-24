@@ -212,8 +212,10 @@ test('the Underground colour sets are made only of tested surfaces', () => {
   assert.match(css, /\.miy-root\[data-miy-look='underground'\] \{\s*--miy-paper: var\(--surface\);\s*--miy-ink: var\(--fg\);\s*--miy-muted: var\(--fg-muted\);\s*--miy-focus: var\(--focus\);/);
 });
 
-test('the one serif is self-hosted, licensed, unmodified and loaded only by the prototype', () => {
-  const dir = 'src/prototype/make-it-yours/fonts';
+test('the one serif is self-hosted, licensed and unmodified, and the prototype uses the shared declaration', () => {
+  // Since Creative Slice 03 Phase 3.3 the shell's Quiet Room setting uses it too, so it is
+  // declared once with the app's styles (tests/atmospheres.test.ts checks who may name it).
+  const dir = 'src/styles/fonts/newsreader';
   const readme = read(`${dir}/README.md`);
   const woff = readdirSync(join(root, dir)).filter((f) => f.endsWith('.woff2')).sort();
   assert.deepEqual(woff, ['newsreader-latin-400-italic.woff2', 'newsreader-latin-400-normal.woff2', 'newsreader-latin-500-normal.woff2']);
@@ -224,12 +226,11 @@ test('the one serif is self-hosted, licensed, unmodified and loaded only by the 
     assert.equal(bytes.subarray(0, 4).toString('latin1'), 'wOF2', `${f}: a WOFF2 file`);
   }
   assert.match(read(`${dir}/OFL.txt`), /SIL Open Font License, Version 1\.1/);
-  // Only the prototype declares it; nothing else in the app names the face.
-  const users = files('src').filter((f) => /\.(tsx?|css)$/.test(f) && /Newsreader/.test(read(f)));
-  assert.ok(users.every((f) => f.startsWith('src/prototype/')), users.join(', '));
-  assert.match(read('src/prototype/make-it-yours/MakeItYours.tsx'), /import '\.\/fonts\.css';/);
-  const declared = [...read('src/prototype/make-it-yours/fonts.css').matchAll(/url\('\.\/fonts\/([^']+)'\)/g)].map((m) => m[1]).sort();
+  const declared = [...read('src/styles/newsreader.css').matchAll(/url\('\.\/fonts\/newsreader\/([^']+)'\)/g)].map((m) => m[1]).sort();
   assert.deepEqual(declared, woff);
+  assert.match(read('src/styles/index.css'), /@import '\.\/newsreader\.css';/);
+  // The prototype no longer declares its own copy.
+  assert.ok(!files('src/prototype').some((f) => f.endsWith('.woff2') || /@font-face/.test(f.endsWith('.css') ? read(f) : '')));
   assert.doesNotMatch(read('package.json'), /newsreader/i, 'no package dependency');
 });
 

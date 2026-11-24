@@ -92,15 +92,15 @@ export function Layout({ current, children }: { current: RouteName; children: Re
       </InPageLink>
 
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="pt-safe atmos-rule sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
+      <header data-shell="header" className="pt-safe atmos-rule sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 md:px-6">
           <a href={href('home')} className="flex items-baseline gap-3" aria-label="Personal Playground — home">
-            <span className="display text-xl tracking-normal">
+            <span data-shell="wordmark" className="display text-xl tracking-normal">
               Personal Playground<span className="text-rust">.</span>
             </span>
-            <span className="label hidden sm:inline lg:hidden xl:inline">Vol. 02</span>
+            <span data-shell="issue" className="label hidden sm:inline lg:hidden xl:inline">Vol. 02</span>
           </a>
-          <nav aria-label="Main" className="hidden lg:block">
+          <nav aria-label="Main" data-shell="nav" className="hidden lg:block">
             <ul className="flex items-center gap-0.5">
               {NAV.filter((n) => DESKTOP.includes(n.route)).map((n) => (
                 <li key={n.route}>
@@ -129,6 +129,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
             <a
               href={href('backup')}
               aria-current={current === 'backup' ? 'page' : undefined}
+              data-shell="settings"
               className="hidden items-center gap-1.5 border border-line px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-paper/60 hover:text-paper aria-[current=page]:border-rust aria-[current=page]:text-paper lg:inline-flex"
             >
               <Archive size={14} aria-hidden /> Settings
@@ -153,11 +154,11 @@ export function Layout({ current, children }: { current: RouteName; children: Re
         </div>
       )}
 
-      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-6 md:pt-10 lg:pb-16">
+      <main id="main" tabIndex={-1} data-shell="main" className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-6 md:pt-10 lg:pb-16">
         {children}
       </main>
 
-      <footer className="mx-auto hidden max-w-6xl border-t border-line px-6 py-8 lg:block">
+      <footer data-shell="footer" className="mx-auto hidden max-w-6xl border-t border-line px-6 py-8 lg:block">
         <div className="flex items-center justify-between">
           <p className="label">Stay curious. Play more. Explore freely.</p>
           <p className="font-jp text-xs tracking-[0.3em] text-muted" lang="ja">
@@ -167,7 +168,7 @@ export function Layout({ current, children }: { current: RouteName; children: Re
       </footer>
 
       {/* ── Mobile bottom nav ───────────────────────────────── */}
-      <nav aria-label="Primary" className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 backdrop-blur lg:hidden">
+      <nav aria-label="Primary" data-shell="tabbar" className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 backdrop-blur lg:hidden">
         <ul className="grid grid-cols-5">
           {NAV.filter((n) => BOTTOM.includes(n.route)).map((n) => {
             const Icon = n.icon;
@@ -204,9 +205,9 @@ export function Layout({ current, children }: { current: RouteName; children: Re
 
       {/* ── Full menu ───────────────────────────────────────── */}
       {menuOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink" id="more-menu" role="dialog" aria-modal="true" aria-label="All sections">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink" id="more-menu" data-shell="menu" role="dialog" aria-modal="true" aria-label="All sections">
           <div className="pt-safe flex h-14 items-center justify-between border-b border-line px-4">
-            <span className="label">Contents · 目次</span>
+            <span data-shell="menu-title" className="label">Contents · 目次</span>
             <button type="button" className="btn-ghost" onClick={closeMenu} aria-label="Close menu" autoFocus>
               <X size={22} aria-hidden />
             </button>
@@ -215,8 +216,8 @@ export function Layout({ current, children }: { current: RouteName; children: Re
             {[...NAV, { route: 'backup' as RouteName, label: 'Backup & Settings', short: 'Backup', num: '08', jp: '保管', icon: Archive }].map((n) => (
               <li key={n.route} className="border-b border-line">
                 <a href={href(n.route)} className="flex items-baseline gap-4 py-3.5" aria-current={current === n.route ? 'page' : undefined}>
-                  <span className="font-mono text-xs text-rust">{n.num}</span>
-                  <span className={`display text-3xl ${current === n.route ? 'text-rust' : ''}`}>{n.label}</span>
+                  <span data-shell="menu-num" className="font-mono text-xs text-rust">{n.num}</span>
+                  <span data-shell="menu-label" className={`display text-3xl ${current === n.route ? 'text-rust' : ''}`}>{n.label}</span>
                   <span className="ml-auto font-jp text-xs text-muted" lang="ja">
                     {n.jp}
                   </span>
