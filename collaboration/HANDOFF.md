@@ -1,6 +1,65 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.1: safety net)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.2: appearance foundation)
+
+Baseline: `main` at `8e56949`. Adds the appearance model, its device-local storage and a provider. There are no controls, no styles and no change for anyone who hasn't chosen an atmosphere, and nobody can choose one yet.
+
+### Data model (`src/appearance/`)
+
+- `looks.ts`: the production registry of the three atmospheres (Studio, The Quiet Room, The Underground) with their curated colour sets and type pairings; the first of each is its default. A unit test keeps it identical to the Slice 02 prototype's definitions rather than refactoring the prototype.
+- `appearance.ts`: `Appearance = { look: LookId | null; custom: { [look]: { palette, type } } }`.
+  - `look: null` is the explicit default, today's Playground.
+  - `custom` keeps each atmosphere's adjustments independently. Defaults are not stored.
+- Stored as `{"v":1,"look":…,"custom":{…}}` under `personal-playground:appearance`. `parseAppearance` turns any stored value into a valid appearance and never throws:
+  - not JSON, the wrong shape or another version → the default;
+  - an unknown atmosphere → the default;
+  - an unknown or foreign colour or type → that atmosphere's default for that half.
+
+### Preview, commit, cancel
+
+- `AppearanceState = { saved, draft, commits }`. What's shown is `draft ?? saved`.
+- Actions:
+  - `preview-look`: an atmosphere or `null`;
+  - `preview-custom`: any atmosphere, shown or not;
+  - `commit`: the draft becomes saved, and `commits` counts up;
+  - `cancel`: the draft is dropped;
+  - `external`: another tab saved; a preview in progress is kept.
+- Invalid ids are ignored. Switching atmospheres never loses another atmosphere's adjustments, and choosing the default keeps them all for next time.
+
+### Provider (`src/hooks/useAppearance.tsx`, mounted in `main.tsx`)
+
+- It loads once, stores only on a commit (never on load or on another tab's change, so a stored value is never rewritten by reading it) and follows other tabs.
+- It mirrors what's shown onto `<html>` as `data-look`, `data-look-palette` and `data-look-type`. With the default, no attributes are set. No styles read them yet.
+
+### Persistence and backward compatibility
+
+- Device-local only, beside the atmosphere key. It is not in personal data, backups, Sync or the legacy settings mirror; a test shows normalisation would strip it even if it got into personal data by mistake.
+- Older builds ignore the key, and this build treats any version but 1 as the default and leaves it untouched.
+
+### Evidence
+
+- `tests/appearance.test.ts` (9 tests) and `browser-tests/appearance.test.ts` (14 scenarios) cover:
+  - the default unchanged at both widths, with nothing stored by browsing;
+  - a saved atmosphere applied across reloads and routes, and never rewritten;
+  - eight malformed values;
+  - blocked storage and other tabs;
+  - a real sync to the fake GitHub whose file carries no trace of it.
+- Mutations caught:
+  - storing on load;
+  - switching atmospheres dropping adjustments;
+  - no colour validation;
+  - cancel keeping the preview;
+  - the default setting attributes.
+- The legacy colour inventory is unchanged (471 in 28 files).
+
+### Open questions and trade-offs
+
+- **Pre-paint is not included.** Attributes land after React's first render; harmless while nothing styles them. Phase 3.3 needs a small inline script in `index.html`, a `theme-color` change and the test that pins it, which deserves its own review.
+- **The commit path through the provider has no browser test yet,** because there's no control to trigger it. The reducer and storage are unit-tested, and browser coverage comes with the controls.
+- **Two tabs, two previews:** the last commit wins. A preview isn't shared between tabs.
+- **Backups and Erase don't include appearance (D1, D6).** Erase stays as it is until its own phase.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.1: safety net)
 
 Baseline: `main` at `66110e5`. Tests, an inventory and a comparison script only: no file under `src/`, no workflow and no visual harness file changes, so production behaviour, storage, Sync, ranking, Pulse, the Weekly Drop, the planner, the prototype and the visual publisher are untouched.
 
