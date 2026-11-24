@@ -1,6 +1,35 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (D-N: thread-node URL hardening)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (PR 1: Discovery foundation)
+
+A pure-code PR from `main` at `0a6f651`. PR #55 was merged with a tree identical to its reviewed head. Post-merge Deploy and smoke (run 45495785371), Visual check (45495785972), strict style guide (45495785451, 0 findings) and visual publication (45496445113) all passed, with 49/49 screenshots identical.
+
+**What's added:** `src/discovery/`, a read-only view of discoveries and their relationships over the existing Weekly Drop content. It contains:
+- `types.ts`;
+- `adapters.ts` (`fromDropItem`, `fromThreadNode`);
+- `graph.ts` (`createDiscoveryGraph(content, { today })`, which provides `all`, `get`, `has`, `relationsFor`, `neighbourhood` and `problems`);
+- `index.ts`.
+
+Tests are in `tests/discovery-graph.test.ts`. Nothing imports the module, so no route, UI, content or behaviour changes.
+
+**Semantics** (detailed in `graph.ts`):
+- **Availability** follows the Drop's own `visibleEditions` rule for an explicit `today`; thread nodes are always available. Unavailable records are absent from the graph, so they can't be reached at any depth, and claims authored on them are never seen.
+- **Each claim is stored once, as authored.** Traversal works both ways, labelled outgoing or incoming, and the meaning always reads `from → to`.
+- **Duplicates:** only a repeat of the same from, to, relation (trimmed, case-insensitive) and basis collapses. Reciprocal claims and differently worded claims are kept.
+- **Ignored:** self-links. Unknown targets are ignored and reported. Targets that exist but aren't published yet are ignored silently, so diagnostics never reveal scheduled content.
+- **Neighbourhood:**
+  - depth 1 or 2 only;
+  - inner limit 6 and outer limit 12 by default, both configurable;
+  - the outer ring is strictly second-degree and grows only from the shown inner ring;
+  - left-out counts are reported.
+
+**For review** (implementation choices, not silently settled product decisions):
+1. **Ordering.** Outgoing claims keep the editor's authored order, then incoming claims sorted by author id. The assessment had floated "basis, then id". Presentation can still put documented claims first in PR 3.
+2. **Thread nodes are always available** (they have no publication state), but carry no creators, sources or verification. That's relevant to D-B in PR 2.
+3. **Naming.** "Discovery" now names three things: `src/utils/discovery.ts` (the Discovery Engine), the saved kind `'discovery'` (your own links), and this module. That's code-level only for now; the D-I naming decision still stands.
+4. **Collisions.** When an item and a node share an id, the item wins, as in the thread panel. None exist today.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (D-N: thread-node URL hardening)
 
 A narrow security-maintenance PR from `main` at `3e50d10`. This is not the discovery foundation, and not Phase 3.4.
 
