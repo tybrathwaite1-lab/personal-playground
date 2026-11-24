@@ -1,6 +1,41 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (creative direction consolidation; Phase 3.3 production check)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (creative sprint closeout: Blueprint V2 consolidation and architecture assessment)
+
+Documentation only. Base: `main` at `cb09027`. PR #53 was merged with a tree identical to its reviewed head. Post-merge Deploy and smoke, Visual check, strict style guide (0 findings) and visual publication all passed; the evidence is in the assessment, §1.
+
+**Added**
+- [CREATIVE_BLUEPRINT_V2.md](CREATIVE_BLUEPRINT_V2.md): the approved creative baseline, verbatim, plus a status note.
+- [references/experience-lab-06/](references/experience-lab-06/README.md): five reconstructed reference images and a written description. It separates what the prototype did from what production requires.
+- [ARCHITECTURE_ASSESSMENT_V2.md](ARCHITECTURE_ASSESSMENT_V2.md): a read-only assessment covering B1–B10, the evaluated sequence, a proposed PR sequence, risks, and the decisions needed.
+
+**Updated**
+- DECISIONS: the sprint decisions, and a table of how the blueprint extends, clarifies or supersedes earlier decisions.
+- VISION: the North Star is now preserved at the top.
+- STATUS: the sprint is closed, implementation planning has begun, and Phase 3.4 is on hold.
+
+**Headline findings**
+- The Weekly Drop's thread graph and "Follow the thread" panel already provide:
+  - the constellation's relationship model: documented vs editorial, a reason per link, a trail, recentring;
+  - its non-visual explorer.
+- The first slice should build on these, as a hidden preview route (as in Slice 02).
+- Content and image rights are the critical path.
+- Avoid for now: content migration, editorial automation, graph libraries, persistent history and per-atmosphere component trees.
+
+**Open questions (assessment §5 and §6)**
+- The image-rights policy for cultural imagery.
+- Where local discovery fits.
+- The existing optional Mood filters.
+- Naming: Collection vs My Finds, and the existing saved kind `'discovery'`.
+- Which archive-balance guidance stands.
+- Blocking link checks for new content.
+- A new saved kind (a Sync contract change).
+- The cover issue model and refresh cadence.
+- Multi-personality timing.
+
+Nothing is resolved here. **Phase 3.4 and all feature implementation stay on hold** until a revised sequence is approved.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (creative direction consolidation; Phase 3.3 production check)
 
 Documentation only. It does three things:
 - preserves [Editorial Strategy v1](EDITORIAL_STRATEGY_V1.md) and [Living Cover Specification v1](LIVING_COVER_SPEC_V1.md) as approved product direction;
