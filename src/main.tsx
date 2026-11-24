@@ -7,6 +7,7 @@ import { PulseProvider } from './hooks/usePulse';
 import { SyncProvider } from './hooks/useSync';
 import { WeatherProvider } from './hooks/useWeather';
 import { AtmosphereProvider } from './hooks/useAtmosphere';
+import { AppearanceProvider } from './hooks/useAppearance';
 // Fonts are bundled with the app (no Google Fonts request), so they work offline from the first launch.
 import '@fontsource/anton/400.css';
 import '@fontsource/ibm-plex-sans/400.css';
@@ -25,7 +26,9 @@ createRoot(document.getElementById('root')!).render(
           <PulseProvider>
             <DropProvider>
               <AtmosphereProvider>
-                <App />
+                <AppearanceProvider>
+                  <App />
+                </AppearanceProvider>
               </AtmosphereProvider>
             </DropProvider>
           </PulseProvider>
