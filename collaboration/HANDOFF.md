@@ -1,6 +1,108 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.3: shell atmospheres)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (creative direction consolidation; Phase 3.3 production check)
+
+Documentation only. It does three things:
+- preserves [Editorial Strategy v1](EDITORIAL_STRATEGY_V1.md) and [Living Cover Specification v1](LIVING_COVER_SPEC_V1.md) as approved product direction;
+- records Phase 3.3's post-merge verification;
+- lists where the specifications and the current architecture disagree.
+
+Nothing here is resolved or implemented, and Phase 3.4 has not started.
+
+### Phase 3.3 post-merge verification (PR #52, merge `8f3c41e`)
+
+- **The merge commit's tree is byte-identical to the reviewed head `8bba9e1`.**
+- **Deploy to GitHub Pages** (run 45450688674): build, deploy and smoke all succeeded.
+  - The smoke check confirmed the deployed commit matches `8f3c41e`.
+  - The app shell, bundle, service worker and manifest load.
+  - `pulse.json` is fresh: 121 events, 6 of 7 sources ok.
+- **Visual check** (run 45450688610): Visual and browser tests succeeded.
+- **Style guide evidence, strict** (run 45450688442): **0 findings**, including the 50 shell-atmosphere captures.
+- **Publish visual results** (run 45451476200) succeeded. The `visual-results` folder for `main` is at `8f3c41e`.
+- **Default appearance:** the published `main` screenshots are identical to the reviewed head's, 49 of 49, at 390 and 1280 px.
+  - Before the merge, the head's screenshots were also 49 of 49 identical to the previous `main` (`62c13c9`).
+
+### Conflicts between the specifications and the current architecture (reported, not resolved)
+
+1. **The cover lead is neither shared nor stable.**
+   - Home's cover star ("Today's pick") is a daily seeded shuffle of all experiences, chosen by `dailySeed()`. That pool includes the owner's private custom experiences.
+   - When the personal weather-aware setting is on, outdoor-only items are filtered out of the pool, which changes the lead.
+   - The issue number on the cover (`seed % 1000`) changes daily.
+   - The spec asks for:
+     - a shared editorial cover story;
+     - personalization that shapes only the supporting discoveries;
+     - a lead stable for about 5–7 days.
+   - How the lead is chosen remains undecided.
+2. **Covers aren't preserved.** The Living Cover is computed on each visit and never recorded, so historical covers can't be referenced.
+   - Weekly Drop editions and `CuratedEdition` do reference item ids, which is close to the spec's model.
+3. **There is no common "discovery record".**
+   - Content lives in several shapes, and only Drop items carry sources, `verifiedAt` and `related` threads:
+     - experiences (`SEED_EXPERIENCES` and custom);
+     - places;
+     - websites;
+     - Drop items (defined inside edition files);
+     - Pulse events;
+     - Drop "nodes".
+   - Experiences and websites have no creator, source attribution or date fields.
+   - The spec's discovery pages (attribution, Visit Original, connections) and its rule to "reference existing records rather than duplicate" assume one record model.
+   - Saved items (`SavedItem`) also store a snapshot of title, subtitle and URL alongside `refId`.
+4. **Categories are closed lists.**
+   - The following are fixed TypeScript unions or JSON-schema enums:
+     - `WebsiteCategory`;
+     - `PlaceCategory`;
+     - `FieldNoteCategory`;
+     - Drop's 11 `column` values.
+   - The Drop candidate scout assigns each candidate its feed's fixed column.
+   - Open discovery with flexible topic labels has a partial home today: Drop `tags`, and the `wildcard` and `rabbit-hole` columns. Websites, places and experiences have no equivalent.
+   - "No ranking penalties outside categories" has no counterpart yet because there is no shared ranking. Nothing found today penalizes uncategorised content.
+5. **Several pipelines, not one.**
+   - Today there are three separate pipelines:
+     - Pulse ingest, for local events;
+     - the Drop candidate scout (RSS feeds into `candidates.json`, never publishing);
+     - the image scout (artifact boundary; `image-scout-results` preserved).
+   - Publishing is a manual PR, with schema validation and link checks.
+   - None of the following exist yet:
+     - a shared pipeline;
+     - batch approval;
+     - approval policies;
+     - audit trail;
+     - rollback;
+     - pause controls.
+   - The automation path in the strategy would be new infrastructure, which today's boundaries (no new services or infrastructure) require separate approval for.
+6. **The archive ratio differs from `EDITORIAL.md`.**
+   - The strategy gives about 60/40 archival to current.
+   - `EDITORIAL.md`, which DECISIONS names as the publishing authority, says "roughly half archive/nostalgia, a third timeless, some contemporary". Its scheme includes a third category, "timeless".
+   - Both are guidance, not quotas, but they disagree.
+7. **Dates and expiry.**
+   - Drop items record `verifiedAt` and, for contemporary or emerging items only, a `year`. There is no separate creation date for archival items, and no expiration field.
+   - Pulse events expire by their own dates.
+   - The spec asks for discovery and creation dates to be distinguished everywhere, and for expiration checks on time-sensitive content.
+8. **"Collection" means two things.**
+   - In the app, **My Collection** (`#/collection`) is the personal shelf of saved items, with its own filters.
+   - The spec separates **Collection** (the organized library, with search, categories and sorting) from **Saved Discoveries** (a simple personal shelf).
+   - Renaming or splitting either would touch navigation, which the atmosphere rules and current boundaries protect.
+9. **The atmosphere descriptors differ slightly.**
+   - The spec calls The Underground "bold, alternative, poster-inspired", where the Phase 3.3 brief said "dark, bold, editorial". Its colour sets already include a light one, Daylight.
+   - Studio is now "graphic" where the brief said "expressive".
+   - The Quiet Room is now "spacious".
+   - Phase 3.3 changed only the shell, so there is no implementation conflict. Later phases should design to the spec's wording.
+10. **Onboarding versus "immediately useful".**
+    - The Make It Yours prototype (`#/preview/make-it-yours`) is a look-then-interests onboarding journey.
+    - The spec requires the cover to work without onboarding or personalization.
+    - The prototype is isolated and the default home works without it, so this is a constraint on Phases 3.5 and 3.6, not a current defect.
+11. **Hiding "Not for me" items** (smaller point).
+    - `applyFamiliarity` (Pulse) always hides items marked "Not for me". The Drop only moves them to the end.
+    - This is a user's own choice, but it bears on the spec's "interests inform without filter bubbles" and should be considered when interest-guided discovery is designed.
+    - The Pick a Vibe interest narrowing keeps the full pool when nothing matches, so it never empties.
+
+Already consistent:
+- no streaks, visit counters or activity dashboards (`FeedbackBar`: "no counts, scores or streaks anywhere");
+- appearance kept separate from Sync (D1, tested);
+- the original appearance preserved unless one is chosen (D3, tested);
+- atmospheres that leave selection, navigation and functionality untouched (Phase 3.3);
+- verified sources, `https` links and link checks as publishing gates for the Drop.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.3: shell atmospheres)
 
 Baseline: `main` at `62c13c9`. The three atmospheres now set the application shell (top bar, navigation, phone tab bar, menu, footer, page frame) and the page colours behind every route. Nobody can choose one yet (no controls); a saved appearance is seeded in tests as a future build would store it. With nothing chosen, nothing changes.
 
