@@ -1,7 +1,7 @@
 /**
- * Validates every edition in content/drop/editions/*.json plus content/drop/nodes.json,
+ * Validates every edition in content/drop/editions/*.json and every thread node in content/drop/nodes.json,
  * and writes public/data/drop.json with all non-draft editions (the app shows each
- * one from its publishDate). Invalid editions are left out and reported.
+ * one from its publishDate). Invalid editions and invalid nodes are left out and reported.
  *
  * Usage: npx tsx scripts/drop/build.ts [--strict]   (--strict exits 1 on any error)
  */
@@ -11,7 +11,7 @@ import { COMMUNITIES } from '../../src/data/communities.ts';
 import { IMAGES } from '../../src/data/images.ts';
 import { SEED_PLACES } from '../../src/data/places.ts';
 import type { DropEdition, DropFile, ThreadNode } from '../../src/types/drop.ts';
-import { validateEdition, validateLibrary } from '../../src/utils/dropValidate.ts';
+import { validateEdition, validateLibrary, validateNodes } from '../../src/utils/dropValidate.ts';
 
 const strict = process.argv.includes('--strict');
 const DIR = 'content/drop/editions';
@@ -44,8 +44,26 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith('.json')).sort()) {
   if (ed.status !== 'draft') editions.push(ed);
 }
 
+// Thread nodes are validated like editions: a malformed or unsafe node is reported and left out.
 const nodesPath = 'content/drop/nodes.json';
-const nodes: ThreadNode[] = existsSync(nodesPath) ? (JSON.parse(readFileSync(nodesPath, 'utf8')) as ThreadNode[]) : [];
+let nodes: ThreadNode[] = [];
+if (existsSync(nodesPath)) {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(nodesPath, 'utf8'));
+  } catch (e) {
+    console.log(`✗ ${nodesPath}: not valid JSON — ${(e as Error).message}`);
+    errorCount++;
+  }
+  if (raw !== undefined) {
+    const checked = validateNodes(raw);
+    checked.warnings.forEach((w) => console.log(`  ! ${nodesPath} ${w.path}: ${w.message}`));
+    checked.errors.forEach((e) => console.log(`✗ ${nodesPath} ${e.path}: ${e.message}`));
+    errorCount += checked.errors.length;
+    nodes = checked.nodes;
+    console.log(`✓ ${nodesPath} — ${nodes.length} thread nodes${checked.errors.length ? ` (${checked.errors.length} errors; invalid nodes left out)` : ''}`);
+  }
+}
 const lib = validateLibrary(editions, nodes);
 lib.warnings.forEach((w) => console.log(`  ! ${w.path}: ${w.message}`));
 lib.errors.forEach((e) => console.log(`✗ ${e.path}: ${e.message}`));

@@ -1,6 +1,43 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (creative sprint closeout: Blueprint V2 consolidation and architecture assessment)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (D-N: thread-node URL hardening)
+
+A narrow security-maintenance PR from `main` at `3e50d10`. This is not the discovery foundation, and not Phase 3.4.
+
+**Pre-flight on `3e50d10`:** the tree is identical to PR #54's reviewed head, and every post-merge run passed:
+- Deploy and smoke (run 45491833048; deployed commit `3e50d10`);
+- Visual check (45491833017);
+- strict style guide (45491832992, 0 findings);
+- Publish visual results (45492533624).
+
+Default screenshots: 49 of 49 identical.
+
+**What changed** (preventive hardening, not a fix for a confirmed exploit; all 37 node URLs were already https):
+- **Validation:** `validateNodes` in `src/utils/dropValidate.ts` checks every thread node:
+  - required fields: a kebab-case `id`, `title`, a known `type` and `summary`;
+  - optional `year`, which must be text;
+  - optional `url`, which must be absolute `https://` and pass `isSafeUrl`;
+  - optional `related`, validated by the same rules as item relations (shared `checkRelations`, with identical messages).
+
+  Unknown extra fields are left alone.
+- **Build:** `scripts/drop/build.ts` reports invalid nodes as errors, failing with `--strict` as the Check workflow runs it, and leaves them out of `drop.json`, as it already does for invalid editions. Valid nodes ship unchanged.
+- **Render guard:** `ThreadPanel` renders a stop's external link only when `isSafeUrl` passes, as defence in depth. The structural href scan now treats it as a guarded boundary rather than a reviewed exception.
+
+**Unchanged:**
+- editorial content and relationships;
+- thread exploration behaviour;
+- Home and navigation;
+- Sync and saved items;
+- appearance;
+- dependencies;
+- publishing infrastructure;
+- ranking.
+
+**Still open (link verification, D-D):** this PR checks URL *form and safety*. Whether links still *work* stays as before:
+- the repo-wide link check (`npm run links`) remains report-only;
+- the gate for new content (verified when added, a reported automatic check, human resolution) is still a decision for the first content PR (assessment B8, D-D).
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (creative sprint closeout: Blueprint V2 consolidation and architecture assessment)
 
 Documentation only. Base: `main` at `cb09027`. PR #53 was merged with a tree identical to its reviewed head. Post-merge Deploy and smoke, Visual check, strict style guide (0 findings) and visual publication all passed; the evidence is in the assessment, §1.
 

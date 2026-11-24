@@ -13,7 +13,7 @@ import { COLUMN_META, type DropEdition, type DropItem, type DropRelation, type T
 import { buildAssistantPrompt } from '../utils/dropPrompt';
 import { validateEdition, type ValidationResult } from '../utils/dropValidate';
 import { formatYmd } from '../utils/community';
-import { hostname } from '../utils/helpers';
+import { hostname, isSafeUrl } from '../utils/helpers';
 
 const FRESHNESS_LABEL: Record<DropItem['freshness'], string> = {
   archive: 'From the archive',
@@ -302,7 +302,9 @@ function ThreadPanel({ startId, onClose }: { startId: string; onClose: () => voi
           </p>
           <h3 className="display mt-1 text-4xl">{current.title}</h3>
           <p className="mt-2 text-paper/85">{current.summary}</p>
-          {current.url && (
+          {/* Thread nodes and items come from the published drop.json; the build validates their URLs as https,
+              and the link is still only rendered when it passes the app's URL safety check. */}
+          {isSafeUrl(current.url) && (
             <a href={current.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm hover:text-rust">
               <ArrowUpRight size={13} aria-hidden /> {hostname(current.url)}
             </a>
