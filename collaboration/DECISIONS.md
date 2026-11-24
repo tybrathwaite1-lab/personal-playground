@@ -144,3 +144,86 @@ Context: Claude's read-only assessment of the approved creative direction (share
 - `EDITORIAL.md` remains the operational publishing guide for The Weekly Drop; where it differs from Editorial Strategy v1 (listed in HANDOFF, 2026-11-24), the difference is open for an owner decision, not silently reconciled.
 - Phase 3.3 (shell atmospheres, PR #52 as `8f3c41e`) verified in production the same day.
 
+
+## 2026-11-24 — Creative sprint closed: Creative Blueprint V2 is the creative baseline
+The exploratory creative sprint is closed: ChatGPT was creative director and independent reviewer, the owner was product owner. The sprint's prototypes explored the magazine, the curiosity shop, the gallery, belonging, a unified experience, the constellation, progressive disclosure, and desktop and mobile layouts.
+
+The owner approved [Creative Blueprint V2, Definitive Edition](CREATIVE_BLUEPRINT_V2.md) as the creative baseline. [Experience Lab 06](references/experience-lab-06/README.md) is its primary interaction reference: reconstructed images and a description, not production requirements.
+
+This is direction, not implementation authorisation. Phase 3.4 and all later feature work are on hold until a revised engineering sequence is approved. The read-only assessment for that is in [ARCHITECTURE_ASSESSMENT_V2](ARCHITECTURE_ASSESSMENT_V2.md).
+
+**Approved creative decisions from the sprint**
+- **North Star**, to be preserved in project documentation:
+  - *Old internet spirit, modern possibilities.*
+  - *Build somewhere worth visiting, not something that demands attention.*
+  - *Reveal the connections. Preserve the wonder.*
+- **Objective:** somewhere people enjoy visiting, not engagement, time spent, clicks or consumption.
+- **Four qualities of one experience** (not modes or destinations): Magazine, Curiosity Shop, Gallery, Hideaway.
+- **Three experience pillars:**
+  - **The Living Cover**, for anticipation ("What's waiting for me today?");
+  - **The Living Constellation**, for association ("What else could this connect to?"), approved as a signature feature;
+  - **My Finds**, for attachment ("What has stayed with me?").
+  - **The Collection** gives predictable access to the published library.
+- **A discovery** is any interesting thing worth sharing, including things not yet categorised. Its page offers:
+  - visual presentation where appropriate;
+  - concise context;
+  - accurate creator and source attribution;
+  - access to the original or a primary source;
+  - a simple way to keep it;
+  - optional deeper observations;
+  - meaningful connections.
+  Not every element is required.
+- **Progressive disclosure:** Enjoy → Associate → Explore → Understand. Each level is optional.
+- **Constellation principles:**
+  - familiarity is an entrance, not a boundary;
+  - connections may cross any subject;
+  - connections are never manufactured to add density;
+  - documented connections and editorial interpretations must be distinguishable;
+  - visitors can explore, expand, recentre and retrace freely;
+  - the wider view is optional, and the whole graph is not exposed by default;
+  - there are no completion requirements.
+- **Deliberately avoided:**
+  - infinite feeds and artificial urgency;
+  - mandatory onboarding;
+  - mood-based categorisation;
+  - restrictive personalisation;
+  - manufactured connections;
+  - unnecessary gamification;
+  - literal virtual-space simulations;
+  - exposed technical complexity;
+  - mediocre content published for volume.
+- **The voice is the founder's to begin with,** but the architecture must later support other editorial personalities without a separate app or a hard-coded identity.
+
+**How the blueprint relates to earlier decisions**
+
+Earlier decisions stay in force where compatible. Nothing below is silently reconciled: items marked *needs confirmation* are also listed as open questions in HANDOFF.
+
+| Earlier decision | Blueprint V2 | Effect |
+|---|---|---|
+| VISION: three pillars, **Go Somewhere** (local), **Do Something**, **Discover Something**. Local discovery in Tampa Bay is a primary use case. | Three *experience* pillars: Cover, Constellation, My Finds. Places are one kind of discovery. Local discovery isn't mentioned. | **Coexists** (confirmed in review, 2026-11-24). The product pillars stay, and the experience pillars sit alongside them. Local discovery, Pulse and the outing tools are preserved; the blueprint doesn't authorise removing them. Their arrangement in navigation after promotion is still open. |
+| Editorial Strategy v1, identity: culture magazine, exploratory gallery, personal library | Magazine, Curiosity Shop, Gallery, Hideaway | **Extends** (adds the Curiosity Shop and the Hideaway). |
+| Editorial Strategy v1, voice: "confident, curious, expressive, knowledgeable…, occasionally playful" | "curious, confident, knowledgeable, understated and occasionally playful"; "We invite. We don't lecture." | **Clarifies.** "Understated" replaces "expressive" for the writing voice; expressiveness moves to composition. |
+| Editorial Strategy v1, balance: about 60/40 archival to current, as guidance. `EDITORIAL.md`: about half archive, a third timeless, some contemporary. | "Balance archival, timeless, contemporary and emerging material without rigid quotas" | **Appears to supersede the 60/40 figure**, and is closer to `EDITORIAL.md`'s categories. *Needs confirmation.* |
+| Editorial Strategy v1: open discovery, quality gates, sources, automation path | Same principles (§11) | **Consistent.** |
+| Living Cover v1: shared lead; personalisation only in supporting discoveries; lead stable about 5–7 days; layered refresh; no urgency | A shared editorial identity stays recognisable; supporting content may respond to interests; the cover evolves deliberately, "when ready"; it is finite | **Consistent and extends.** Adds a finite cover, content-led composition, and occasional unexpected subjects. The 5–7 day guidance stands unless revised. |
+| Living Cover v1: Collection (library), **Saved Discoveries** (personal shelf) | Collection (library), **My Finds** (personal) | **Supersedes the name** "Saved Discoveries" with "My Finds". The app's current **My Collection** is the personal shelf, so naming and navigation are *needs confirmation* (navigation changes need separate authorisation). |
+| Living Cover v1: discovery pages with Visit Original, Save and connections | The same, plus *Look closer* and the constellation; "Keep this" for saving | **Extends.** |
+| Living Cover v1: returning visitors get subtle continuity; recent-thread continuity needs a privacy decision | "Retrace" the current exploration; no dashboards | **Extends.** Retracing the *current* exploration is approved; persistence beyond it still needs that privacy decision. |
+| Living Cover v1 and Slice 03 D3: the original appearance is preserved; atmospheres change presentation only | Same (§10) | **Consistent.** |
+| Slice 03 D1–D6 (device-local appearance; separate taxonomy; preserve the default; shell and page consistent; time-of-day atmosphere; Erase later) | Not contradicted | **Stand.** |
+| Slice 03 phase plan: 3.4 homepage compositions, 3.5 controls, 3.6 interest-guided discovery (as named in the Phase 3.3 authorisation) | Implementation proceeds incrementally, subject to engineering assessment | **On hold.** It will be replaced by a revised sequence once approved. |
+| Slice 02 Make It Yours prototype (look choice, then interests) | "Earlier experiments provide supporting context, not additional mandatory features"; no mandatory onboarding | **Clarifies.** It stays an isolated preview, and any onboarding must be optional. |
+| Discovery Engine "Mood" dial and Plan an Outing "Mood" chips, both optional filters (`src/utils/labels.ts`) | "We do not ask visitors to classify their emotional state or define their mood before exploring"; avoid mood-based categorisation | **Preserved for now** (review, 2026-11-24). The existing optional filters stay unchanged. The new experience adds no mood questions or profiling. A future UX review of the existing filters is a separate decision. |
+
+**Review clarifications (ChatGPT, PR #54, 2026-11-24)**
+- **The cover.** A cover issue that's identical for everyone is a *first-slice simplification* only.
+  - The long-term approach stands: one shared editorial lead, plus supporting discoveries that may be shaped by interests, always leaving room for surprise.
+  - Atmospheres change presentation, never selection.
+- **Relationships.** Traversal may go both ways, but each relation's authored direction, factual meaning and note are preserved, never implicitly reversed.
+  - Reciprocal or differently-worded records between the same pair are independent claims and are kept.
+  - Only identical records (same source, target, relation and basis) are duplicates.
+- **Hidden preview routes are unlinked, not access-controlled.** Anything in them, including visitor-testing content, must be public-ready and properly licensed.
+- **Constellation geometry.** Fixed slots and two rings are initial proposals. Acceptance is about readable labels, accessible relationships, touch targets and mobile use with real titles, not prototype geometry.
+- **Publishing gates.** Image rights, verified content and relationship quality are acceptance gates. Link failures get a human decision rather than an indiscriminate automatic block.
+- **Security maintenance.** The `ThreadPanel` node-URL hardening is a separate maintenance candidate. It is not a confirmed exploit, since all current URLs are https.
+
