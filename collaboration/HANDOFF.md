@@ -1,6 +1,40 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.2: appearance foundation)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.3: shell atmospheres)
+
+Baseline: `main` at `62c13c9`. The three atmospheres now set the application shell (top bar, navigation, phone tab bar, menu, footer, page frame) and the page colours behind every route. Nobody can choose one yet (no controls); a saved appearance is seeded in tests as a future build would store it. With nothing chosen, nothing changes.
+
+### Shared versus atmosphere-specific
+
+- **Shared, one system:** each colour set re-points the existing palette roles (`--pp-ink` page, `--pp-paper` text, `--pp-rust` accent, …) under `html[data-look][data-look-palette]` in `src/styles/atmospheres/tokens.css`. Every page already draws with those roles, so pages stay consistent with the shell (D4) without page changes. The Newsstand surfaces (Living Cover, editions) keep their approved colours. Shell type comes from nine `--shell-*` variables set per type pairing; shell colours use the semantic tokens (`--surface`, `--fg`, `--accent`, …). `Layout.tsx` only gained `data-shell` hooks.
+- **Atmosphere-specific (`src/styles/atmospheres/shell.css`):** how each part is drawn. Studio: four-colour stripe, pill navigation, round controls, coloured dots in the menu, no grain. The Quiet Room: Newsreader wordmark and menu, taller bar, hairline indicators, more space above pages, no grain or coloured rule. The Underground: heavy accent rule, hard edges, reversed blocks for the current place, condensed or mono capitals, grain kept.
+- Studio's decorative colours are used only for stripes and dots (tested), never text or state.
+
+### Before first paint and browser colours
+
+- An inline script in `index.html` applies the saved appearance to `<html>` and sets `theme-color` and `color-scheme` before the stylesheet paints. It mirrors `resolve(parseAppearance(…))`; a unit test runs it against a corpus of valid, malformed and hostile values and every valid combination, and checks its colour map against the tokens.
+- The provider keeps the metas in step after that, reading the applied `--pp-ink` (one source of truth); the default leaves `#141614`/`dark` untouched. The static `theme-color` and manifest tests are unchanged.
+
+### Newsreader
+
+Moved from the prototype to `src/styles/fonts/newsreader/` and declared once with the app's styles (files, hashes and licence unchanged). Browsers fetch it only when used, so only The Quiet Room requests it; tested in unit, browser and strict style-guide checks.
+
+### Visual comparison: the phone tab bar
+
+`compare-published.ts` leaves out exactly rows 779–843 of 390 px full-page images, where Chromium draws the fixed, translucent tab bar inconsistently (whole, half or not at all) between runs. The bar is still compared in every 390 px first-screen image and the menu image, and any difference outside the band counts as before. The band is derived from the harness viewport and the bar's height, both pinned by tests.
+
+### Tests
+
+- `tests/atmospheres.test.ts`: every registry colour set has one complete block; all 29 legacy page pairs and all control states on ink, raised and hunter pass WCAG AA in all nine sets (the same list as the default, now shared in `tests/helpers/contrast.ts`); every rule needs `data-look`; hooks and type variables; the pre-paint script's equivalence; Newsreader's users.
+- `browser-tests/atmospheres.test.ts`: the default is unchanged (desktop and phone); each atmosphere through navigation, Back and reload; all 18 colour and type combinations; malformed values; no flash with the app's JavaScript held; browser colours following another tab; Newsreader only in The Quiet Room; keyboard and focus; owner tools.
+- The strict style guide captures the shell in the default and nine colour sets on `#/plan`, the homepage and the phone menu, with axe, overflow and errors as findings.
+
+### Open questions
+
+- D4: since every page takes the atmosphere's colours, no "not available on this page" notice was needed. Page-level compositions (and any such notice) belong to Phase 3.4+.
+- Fixed non-palette colours in a few pages (for example `bg-white/[0.03]` hover washes) are faint on light colour sets; harmless, recorded for later phases.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (Creative Slice 03, Phase 3.2: appearance foundation)
 
 Baseline: `main` at `8e56949`. Adds the appearance model, its device-local storage and a provider. There are no controls, no styles and no change for anyone who hasn't chosen an atmosphere, and nobody can choose one yet.
 

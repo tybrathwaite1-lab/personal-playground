@@ -1,0 +1,328 @@
+/*
+ * Shell atmospheres (Creative Slice 03, Phase 3.3).
+ *
+ * The application shell (top bar, navigation, tab bar, menu, footer, page frame) set three
+ * ways. Nothing here applies without data-look on <html>, so the default Playground is
+ * unchanged, time-of-day atmosphere included.
+ *
+ * Shared: every rule reads the same tokens. Colour comes from the semantic surface tokens
+ * (--surface, --fg, --fg-muted, --accent, --control), which on the shell resolve to the colour
+ * set chosen in tokens.css; type comes from a handful of --shell-* variables set per type
+ * pairing below. Layout.tsx marks the shell's parts with data-shell="…" and nothing else.
+ *
+ * Atmosphere-specific: only how each part is drawn (rules, indicators, corners, spacing).
+ * Text and state colours are always tested pairs (surface on accent, fg on surface, surface on
+ * fg, fg on a 10% fg wash…). Studio's four decorative colours are used only for stripes and
+ * dots, never for text or to show state. Nothing here animates; existing transitions follow
+ * reduced motion as before.
+ */
+
+/* ── Type pairings ─────────────────────────────────────────────────────── */
+/* --shell-display: wordmark and menu entries. --shell-nav: navigation labels. */
+html[data-look='studio'][data-look-type='sans'] {
+  --shell-display: 'IBM Plex Sans', system-ui, sans-serif;
+  --shell-display-weight: 600;
+  --shell-display-case: none;
+  --shell-display-tracking: -0.02em;
+  --shell-nav: 'IBM Plex Sans', system-ui, sans-serif;
+  --shell-nav-weight: 500;
+  --shell-nav-case: none;
+  --shell-nav-tracking: 0;
+  --shell-nav-size: 0.8125rem;
+}
+html[data-look='studio'][data-look-type='mono'] {
+  --shell-display: 'IBM Plex Mono', ui-monospace, monospace;
+  --shell-display-weight: 500;
+  --shell-display-case: none;
+  --shell-display-tracking: -0.03em;
+  --shell-nav: 'IBM Plex Mono', ui-monospace, monospace;
+  --shell-nav-weight: 500;
+  --shell-nav-case: none;
+  --shell-nav-tracking: 0;
+  --shell-nav-size: 0.8125rem;
+}
+html[data-look='quiet-room'][data-look-type='book'] {
+  --shell-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --shell-display-weight: 400;
+  --shell-display-case: none;
+  --shell-display-tracking: 0;
+  --shell-nav: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --shell-nav-weight: 400;
+  --shell-nav-case: none;
+  --shell-nav-tracking: 0;
+  --shell-nav-size: 1rem;
+}
+html[data-look='quiet-room'][data-look-type='serif-sans'] {
+  --shell-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --shell-display-weight: 400;
+  --shell-display-case: none;
+  --shell-display-tracking: 0;
+  --shell-nav: 'IBM Plex Sans', system-ui, sans-serif;
+  --shell-nav-weight: 400;
+  --shell-nav-case: none;
+  --shell-nav-tracking: 0.01em;
+  --shell-nav-size: 0.875rem;
+}
+html[data-look='underground'][data-look-type='poster'] {
+  --shell-display: Anton, 'Arial Narrow', Impact, sans-serif;
+  --shell-display-weight: 400;
+  --shell-display-case: uppercase;
+  --shell-display-tracking: 0.01em;
+  --shell-nav: 'IBM Plex Mono', ui-monospace, monospace;
+  --shell-nav-weight: 500;
+  --shell-nav-case: uppercase;
+  --shell-nav-tracking: 0.12em;
+  --shell-nav-size: 0.75rem;
+}
+html[data-look='underground'][data-look-type='zine'] {
+  --shell-display: 'IBM Plex Mono', ui-monospace, monospace;
+  --shell-display-weight: 500;
+  --shell-display-case: uppercase;
+  --shell-display-tracking: -0.04em;
+  --shell-nav: 'IBM Plex Mono', ui-monospace, monospace;
+  --shell-nav-weight: 500;
+  --shell-nav-case: uppercase;
+  --shell-nav-tracking: 0.06em;
+  --shell-nav-size: 0.75rem;
+}
+
+/* ── Shared shell, any atmosphere ──────────────────────────────────────── */
+html[data-look] [data-shell='wordmark'],
+html[data-look] [data-shell='menu-label'] {
+  font-family: var(--shell-display);
+  font-weight: var(--shell-display-weight);
+  text-transform: var(--shell-display-case);
+  letter-spacing: var(--shell-display-tracking);
+  font-stretch: normal;
+  line-height: 1.05;
+}
+html[data-look] [data-shell='nav'] .nav-link,
+html[data-look] [data-shell='settings'],
+html[data-look] [data-shell='tabbar'] span {
+  font-family: var(--shell-nav);
+  font-weight: var(--shell-nav-weight);
+  text-transform: var(--shell-nav-case);
+  letter-spacing: var(--shell-nav-tracking);
+}
+html[data-look] [data-shell='nav'] .nav-link,
+html[data-look] [data-shell='settings'] {
+  font-size: var(--shell-nav-size);
+}
+html[data-look] [data-shell='tabbar'] span {
+  font-size: 0.6875rem;
+}
+html[data-look] [data-shell='menu-num'] {
+  white-space: nowrap;
+}
+/* The bars are opaque: a light page showing through blurred content reads as a smudge. */
+html[data-look] [data-shell='header'],
+html[data-look] [data-shell='tabbar'] {
+  background-color: rgb(var(--surface));
+}
+
+/* ── Studio: colourful, playful, expressive ────────────────────────────── */
+/* A four-colour stripe instead of the time-of-day rule, pill navigation, round controls. */
+html[data-look='studio'] body::before {
+  display: none;
+}
+html[data-look='studio'] .atmos-rule {
+  border-top: 4px solid transparent;
+  background-image: linear-gradient(
+    90deg,
+    rgb(var(--look-a)) 0 25%,
+    rgb(var(--look-b)) 25% 50%,
+    rgb(var(--look-c)) 50% 75%,
+    rgb(var(--look-d)) 75% 100%
+  );
+  background-origin: border-box;
+  background-size: 100% 4px;
+  background-repeat: no-repeat;
+}
+html[data-look='studio'] [data-shell='wordmark'] {
+  font-size: 1.375rem;
+}
+html[data-look='studio'] [data-shell='issue'] {
+  border: 1px solid rgb(var(--control));
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+}
+html[data-look='studio'] [data-shell='nav'] ul {
+  gap: 0.25rem;
+}
+html[data-look='studio'] [data-shell='nav'] .nav-link {
+  border-radius: 999px;
+  padding: 0.375rem 0.75rem;
+}
+html[data-look='studio'] [data-shell='nav'] .nav-link::after {
+  display: none;
+}
+html[data-look='studio'] [data-shell='nav'] .nav-link:hover {
+  background-color: rgb(var(--fg) / 0.1);
+  color: rgb(var(--fg));
+}
+html[data-look='studio'] [data-shell='nav'] .nav-link[aria-current='page'] {
+  background-color: rgb(var(--accent));
+  color: rgb(var(--surface));
+}
+html[data-look='studio'] [data-shell='settings'],
+html[data-look='studio'] [data-shell='header'] .btn-ghost {
+  border-radius: 999px;
+}
+html[data-look='studio'] .tab-link {
+  isolation: isolate;
+}
+html[data-look='studio'] .tab-link[aria-current='page']::before {
+  z-index: -1;
+  top: 0.5rem;
+  left: 50%;
+  right: auto;
+  width: 3.5rem;
+  height: 1.75rem;
+  margin-left: -1.75rem;
+  border-radius: 999px;
+  background: rgb(var(--accent) / 0.16);
+}
+html[data-look='studio'] [data-shell='menu-num']::before {
+  content: '';
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-right: 0.5rem;
+  border-radius: 999px;
+  background: rgb(var(--look-a));
+}
+html[data-look='studio'] [data-shell='menu'] li:nth-child(4n + 2) [data-shell='menu-num']::before {
+  background: rgb(var(--look-b));
+}
+html[data-look='studio'] [data-shell='menu'] li:nth-child(4n + 3) [data-shell='menu-num']::before {
+  background: rgb(var(--look-c));
+}
+html[data-look='studio'] [data-shell='menu'] li:nth-child(4n) [data-shell='menu-num']::before {
+  background: rgb(var(--look-d));
+}
+html[data-look='studio'] [data-shell='menu-label'] {
+  font-size: 1.75rem;
+}
+html[data-look='studio'][data-look-type='mono'] [data-shell='menu-label'] {
+  font-size: 1.375rem;
+}
+
+/* ── The Quiet Room: warm, literary, restrained ────────────────────────── */
+/* No grain, no coloured rule: a taller bar, a serif wordmark, hairline indicators and more air
+   above each page. */
+html[data-look='quiet-room'] body::before {
+  display: none;
+}
+html[data-look='quiet-room'] .atmos-rule {
+  border-top-color: transparent;
+}
+html[data-look='quiet-room'] [data-shell='header'] > div {
+  height: 4rem;
+}
+html[data-look='quiet-room'] [data-shell='wordmark'] {
+  font-size: 1.5rem;
+}
+html[data-look='quiet-room'] [data-shell='issue'],
+html[data-look='quiet-room'] [data-shell='menu-title'],
+html[data-look='quiet-room'] [data-shell='footer'] .label {
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  font-size: 0.9375rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+html[data-look='quiet-room'] [data-shell='nav'] .nav-link {
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+}
+html[data-look='quiet-room'] [data-shell='nav'] .nav-link::after {
+  left: 0.625rem;
+  right: 0.625rem;
+  bottom: 0.25rem;
+  height: 1px;
+}
+html[data-look='quiet-room'] [data-shell='settings'] {
+  border-color: transparent;
+}
+html[data-look='quiet-room'] .tab-link[aria-current='page']::before {
+  left: 35%;
+  right: 35%;
+  height: 1px;
+}
+html[data-look='quiet-room'] [data-shell='main'] {
+  padding-top: 2.5rem;
+}
+@media (min-width: 768px) {
+  html[data-look='quiet-room'] [data-shell='main'] {
+    padding-top: 4.5rem;
+  }
+}
+html[data-look='quiet-room'] [data-shell='menu-num'] {
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: rgb(var(--fg-muted));
+}
+html[data-look='quiet-room'] [data-shell='menu-label'] {
+  font-size: 1.875rem;
+}
+
+/* ── The Underground: dark, bold, editorial ────────────────────────────── */
+/* A heavy rule in the accent, a hard edge under the bar, reversed blocks for where you are. */
+html[data-look='underground'] .atmos-rule {
+  border-top: 6px solid rgb(var(--accent));
+}
+html[data-look='underground'] [data-shell='header'] {
+  border-bottom: 2px solid rgb(var(--fg));
+}
+html[data-look='underground'] [data-shell='tabbar'],
+html[data-look='underground'] [data-shell='footer'] {
+  border-top: 2px solid rgb(var(--fg));
+}
+html[data-look='underground'] [data-shell='wordmark'] {
+  font-size: 1.625rem;
+}
+html[data-look='underground'][data-look-type='zine'] [data-shell='wordmark'] {
+  font-size: 1.25rem;
+}
+html[data-look='underground'] [data-shell='issue'] {
+  background-color: rgb(var(--fg));
+  color: rgb(var(--surface));
+  padding: 0.125rem 0.375rem;
+}
+html[data-look='underground'] [data-shell='nav'] .nav-link::after {
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+html[data-look='underground'] [data-shell='nav'] .nav-link[aria-current='page'] {
+  background-color: rgb(var(--fg));
+  color: rgb(var(--surface));
+}
+html[data-look='underground'] [data-shell='nav'] .nav-link[aria-current='page']::after {
+  display: none;
+}
+html[data-look='underground'] [data-shell='settings'] {
+  border-width: 2px;
+  border-color: rgb(var(--control));
+}
+html[data-look='underground'] .tab-link[aria-current='page']::before {
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+html[data-look='underground'] [data-shell='menu-num'] {
+  background-color: rgb(var(--accent));
+  color: rgb(var(--surface));
+  padding: 0.125rem 0.375rem;
+  font-weight: 500;
+}
+html[data-look='underground'] [data-shell='menu-label'] {
+  font-size: 2rem;
+}
+html[data-look='underground'][data-look-type='zine'] [data-shell='menu-label'] {
+  font-size: 1.625rem;
+}
+html[data-look='underground'] [data-shell='menu'] li {
+  border-bottom-width: 2px;
+}

@@ -56,9 +56,10 @@ test('a saved atmosphere is applied, survives reloads and navigation, and is nev
       assert.deepEqual(await lookAttrs(page), want, `on #/${route}`);
     }
     assert.equal(await raw(KEY), stored, 'the stored value is byte-identical');
-    // No styles use these attributes yet: the page still renders the default Playground.
+    // Since Phase 3.3 the shell takes the atmosphere's colours (Lamplight's page); the Living
+    // Cover keeps its Newsstand surface and the time-of-day atmosphere carries on underneath.
     await page.locator('[data-home-area="cover"]').waitFor();
-    assert.deepEqual(await defaultLook(page), { body: 'rgb(20, 22, 20)', cover: 'teal', atmosphere: 'afternoon' });
+    assert.deepEqual(await defaultLook(page), { body: 'rgb(33, 27, 23)', cover: 'teal', atmosphere: 'afternoon' });
   },
 ));
 

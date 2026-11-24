@@ -1,4 +1,8 @@
 @import './tokens.css';
+/* Creative Slice 03: atmosphere colour sets and the shell's three settings (inactive by default). */
+@import './atmospheres/tokens.css';
+@import './atmospheres/shell.css';
+@import './newsreader.css';
 
 @tailwind base;
 @tailwind components;

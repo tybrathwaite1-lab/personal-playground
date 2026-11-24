@@ -5,7 +5,6 @@ import { InterestsStep } from './InterestsStep';
 import { INITIAL, customOf, parsePlace, placeHref, reduce, type Action, type Choices, type LookId, type Place } from './journey';
 import { LookStep } from './LookStep';
 import { UNDERGROUND_TONES } from './looks/Underground';
-import './fonts.css';
 import { SampleDiscovery } from './SampleDiscovery';
 import './tokens.css';
 import './prototype.css';

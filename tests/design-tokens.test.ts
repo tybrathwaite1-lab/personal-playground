@@ -9,6 +9,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tailwind from '../tailwind.config.js';
+import { legacyPairs } from './helpers/contrast.ts';
 
 type RGB = [number, number, number];
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -140,56 +141,20 @@ test('Newsstand surfaces use exactly the approved palette pairs', () => {
 });
 
 test('legacy Field Guide pairs used by existing pages meet WCAG AA', () => {
+  // The list lives in tests/helpers/contrast.ts so every atmosphere colour set is held to
+  // exactly the same pairs (tests/atmospheres.test.ts).
   const ink = P('ink');
-  const ink2 = P('ink-2');
-  const paper = P('paper');
-  const muted = P('muted');
-  const hunter = P('hunter');
-  const rust = P('rust');
-  const hunterHeader = over(hunter, 0.4, ink2); // bg-hunter/40 headers inside cards
-  const hunterPanel = over(hunter, 0.3, ink); // bg-hunter/30 panels on the page
-  const text: [string, RGB, RGB][] = [
-    ['paper on ink', paper, ink],
-    ['paper on ink2 (cards)', paper, ink2],
-    ['paper on hunter', paper, hunter],
-    ['muted on ink', muted, ink],
-    ['muted on ink2', muted, ink2],
-    ['muted on hunter', muted, hunter],
-    ['rust on ink (labels, numerals)', rust, ink],
-    ['rust on ink2 (card dates, prices)', rust, ink2],
-    ['rust on hunter/40 card headers', rust, hunterHeader],
-    ['ink on rust (primary buttons, rust editions)', ink, rust],
-    ['ink on rust hover', ink, P('rust-hover')],
-    ['ink on paper (pressed chips)', ink, paper],
-    ['paper/60 on ink', over(paper, 0.6, ink), ink],
-    ['paper/60 on hunter/40 headers', over(paper, 0.6, hunterHeader), hunterHeader],
-    ['paper/60 on hunter/30 panels', over(paper, 0.6, hunterPanel), hunterPanel],
-    ['paper/85 on ink2', over(paper, 0.85, ink2), ink2],
-    ['muted/80 placeholders on ink', over(muted, 0.8, ink), ink],
-    ['popup links (rust) on ink2', rust, ink2],
-  ];
+  const { text, nonText } = legacyPairs({ ink, ink2: P('ink-2'), paper: P('paper'), muted: P('muted'), hunter: P('hunter'), rust: P('rust'), rustHover: P('rust-hover'), control: P('control') });
+  assert.equal(text.length, 18);
+  assert.equal(nonText.length, 11);
   for (const [label, fg, bg] of text) assert.ok(contrast(fg, bg) >= 4.5, `${label}: ${contrast(fg, bg).toFixed(2)}:1`);
   // Non-text (WCAG 1.4.11): control boundaries, focus indicators and control states against
   // every background they sit on.
-  const control = P('control');
-  const nonText: [string, RGB, RGB][] = [
-    ['control border on ink', control, ink],
-    ['control border on cards', control, ink2],
-    ['control border on hunter/40 headers', control, hunterHeader],
-    ['control border on hunter/30 panels', control, hunterPanel],
-    ['focus ring on ink', rust, ink],
-    ['focus ring on cards', rust, ink2],
-    ['focused input border (paper) on ink', paper, ink],
-    ['pressed chip fill (paper) on ink', paper, ink],
-    ['pressed chip fill (paper) on cards', paper, ink2],
-    ['primary button fill (rust) on ink', rust, ink],
-    ['primary button fill (rust) on cards', rust, ink2],
-  ];
   for (const [label, fg, bg] of nonText) assert.ok(contrast(fg, bg) >= 3, `${label}: ${contrast(fg, bg).toFixed(2)}:1`);
   // Decorative rules are not control boundaries (the reason --control exists).
   assert.ok(contrast(P('line'), ink) < 3);
   // The rust fix: the old value failed body-text contrast on ink and on cards.
-  assert.ok(contrast([0xb7, 0x69, 0x40], ink) < 4.5 && contrast([0xb7, 0x69, 0x40], ink2) < 4.5, 'regression reference');
+  assert.ok(contrast([0xb7, 0x69, 0x40], ink) < 4.5 && contrast([0xb7, 0x69, 0x40], P('ink-2')) < 4.5, 'regression reference');
 });
 
 test('theme color and manifest match the ink token', () => {
