@@ -22,10 +22,20 @@ Documentation only. Base: `main` at `cb09027`. PR #53 was merged with a tree ide
 - Content and image rights are the critical path.
 - Avoid for now: content migration, editorial automation, graph libraries, persistent history and per-atmosphere component trees.
 
+**Revised after independent review (ChatGPT, 2026-11-24).** Documentation only:
+- the cover's non-personalised issue is a first-slice simplification;
+- relationship direction and meaning are preserved, and reciprocal records are kept;
+- the `ThreadPanel` URL hardening is a separate maintenance candidate;
+- hidden preview routes are public but unlinked;
+- constellation geometry is a proposal with real-title acceptance criteria;
+- the product pillars, local discovery and the outing tools coexist with the new experience;
+- the existing Mood filters are preserved, with a separate future review;
+- publishing gates distinguish hard requirements from flaky link checks.
+
 **Open questions (assessment §5 and §6)**
 - The image-rights policy for cultural imagery.
-- Where local discovery fits.
-- The existing optional Mood filters.
+- How the preserved product pillars and tools sit in navigation after promotion.
+- A future UX review of the existing optional Mood filters (D-M).
 - Naming: Collection vs My Finds, and the existing saved kind `'discovery'`.
 - Which archive-balance guidance stands.
 - Blocking link checks for new content.

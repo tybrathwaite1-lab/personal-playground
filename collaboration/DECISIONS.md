@@ -200,7 +200,7 @@ Earlier decisions stay in force where compatible. Nothing below is silently reco
 
 | Earlier decision | Blueprint V2 | Effect |
 |---|---|---|
-| VISION: three pillars, **Go Somewhere** (local), **Do Something**, **Discover Something**. Local discovery in Tampa Bay is a primary use case. | Three *experience* pillars: Cover, Constellation, My Finds. Places are one kind of discovery. Local discovery isn't mentioned. | **Extends.** It reframes the experience, but the role of local discovery (Pulse, Local Playground, Plan an Outing) is *needs confirmation*. |
+| VISION: three pillars, **Go Somewhere** (local), **Do Something**, **Discover Something**. Local discovery in Tampa Bay is a primary use case. | Three *experience* pillars: Cover, Constellation, My Finds. Places are one kind of discovery. Local discovery isn't mentioned. | **Coexists** (confirmed in review, 2026-11-24). The product pillars stay, and the experience pillars sit alongside them. Local discovery, Pulse and the outing tools are preserved; the blueprint doesn't authorise removing them. Their arrangement in navigation after promotion is still open. |
 | Editorial Strategy v1, identity: culture magazine, exploratory gallery, personal library | Magazine, Curiosity Shop, Gallery, Hideaway | **Extends** (adds the Curiosity Shop and the Hideaway). |
 | Editorial Strategy v1, voice: "confident, curious, expressive, knowledgeable…, occasionally playful" | "curious, confident, knowledgeable, understated and occasionally playful"; "We invite. We don't lecture." | **Clarifies.** "Understated" replaces "expressive" for the writing voice; expressiveness moves to composition. |
 | Editorial Strategy v1, balance: about 60/40 archival to current, as guidance. `EDITORIAL.md`: about half archive, a third timeless, some contemporary. | "Balance archival, timeless, contemporary and emerging material without rigid quotas" | **Appears to supersede the 60/40 figure**, and is closer to `EDITORIAL.md`'s categories. *Needs confirmation.* |
@@ -213,4 +213,17 @@ Earlier decisions stay in force where compatible. Nothing below is silently reco
 | Slice 03 D1–D6 (device-local appearance; separate taxonomy; preserve the default; shell and page consistent; time-of-day atmosphere; Erase later) | Not contradicted | **Stand.** |
 | Slice 03 phase plan: 3.4 homepage compositions, 3.5 controls, 3.6 interest-guided discovery (as named in the Phase 3.3 authorisation) | Implementation proceeds incrementally, subject to engineering assessment | **On hold.** It will be replaced by a revised sequence once approved. |
 | Slice 02 Make It Yours prototype (look choice, then interests) | "Earlier experiments provide supporting context, not additional mandatory features"; no mandatory onboarding | **Clarifies.** It stays an isolated preview, and any onboarding must be optional. |
-| Discovery Engine "Mood" dial and Plan an Outing "Mood" chips, both optional filters (`src/utils/labels.ts`) | "We do not ask visitors to classify their emotional state or define their mood before exploring"; avoid mood-based categorisation | **Possible conflict with live features.** *Needs confirmation* whether optional mood filters on existing tools are in scope. Nothing changes without authorisation. |
+| Discovery Engine "Mood" dial and Plan an Outing "Mood" chips, both optional filters (`src/utils/labels.ts`) | "We do not ask visitors to classify their emotional state or define their mood before exploring"; avoid mood-based categorisation | **Preserved for now** (review, 2026-11-24). The existing optional filters stay unchanged. The new experience adds no mood questions or profiling. A future UX review of the existing filters is a separate decision. |
+
+**Review clarifications (ChatGPT, PR #54, 2026-11-24)**
+- **The cover.** A cover issue that's identical for everyone is a *first-slice simplification* only.
+  - The long-term approach stands: one shared editorial lead, plus supporting discoveries that may be shaped by interests, always leaving room for surprise.
+  - Atmospheres change presentation, never selection.
+- **Relationships.** Traversal may go both ways, but each relation's authored direction, factual meaning and note are preserved, never implicitly reversed.
+  - Reciprocal or differently-worded records between the same pair are independent claims and are kept.
+  - Only identical records (same source, target, relation and basis) are duplicates.
+- **Hidden preview routes are unlinked, not access-controlled.** Anything in them, including visitor-testing content, must be public-ready and properly licensed.
+- **Constellation geometry.** Fixed slots and two rings are initial proposals. Acceptance is about readable labels, accessible relationships, touch targets and mobile use with real titles, not prototype geometry.
+- **Publishing gates.** Image rights, verified content and relationship quality are acceptance gates. Link failures get a human decision rather than an indiscriminate automatic block.
+- **Security maintenance.** The `ThreadPanel` node-URL hardening is a separate maintenance candidate. It is not a confirmed exploit, since all current URLs are https.
+

@@ -40,7 +40,7 @@
    - no change to Home;
    - reversible by deleting a folder.
 
-   Promotion to the real cover and navigation is a separate, later approval, after visitor testing.
+   Promotion to the real cover and navigation is a separate, later approval, after visitor testing. A hidden route is *unlinked, not access-controlled*: anything in it is publicly reachable (B4, "Visibility").
 5. **Do not build yet:**
    - a canonical content migration;
    - the editorial automation pipeline;
@@ -51,15 +51,19 @@
    - a graph library.
 
    None is needed to validate the experience.
-6. **Conflicts to settle.** Four need owner decisions before building:
-   - the role of local discovery;
-   - "My Finds" and "My Collection" naming against the existing saved kind `'discovery'`;
-   - the optional Mood filters in the Discovery Engine and Plan an Outing;
-   - the image-rights policy.
+6. **Conflicts to settle.** Two need owner decisions before building:
+   - the image-rights policy;
+   - "My Finds" and "My Collection" naming against the existing saved kind `'discovery'`.
+
+   Two were settled in independent review (2026-11-24, §5):
+   - The existing product pillars and tools stay alongside the new experience pillars: Go Somewhere, Do Something and Discover Something, with local discovery, Pulse and the outing tools.
+   - The existing optional Mood filters stay unchanged for now. Their future UX review is a separate decision (D-M).
 
    Two are engineering gaps to close inside the slice:
    - thread nodes are not schema-validated;
    - link checks are report-only.
+
+   One small security-maintenance candidate is recorded separately (B10, D-N).
 
 ---
 
@@ -165,11 +169,11 @@
 | Stable ids | ✅ item and node ids, collision-checked | Extend the collision check to the new discovery file |
 | A description of why | ✅ `relation` (a verb phrase) plus `note` (one sentence) | The Lab 06 copy ("Nujabes helped shape its soundtrack") maps to `note` |
 | Documented vs interpretive | ✅ `basis: 'fact' \| 'editorial'`, already shown as "Documented" or "Our pick" | The blueprint's "cultural, conceptual, unexpected" connection types are finer-grained. **Recommendation:** keep the binary `basis` as the trust signal, and optionally add a free-text flavour later. Don't build a taxonomy now. |
-| Direction | Stored on one side; `ThreadPanel` computes incoming links by scanning | **Recommendation:** treat relations as undirected for display, with the authored direction kept for the copy ("from …"). Store each one once, and add a validator that rejects the same pair declared twice. |
-| Duplicates and self-links | ❌ not checked | Add to the validator (an error in `--strict` for discovery content) |
+| Direction | Stored on the authoring record; `ThreadPanel` computes incoming links by scanning, and labels them "(from …)" | **Recommendation:** *traversal* may go both ways, so a visitor can reach A from B. *Meaning* stays exactly as authored: the source, the target, the `relation` verb, the `note` and the `basis`. An incoming link is shown from its author's point of view ("Nujabes → scored → *Samurai Champloo*", seen from the anime), never silently reversed into a different factual claim. If the reverse needs its own wording, it is authored as its own record. |
+| Duplicates and self-links | ❌ not checked | Self-links: an error. **Duplicate claims** (same source, same target, same `relation`, same `basis`) are an error in `--strict` for discovery content. **Not duplicates:** a reciprocal record (B→A alongside A→B) or a second relation between the same pair with a different verb or basis. These can be independent, meaningful claims, each needing its own support, so they are kept. Today's 8 reciprocal pairs are valid. Display shows each record once, de-duplicating only *identical* records reached in both directions, and keeps every distinct claim and its note. |
 | Dangling references | Warning only ("doesn't exist yet") | Keep warnings for the Drop's existing workflow. For relations a discovery shows, unresolved targets are filtered at render (already true: `itemById` resolves visible editions only) and reported in the build. |
 | Archived or unavailable | ✅ partly: links to scheduled-edition items silently disappear | Make availability explicit in the adapter (`available` / `scheduled` / `withdrawn`). Never show a link to something the visitor can't open. |
-| Editorial validation | Item relations are checked for shape; nodes are not checked at all | Validate nodes (shape, https `url`) or move discoveries to (b) above. Also a test that every `fact` relation on slice content has a source on at least one end (**Recommendation**; editorial to confirm). |
+| Editorial validation | Item relations are checked for shape; nodes are not checked at all | Validate nodes (shape, https `url`) or move discoveries to (b) above. Also a test that every `fact` relation on slice content has a source on at least one end (**Recommendation**; editorial to confirm). Machines check form; whether a relationship is meaningful (blueprint §07: never manufactured) is an editorial review gate (B8). |
 | Wider-neighbourhood traversal | `ThreadPanel` steps one hop at a time | A pure `neighbourhood(id, depth ≤ 2, limit)`: deterministic breadth-first traversal, sorted by (basis, then id), capped per ring. Unit-tested. |
 | Determinism and testability | Data is static JSON; `ThreadPanel` is UI-coupled | Pull graph logic into pure functions with fixture tests, as with `src/utils/discovery.ts`. |
 
@@ -198,9 +202,13 @@
 
 **Recommendations.**
 1. **Leave Home untouched** until the slice has been tested with visitors.
-2. **A cover issue as content, not an algorithm.** A small `CoverIssue {id, publishDate, status, lead, sections[{layout, discoveryIds[]}], interlude?, closing}`, referencing discovery ids, with the same draft, scheduled and published lifecycle and validator pattern as Drop editions.
+2. **A cover issue as content, not an algorithm. This is a first-slice simplification.** A small `CoverIssue {id, publishDate, status, lead, sections[{layout, discoveryIds[]}], interlude?, closing}`, referencing discovery ids, with the same draft, scheduled and published lifecycle and validator pattern as Drop editions.
    - Refresh then becomes an editorial act: a PR changing one section, or a new issue. That gives deliberate, auditable, layered change with no randomness.
    - The visitor sees the latest published issue; earlier issues become Editions by reference, as the spec requires.
+   - **In the first slice, the whole issue is identical for everyone and not personalised.** That keeps the slice testable and deterministic. It is not the long-term design.
+   - **The long-term approved approach stays:** one shared editorial lead, plus supporting discoveries that *may* be shaped by visitor interests (Living Cover v1; blueprint §05), always leaving room for surprise. Personalisation expands, never filters out (blueprint §10).
+   - The model should leave room for that later. For example, supporting sections could be marked as eligible for interest-informed ordering, while the lead and at least one "unexpected" slot stay fixed. Nothing personalised is built until it is separately approved (P4).
+   - **Atmospheres change how the issue is presented, never which discoveries are in it.**
 3. **The shared lead never comes from private data or weather.** Private custom experiences and weather can keep informing the *local* window and the existing tools.
 4. **Content-led layouts.** A handful of section layouts chosen per content shape, not per atmosphere:
    - `lead-wide` (photography, architecture);
@@ -240,6 +248,12 @@
   7. **Visit the original**: a primary-source link (`sources[0]`, kind `official`, `listen`, `watch` or `read`) with `rel="noreferrer"` and the external-link convention.
 - **Attribution.** Creators and year under the title; sources listed with `verifiedAt`; the image credit through `Credit`.
 - **Atmospheres.** The page uses the semantic tokens, so it follows the shell's colour sets automatically.
+- **Visibility.** A hidden preview route is **unlinked, not access-controlled.** Assumptions about deployment:
+  - The site is a public GitHub Pages deployment of a public repository. Anyone with the URL can open the route, and its code, content JSON and images are public files. (The Drop's scheduled editions are already public in `drop.json` in the same way.)
+  - Hash routes aren't separately indexed, but a link can be shared freely.
+  - Therefore everything in the preview, including visitor-testing content, must be **publishable as is**: verified, attributed and properly licensed. No placeholder imagery of uncertain rights, no unreviewed copy, nothing private.
+  - Drafts stay out of the build, as with Drop drafts.
+  - Real access control would need infrastructure this project doesn't have, and isn't proposed.
 
 ---
 
@@ -252,7 +266,7 @@
 | Canvas or WebGL | Not needed at this scale. Worse for accessibility. |
 | `d3-force` or a graph library | Not justified. It adds a dependency and non-determinism, the graph has under 100 vertices, and the blueprint asks *not* to expose the whole graph. |
 
-**Recommended minimal design.**
+**Recommended minimal design: an initial proposal, not a fixed specification.** The numbers below (fixed angular slots, two rings, 6/12 caps) are starting values for the first implementation. They should be adjusted to whatever real titles and real devices show. Lab 06's illustrative geometry is a reference, not a requirement.
 - The SVG is an *enhancement over the list*. Each node is a real `<a>` or `<button>` in DOM order, with a 44 px minimum target. Edges are decorative (`aria-hidden`). The list carries the relationship text, so screen-reader users get the same content.
 - **Bounded:**
   - inner ring ≤ 6;
@@ -316,7 +330,7 @@
 - **publishing:** a PR adding an edition JSON, with blocking strict validation, report-only link checks, the reviewer and the owner merging;
 - **images:** Commons only, with licence and credit required and an isolated scout workflow.
 
-**For the first slice (essential):**
+**For the first slice (essential).** These are acceptance gates: slice content doesn't ship until each is met.
 1. Hand-curated content: about 12 discoveries, the relations between them, sources, and images that pass the rights decision.
 2. Validator coverage for the new discovery file:
    - shape and https;
@@ -324,8 +338,13 @@
    - duplicate relations and self-links;
    - `basis` required;
    - for `fact` relations, a source on at least one end.
-3. A slice-content link check, run blocking or with a recorded manual pass. The repo-wide link check stays report-only, because external sites flake.
-4. Each image carries an `EditorialImageMeta` credit and licence.
+3. **Links:** each source and original link in slice content is verified when added: a recorded `verifiedAt` date, plus a reviewer's check in the content PR. An automated check runs on just the new or changed content and reports failures in the PR.
+   - A failing check needs a human decision: fix it, replace the source, or record why it's a temporary outage.
+   - It shouldn't automatically block every publish, because external sites flake.
+   - The repo-wide link check stays report-only.
+4. **Image rights:** each image carries an `EditorialImageMeta` credit and licence that meets the approved rights policy (D-A). This is a hard gate, enforced by tests.
+5. **Verified content:** facts in the context and `fact` relations trace to a listed source.
+6. **Relationship quality:** every relation shown has a meaningful `note`, and is reviewed editorially as not manufactured (blueprint §07). This is a reviewer gate, not a test.
 
 **Longer term (not prerequisites):**
 - batch approval;
@@ -368,7 +387,7 @@ Much of this is already provided by Git:
 | Risk | Today (fact) | Recommendation |
 |---|---|---|
 | External imagery | Commons only, downloaded and self-hosted at build; no runtime image hosts | Keep. Add no hotlinked images and no third-party embeds (album players) without a separate decision: they bring tracking and CSP questions. |
-| Source links | Item sources must be https (validator); `isSafeUrl` exists. `ThreadPanel` renders node `url` without `isSafeUrl`, and nodes aren't validated | Validate node and discovery URLs at build, and use `isSafeUrl` at render for anything from content. Close this gap in the foundation PR. |
+| Source links | Item sources must be https (validator); `isSafeUrl` exists. `ThreadPanel` renders node `url` without `isSafeUrl`, and nodes aren't validated | See the maintenance candidate below. New discovery content gets URL validation from its first PR. |
 | Untrusted editorial inputs | Candidates are https-filtered and rendered as text plus `href` on the Editorial Desk | Keep candidates out of any public surface. Anything scout-proposed enters only through a reviewed PR. |
 | Graph traversal | One-hop UI scanning; static data | Pure, bounded, deterministic functions (depth ≤ 2, capped rings); no recursion over unbounded input |
 | Local storage | Personal data, appearance, time-of-day atmosphere, Sync settings | No new persistent keys in the slice except possibly `sessionStorage` (B7) |
@@ -378,6 +397,15 @@ Much of this is already provided by Git:
 | Deployment and rollback | Pages deploy on `main` with a smoke check; a revert redeploys | The preview route makes rollback trivial: removing the route entry hides it. |
 | Scheduled content in the public JSON | Scheduled editions ship in `drop.json` and are filtered client-side | Existing behaviour, not a security issue, but don't rely on client-side filtering for anything confidential. Draft discoveries must never ship, matching the Drop's draft rule. |
 | CI safeguards | Strict content, lint, unit, browser and visual tests, strict style guide, action pins, protected harness | Don't weaken any of them. Each slice PR adds its own unit, browser and style-guide evidence. |
+
+**Security maintenance candidate (separate from the slice; not changed in this PR).**
+- **Finding (fact):** `ThreadPanel` (`src/pages/Drop.tsx`) renders `href={current.url}` for thread nodes without `isSafeUrl`, and `content/drop/nodes.json` isn't schema-validated.
+- **Severity:** a hardening gap, not a confirmed exploit. All 37 node URLs are `https://` today, and nodes reach `main` only through reviewed PRs.
+- **Proposed minimal fix,** as its own small reviewable PR:
+  - validate nodes at build (required fields, `https://` URL), in `validateLibrary` or a `validateNode`;
+  - render node links only when `isSafeUrl(url)` is true, otherwise omit the link;
+  - add tests for both.
+- **Behaviour today:** unchanged, because every existing URL already passes. It can land before or independently of PR 1, and needs its own authorisation.
 
 ---
 
@@ -453,10 +481,13 @@ Each is independently reviewable, and none is merged without review and owner au
   - existing editions must stay valid unchanged;
   - Drop rendering;
   - the image pipeline.
-- **Acceptance:**
+- **Acceptance (gates):**
   - strict validation passes;
   - existing editions and nodes still pass, or the specific node fixes are listed;
-  - every image is licensed and credited.
+  - every image meets the approved rights policy, with credit and licence (tested);
+  - every source link is verified (B8, item 3), with any failing link resolved by a recorded human decision rather than an automatic block;
+  - facts and `fact` relations trace to sources;
+  - every relation passed editorial review for meaning (B8, item 6).
 - **Tests:**
   - validator unit tests, including the failure cases;
   - `drop.test.ts` unchanged and passing;
@@ -504,7 +535,7 @@ Each is independently reviewable, and none is merged without review and owner au
   - the basis shown in text;
   - external-link conventions.
 - **Visual:** style guide states in the default and three atmospheres, phone and desktop.
-- **Risk:** low. Rollback by removing the preview entry.
+- **Risk:** low. Rollback by removing the preview entry. The route is public once deployed (B4, "Visibility"), so only gate-passing content may ship in it.
 - **Owner decisions:**
   - the route name;
   - the "Documented" and "Editorial" labels;
@@ -524,12 +555,14 @@ Each is independently reviewable, and none is merged without review and owner au
 - **Protected:**
   - the Drop's "Follow the thread", which stays unchanged;
   - production navigation.
-- **Acceptance:**
+- **Acceptance** (verified with the slice's *real* titles, not placeholders):
   - layout is deterministic: same screenshot on every run;
-  - bounds hold;
+  - labels stay readable at 390 and 1280 px, with no overlap or clipping that hides meaning, and the full title in the accessible name;
+  - every relationship and its reason is reachable in the list alternative, by keyboard and screen reader;
+  - touch targets are at least 44 px and usable on a phone, checked on the owner's real devices as well as emulation;
   - every node is reachable by keyboard and named;
-  - the list alternative carries every relationship;
   - there is no completion pressure.
+  - The ring counts and slot geometry are starting values and may change to meet these criteria.
 - **Tests:**
   - layout unit tests (no overlap within the slot model);
   - browser tests: keyboard traversal, recentring, Back, reload, a 390 px sheet, reduced motion (no animation).
@@ -541,7 +574,7 @@ Each is independently reviewable, and none is merged without review and owner au
 - **Visual:** nearby and wider states, at 390 and 1280 px.
 - **Risk:** label collisions with long titles. Mitigated by truncation plus full accessible names.
 - **Owner decisions:**
-  - ring limits;
+  - initial ring limits (adjustable);
   - whether visited nodes are marked.
 
 ### PR 5: Living Cover (preview)
@@ -560,7 +593,7 @@ Each is independently reviewable, and none is merged without review and owner au
   - tests and evidence.
 - **Protected:** Home, and the Living Cover tests at `data-home-area="cover"`, which stay unchanged.
 - **Acceptance:**
-  - the published issue renders identically for everyone, with no personal data and no weather;
+  - in this first slice, the published issue renders identically for everyone, with no personal data and no weather. This is a deliberate simplification (B3); interest-shaped supporting discoveries remain the long-term direction;
   - drafts are never shipped;
   - each layout works at 390 and 1280 px;
   - the cover is finite.
@@ -624,7 +657,8 @@ Each is independently reviewable, and none is merged without review and owner au
 - Multi-personality support. Keep identity strings in content where convenient, but build nothing for it.
 - Third-party embeds (players, maps beyond Leaflet).
 - Per-atmosphere component trees.
-- Changes to the Drop, Home, the Discovery Engine, Pulse or Sync.
+- Changes to the Drop, Home, the Discovery Engine, Plan an Outing, Pulse, the Local Playground or Sync. The existing product pillars and tools stay (§5, item 2).
+- New mood profiling of any kind. The existing optional Mood filters stay as they are (§5, item 3).
 
 ---
 
@@ -636,8 +670,13 @@ Each is independently reviewable, and none is merged without review and owner au
      - allow some non-free images under a documented policy;
      - link-out cards.
    - This is a legal and product decision, not engineering. *Owner.*
-2. **Local discovery's place.** The blueprint doesn't mention Tampa Bay, Pulse, Local Playground or Plan an Outing, all of which are core in VISION. The slice doesn't need to touch them, but the eventual navigation does. *Owner.*
-3. **Mood filters.** The Discovery Engine and Plan an Outing offer optional Mood filters, and `Experience.moods` exists. The blueprint says to avoid mood-based categorisation and not to ask visitors their mood. Should the existing tools change, or does the rule apply only to new experiences? *Owner.* Nothing changes without authorisation.
+2. **Local discovery's place.**
+   - **Settled (review, 2026-11-24):** the existing *product* pillars stay. Go Somewhere (local discovery, Pulse, Local Playground), Do Something (experiences, Plan an Outing, the Discovery Engine) and Discover Something (the Drop, Digital) coexist with the blueprint's *experience* pillars (Living Cover, Living Constellation, My Finds). The blueprint doesn't authorise removing any of them.
+   - **Still open:** how they're arranged in navigation once the new experience is promoted. *Owner*, as a navigation decision.
+3. **Mood filters.**
+   - **Settled (review, 2026-11-24):** the existing optional Mood filters in the Discovery Engine and Plan an Outing, and `Experience.moods`, are preserved for now, unchanged.
+   - The new experience adds no mood questions and no mood profiling.
+   - **Still open:** a future UX review of the existing filters against blueprint §10 and §14, recorded as its own decision (D-M).
 4. **Naming.**
    - Should "My Collection" become "My Finds"?
    - Should the public "Collection" join navigation?
@@ -649,7 +688,11 @@ Each is independently reviewable, and none is merged without review and owner au
    - Most of today's Drop graph is in scheduled editions, so it isn't visible yet.
    - Bringing editions forward is an editorial decision.
 6. **Archive ratio.** Editorial Strategy v1 suggests about 60/40. The blueprint suggests a balance across archival, timeless, contemporary and emerging without quotas. Which guidance stands? *Owner.*
-7. **Link verification as a gate.** Functioning links are "mandatory publishing gates", but the repo-wide link check is report-only. Should it be blocking for new discovery content? (Recommended: yes for slice content; no for the flaky repo-wide check.) *Owner and reviewer.*
+7. **Link verification as a gate.** Functioning links are "mandatory publishing gates", but the repo-wide link check is report-only.
+   - **Recommendation:** verify links on new content when it's added, with the date recorded and reviewer confirmation, plus an automated check that reports failures in the PR.
+   - A failure gets a human decision rather than an automatic block (B8, item 3). Flaky external availability shouldn't stop all publishing.
+   - Image rights, verified content and relationship quality are hard gates (B8, items 4–6).
+   - *Owner and reviewer.*
 8. **Sync contract.** A new saved kind for standalone discoveries (B6). *Owner*, with a separate Sync approval.
 9. **Real-device testing.** CI only emulates phones; the owner's devices are the real-device check. *Owner.*
 10. **Multi-personality.** It is approved as a later capability, and the assessment deliberately doesn't design for it now. Confirm that's acceptable. *Owner.*
@@ -669,15 +712,17 @@ Each is independently reviewable, and none is merged without review and owner au
 | D-A | The image-rights policy for cultural imagery | PR 2 |
 | D-B | Standalone discoveries: (a) extend `ThreadNode` or (b) a new `content/discoveries/` (recommended) | PR 2 |
 | D-C | The slice's discovery list, relations and sources (editorial) | PR 2 |
-| D-D | A blocking link check for new discovery content | PR 2 |
+| D-D | The link-verification gate for new content: verified when added and reported automatically, with human resolution and no indiscriminate blocking | PR 2 |
 | D-E | The preview route name, and the slice running as a hidden preview | PR 3 |
 | D-F | A new saved kind for standalone discoveries (a Sync contract change) | PRs 3 and 6 |
-| D-G | Constellation limits (inner ≤ 6, outer ≤ 12, depth ≤ 2) and whether visited nodes are marked | PR 4 |
+| D-G | Initial constellation limits (proposed: inner ≤ 6, outer ≤ 12, depth ≤ 2; adjustable against real titles and devices) and whether visited nodes are marked | PR 4 |
 | D-H | The `CoverIssue` model, refresh cadence and editorial ownership | PR 5 |
 | D-I | Collection and My Finds naming, and the relabelling of "Discoveries" | PR 6, promotion |
-| D-J | The role of local discovery and of the existing Mood filters | Promotion |
+| D-J | How the preserved product pillars and tools (local discovery, Pulse, outing tools) are arranged in navigation after promotion | Promotion |
 | D-K | `sessionStorage` for the trail across reloads (optional) | PR 4 |
 | D-L | Which archive-balance guidance stands | Content |
+| D-M | A future UX review of the existing optional Mood filters (preserved unchanged until then) | Separate, not on the slice's path |
+| D-N | The ThreadPanel URL hardening (B10) as its own maintenance PR | Independent |
 
 ---
 
