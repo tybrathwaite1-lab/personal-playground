@@ -38,9 +38,12 @@ export const ROUTES: RouteName[] = [
  * never part of ROUTES (so the app, its navigation and the standard screenshot matrix are
  * unchanged). Each one is code-split.
  */
-export type PreviewName = 'styleguide' | 'preview/make-it-yours';
-/** Hidden review routes: #/styleguide and the Creative Slice 02 prototype (#/preview/make-it-yours). */
-export const PREVIEWS: PreviewName[] = ['styleguide', 'preview/make-it-yours'];
+export type PreviewName = 'styleguide' | 'preview/make-it-yours' | 'preview/living';
+/**
+ * Hidden review routes: #/styleguide, the Creative Slice 02 prototype (#/preview/make-it-yours)
+ * and the discovery experience preview (#/preview/living?d=<id>, PR 3). Unlisted, not private.
+ */
+export const PREVIEWS: PreviewName[] = ['styleguide', 'preview/make-it-yours', 'preview/living'];
 
 export interface Route {
   name: RouteName;

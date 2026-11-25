@@ -8,7 +8,7 @@
  *  - The shell is styled through shared variables and data-shell hooks only.
  *  - The pre-paint script in index.html agrees with resolve(parseAppearance(…)) for every input
  *    and gives the browser the page colour of the set it applies.
- *  - Newsreader is named only by The Quiet Room and the prototype.
+ *  - Newsreader is named only by The Quiet Room, the prototype and the discovery preview.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -126,14 +126,15 @@ test('the shell is styled through shared type variables and data-shell hooks onl
   assert.doesNotMatch(shellCss, /#[0-9a-fA-F]{3,8}\b|rgba?\(\s*\d/);
 });
 
-test('Newsreader is named only by The Quiet Room, its declaration and the prototype', () => {
+test('Newsreader is named only by The Quiet Room, its declaration, the prototype and the discovery preview', () => {
   const files = (dir: string): string[] =>
     readdirSync(join(root, dir)).flatMap((f) => {
       const p = join(dir, f);
       return statSync(join(root, p)).isDirectory() ? files(p) : [p];
     });
   const users = files('src').filter((f) => /\.(tsx?|css)$/.test(f) && /Newsreader/.test(strip(read(f))));
-  assert.deepEqual(users.filter((f) => !f.startsWith('src/prototype/')).sort(), ['src/styles/atmospheres/shell.css', 'src/styles/newsreader.css']);
+  // PR 3: the discovery preview (#/preview/living, a lazy chunk) sets its editorial text in it.
+  assert.deepEqual(users.filter((f) => !f.startsWith('src/prototype/')).sort(), ['src/preview/living/living.css', 'src/styles/atmospheres/shell.css', 'src/styles/newsreader.css']);
   // In the shell styles, only Quiet Room rules name it.
   for (const m of shellCss.matchAll(/([^{}]+)\{([^{}]*Newsreader[^{}]*)\}/g)) {
     for (const s of m[1].split(',')) assert.match(s.trim(), /^html\[data-look='quiet-room'\]/, s.trim());

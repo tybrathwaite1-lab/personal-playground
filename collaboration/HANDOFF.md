@@ -1,6 +1,64 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-25 (PR 2: Editorial content foundation)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-25 (PR 3: Discovery experience)
+
+**PR #57 post-merge (`119e131`):** the tree is identical to the reviewed head `53f9766`. Deploy passed (smoke: "deployed commit 119e131"). Visual check passed, the strict style guide had 0 findings, and visual publication succeeded. The published default screenshots are identical to the reviewed head (49/49). The production build reports "0 public" standalone discoveries.
+
+**Preview content (owner-approved, option A):** see [PR3_PREVIEW_PROPOSAL.md](PR3_PREVIEW_PROPOSAL.md) and DECISIONS.
+- `public/data/preview/living.json` is generated beside `discoveries.json`.
+- It holds the ten `ready` records through the public allowlist, minus `status` and `publishDate`.
+- SEED (a draft) is excluded. Relations point only within the file: 5 of the 6 authored claims.
+- `discoveries.json` is unchanged and still holds 0 records.
+
+**What a visitor sees** at `#/preview/living?d=<id>`, a lazy chunk linked from nowhere:
+- a quiet masthead saying "Preview, not yet published";
+- the subject (with the year, when known) and a large title;
+- the editorial context;
+- creators with their roles ("Made by" for works, "Credits" for subjects, "Where to find it" when there are none);
+- **Visit the original**, from `destination` (never a source), with the host, any availability note and the new-tab convention;
+- sources behind a disclosure, each with its host and the date it was checked;
+- **"There are connections here."** Each claim is a sentence written from → to, as authored, with its note and basis in text. Documented claims come first. A claim made *about* this discovery shows here too, still in its own direction.
+- With no connections: "This one stands on its own.", and nothing invented;
+- the path so far (in memory only) and the rest of the preview, as a plain list;
+- with no id, the index. Unknown, malformed and unavailable ids get one calm not-found state.
+
+**Behaviour:**
+- Each discovery is a history entry, so Back, Forward, reload and direct links work.
+- After moving to another discovery, focus goes to its heading.
+- Robots `noindex` is set while the route is open.
+- External links pass `isSafeUrl` at render, as well as the https check on load.
+- Nothing is saved, persisted or tracked. There's no Sync change and no save button.
+
+**Visual direction:**
+- Colour comes only from the semantic tokens, and the title uses the atmosphere's display face (`--shell-display`). So Studio, The Quiet Room and The Underground restyle it with no separate page.
+- Without an image, the title is the object and there is no placeholder. A registry image (permitted licence) leads the page with its credit when a record names one; none does yet.
+- Nothing animates.
+
+**Tests:**
+- Unit: `tests/discovery-preview.test.ts` (12), mutation-checked.
+- Browser: `browser-tests/living.test.ts` (9).
+- Style guide: 30 preview states at 360, 390, 768 and 1280 px and in three atmospheres, each with axe, overflow, broken words and page errors, plus a separate-chunk assertion.
+- Existing guards updated narrowly:
+  - the discovery-module isolation now allows only the preview route;
+  - the previews list;
+  - Newsreader users;
+  - the guarded hrefs list.
+
+**Not built:**
+- Keep this (PR 6);
+- Look closer (no source field; copy would be invented);
+- the constellation (PR 4);
+- the cover;
+- navigation promotion;
+- publication.
+
+**Owner decisions:**
+- the route name;
+- the basis labels;
+- whether and how Look closer gets authored content;
+- when (or whether) any record is published.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-25 (PR 2: Editorial content foundation)
 
 A PR from `main` at `a731775`. PR #56 was merged with a tree identical to its reviewed head. Post-merge runs all passed:
 - Deploy and smoke (45498952164; deployed commit `a731775`);

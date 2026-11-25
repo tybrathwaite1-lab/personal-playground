@@ -279,3 +279,19 @@ The Playground has a recognisable editorial perspective without restricting itse
   - Nakagin's destination is now MoMA's collection page for the capsule, because the exhibition has ended.
   - SEED stays a draft.
 
+
+## 2026-11-25 — PR 3: discovery experience preview
+
+**Preview content mechanism: option A approved by the owner** ([proposal](PR3_PREVIEW_PROPOSAL.md)).
+- The ten `ready` Edition 001 records ship in a separate, unlisted file, `public/data/preview/living.json`. Only `#/preview/living` reads it.
+- The public file, `discoveries.json`, is unchanged and still holds 0 records. Statuses are unchanged and nothing is published.
+- **Amended rule:** `ready` was "never shipped". It is now "never in `discoveries.json`; included in the unlisted preview file".
+- Drafts (SEED) and records with unresolved link reviews never ship. The public field allowlist applies, minus `status` and `publishDate`.
+- The preview is public to anyone with the URL. That's why only publishable-as-is records may be `ready`.
+
+**Engineering choices in PR 3, for review:**
+- **Route:** `#/preview/living?d=<id>`, as the assessment proposed (D-E). Each discovery is a history entry. With no `d`, the page shows the preview's index. Unknown, malformed and unavailable ids share one calm "There's no discovery here" state, so it never reveals whether a draft exists.
+- **Relationship labels:** "Documented connection" and "Editorial association, not a documented link", in text. Documented claims are listed first.
+- **Claims read as authored.** Each one is written as a sentence from → to, whichever page it appears on, so it is never reversed.
+- **Not built:** "Keep this" (My Finds is PR 6) and "Look closer". No record has a deeper-observation field, and inventing copy would break the content rules. Both remain owner decisions.
+- **Image-free by design.** With no licensed image, the title carries the page at full size, with no placeholder. A registry image, when a record names one, leads the page with its credit.

@@ -219,6 +219,9 @@ test('every JSX href is a constant, a trusted builder, guarded by isSafeUrl, or 
     ...PERSONAL_DATA_BOUNDARIES.map((b) => `${b.file}: ${b.expr}`),
     ...CONTENT_BOUNDARIES.map((b) => `${b.file}: ${b.expr}`),
     'src/pages/Pulse.tsx: e.url',
+    // PR 3: the discovery preview's original destination and sources (also checked as https on load).
+    'src/preview/living/Living.tsx: r.destination.url',
+    'src/preview/living/Living.tsx: s.url',
   ].sort());
   assert.ok(!Object.values(REVIEWED).some((why) => /DEFECT|personal/i.test(why)), 'no personal-data URL is a reviewed exception');
   // Every reviewed entry still exists (no stale exceptions).

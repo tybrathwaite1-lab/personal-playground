@@ -16,6 +16,10 @@
  * reviewer needs to see (prototype/<state>-<w>.jpg and -fold.jpg), with axe, overflow, broken
  * words in headings and page errors, counted as findings; and a bundle check that the prototype
  * is its own chunk.
+ * PR 3: the discovery experience preview (#/preview/living?d=<id>) for the five discoveries a
+ * reviewer asked to see, the index and not-found states, at 360/390/768/1280 px and in three
+ * atmospheres (living/<state>-<w>.jpg and -fold.jpg), with axe, overflow, broken words in
+ * headings, page errors, image-free composition and the lazy chunk, all findings in strict mode.
  * Creative Slice 03 Phase 3.3: the shell in the default and every atmosphere colour set
  * (shell/<state>-<view>-<w>.jpg) with axe, overflow, page errors, the applied colours and the
  * Quiet Room serif's requests, counted as findings.
@@ -643,6 +647,101 @@ async function prototypeChecks(browser: Browser, origin: string, blocked: Set<st
   return out;
 }
 
+/**
+ * PR 3: the discovery experience preview. The five discoveries the review asked for (Jazz kissa
+ * leads), the sources disclosure open, the index and a not-found id, in the default appearance at
+ * every width, and Jazz kissa and Strandbeest in one colour set of each atmosphere.
+ */
+const LIVING_LOOKS: Record<string, { look: string; palette: string; type: string }> = {
+  studio: { look: 'studio', palette: 'poster', type: 'sans' },
+  'quiet-room': { look: 'quiet-room', palette: 'lamplight', type: 'book' },
+  underground: { look: 'underground', palette: 'newsstand', type: 'poster' },
+};
+const LIVING_STATES: { name: string; d: string | null; widths: number[]; look?: string; open?: boolean; view: string }[] = [
+  { name: 'jazz-kissa', d: 'jazz-kissa', widths: [360, 390, 768, 1280], view: 'found' },
+  { name: 'jazz-kissa-sources', d: 'jazz-kissa', widths: [390, 1280], open: true, view: 'found' },
+  { name: 'edgerton', d: 'edgerton-high-speed-photography', widths: [390, 1280], view: 'found' },
+  { name: 'obra-dinn', d: 'return-of-the-obra-dinn', widths: [390, 1280], view: 'found' },
+  { name: 'strandbeest', d: 'strandbeest', widths: [390, 1280], view: 'found' },
+  { name: 'onyeabor', d: 'william-onyeabor', widths: [360, 390, 768, 1280], view: 'found' },
+  { name: 'index', d: null, widths: [390, 1280], view: 'index' },
+  { name: 'not-found', d: 'seed-erosion-blocks', widths: [390], view: 'missing' },
+  ...Object.keys(LIVING_LOOKS).flatMap((look) => [
+    { name: `jazz-kissa-${look}`, d: 'jazz-kissa', widths: [390, 1280], look, view: 'found' },
+    { name: `strandbeest-${look}`, d: 'strandbeest', widths: [390, 1280], look, view: 'found' },
+  ]),
+];
+interface LivingResult {
+  state: string;
+  width: number;
+  view: string;
+  composition: string | null;
+  connections: number | null;
+  broken: string[];
+  overflowPx: number;
+  offenders: string[];
+  pageErrors: string[];
+  axe: WidthResult['axe'];
+  files: string[];
+}
+async function livingChecks(browser: Browser, origin: string, blocked: Set<string>) {
+  const out: LivingResult[] = [];
+  await mkdir(join(OUT, 'living'), { recursive: true });
+  for (const st of LIVING_STATES)
+    for (const width of st.widths) {
+      const ctx = await browser.newContext({ viewport: { width, height: WIDTHS[width] ?? 900 }, deviceScaleFactor: 1, locale: 'en-US', timezoneId: 'America/New_York', reducedMotion: 'reduce', serviceWorkers: 'block' });
+      await ctx.addInitScript(NAME_SHIM);
+      await ctx.route('**/*', (route) => {
+        const url = new URL(route.request().url());
+        if (url.origin === origin) return route.continue();
+        blocked.add(url.host);
+        return route.abort('blockedbyclient');
+      });
+      if (st.look) {
+        const l = LIVING_LOOKS[st.look];
+        await ctx.addInitScript((v) => localStorage.setItem('personal-playground:appearance', v), JSON.stringify({ v: 1, look: l.look, custom: { [l.look]: { palette: l.palette, type: l.type } } }));
+      }
+      const { page, errors } = await open(ctx, origin, `#/preview/living${st.d ? `?d=${st.d}` : ''}`);
+      await page.waitForFunction((v) => document.querySelector('main')?.getAttribute('data-living-view') === v, st.view);
+      await hideBodyGrain(page);
+      if (st.open) await page.locator('details.living-sources summary').click();
+      await page.waitForTimeout(150);
+      const broken = await page.evaluate(() => {
+        const bad: string[] = [];
+        for (const el of document.querySelectorAll('main h1, main h2, .living-name, .living-visit-cta')) {
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            const text = n.textContent ?? '';
+            for (const m of text.matchAll(/\S+/g)) {
+              const r = document.createRange();
+              r.setStart(n, m.index!);
+              r.setEnd(n, m.index! + m[0].length);
+              if (new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size > 1) bad.push(m[0]);
+            }
+          }
+        }
+        return bad;
+      });
+      const facts = await page.evaluate(() => ({
+        composition: document.querySelector('article[data-composition]')?.getAttribute('data-composition') ?? null,
+        connections: document.querySelector('[data-connections]') ? Number(document.querySelector('[data-connections]')!.getAttribute('data-connections')) : null,
+      }));
+      const axe = (await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()).violations.map((v) => ({
+        id: v.id,
+        impact: v.impact ?? null,
+        nodes: v.nodes.length,
+        targets: v.nodes.slice(0, 4).map((n) => n.target.join(' ')),
+      }));
+      const { overflowPx, offenders } = await measureOverflow(page);
+      const files = [`living/${st.name}-${width}-fold.jpg`, `living/${st.name}-${width}.jpg`];
+      await page.screenshot({ path: join(OUT, files[0]), type: 'jpeg', quality: 80 });
+      await page.screenshot({ path: join(OUT, files[1]), type: 'jpeg', quality: 72, fullPage: true });
+      out.push({ state: st.name, width, view: st.view, ...facts, broken, overflowPx, offenders, pageErrors: errors, axe, files });
+      await ctx.close();
+    }
+  return out;
+}
+
 /** The default app shell must not load the handwritten face, nor The Quiet Room's serif. */
 async function homeLoadsNoCaveat(browser: Browser, origin: string, blocked: Set<string>) {
   const ctx = await newContext(browser, origin, 390, 'reduce', blocked);
@@ -752,6 +851,7 @@ async function bundle() {
   const entryText = (await Promise.all(entries.map((e) => readFile(join(DIST, 'assets', e), 'utf8')))).join('\n');
   const guide = await Promise.all(assets.filter((f) => /^StyleGuide-.*\.(js|css)$/.test(f)).map(size));
   const prototype = await Promise.all(assets.filter((f) => /^MakeItYours-.*\.(js|css)$/.test(f)).map(size));
+  const living = await Promise.all(assets.filter((f) => /^Living-.*\.(js|css)$/.test(f)).map(size));
   return {
     caveatFiles: caveatAll,
     caveatLatinBold: caveat,
@@ -767,6 +867,9 @@ async function bundle() {
     entryDeclaresNewsreader: /@font-face\s*\{[^}]*Newsreader/i.test(entryText),
     newsreaderFiles: assets.filter((f) => /newsreader/i.test(f)),
     prototypeChunks: prototype,
+    // PR 3: the discovery preview stays out of the entry bundle.
+    entryContainsLiving: /There are connections here\.|living-discovery|data\/preview\/living\.json/.test(entryText),
+    livingChunks: living,
   };
 }
 
@@ -799,6 +902,13 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
       `- ${!p.broken.length && !p.axe.length && p.overflowPx <= 1 && !p.pageErrors.length ? '✅' : '❌'} ${p.label} @ ${p.width}px: axe ${p.axe.length ? p.axe.map((x) => `\`${x.id}\` (${x.impact}, ${x.nodes}) ${x.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${p.overflowPx}px${p.offenders.length ? ` (${p.offenders.join(', ')})` : ''}; ${p.broken.length ? `BROKEN words: ${p.broken.join(', ')}` : 'no broken words'}; errors ${p.pageErrors.length ? p.pageErrors.join(' / ') : 'none'} (${p.files.map((f) => `[${f}](${f})`).join(' · ')})`,
     );
   L.push('');
+  L.push('## Discovery experience preview (PR 3, #/preview/living)', '');
+  L.push('Every discovery here is image-free by design (no licensed image yet): `composition type` means the title carries the page, with no placeholder.', '');
+  for (const x of r.living)
+    L.push(
+      `- ${!x.broken.length && !x.axe.length && x.overflowPx <= 1 && !x.pageErrors.length ? '✅' : '❌'} ${x.state} @ ${x.width}px: ${x.view}${x.composition ? `, composition ${x.composition}` : ''}${x.connections !== null ? `, ${x.connections} connection(s)` : ''}; axe ${x.axe.length ? x.axe.map((a) => `\`${a.id}\` (${a.impact}, ${a.nodes}) ${a.targets.join(' / ')}`).join('; ') : 'no violations'}; overflow ${x.overflowPx}px${x.offenders.length ? ` (${x.offenders.join(', ')})` : ''}; ${x.broken.length ? `BROKEN words: ${x.broken.join(', ')}` : 'no broken words'}; errors ${x.pageErrors.length ? x.pageErrors.join(' / ') : 'none'} (${x.files.map((f) => `[${f}](${f})`).join(' · ')})`,
+    );
+  L.push('');
   L.push('## Shell atmospheres (Creative Slice 03, Phase 3.3)', '');
   for (const x of r.shell)
     L.push(
@@ -815,6 +925,7 @@ function markdown(r: Awaited<ReturnType<typeof run>>) {
   L.push(`- ${r.bundle.entryReferencesCaveat ? '❌' : '✅'} App entry files (${r.bundle.entryFiles.join(', ')}) declare no Caveat font files`);
   L.push(`- ${!r.bundle.entryDeclaresNewsreader || r.bundle.newsreaderFiles.length !== 3 ? '❌' : '✅'} The Quiet Room's serif (Newsreader) is self-hosted, declared once with the app's styles and fetched only when used: ${r.bundle.newsreaderFiles.join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsPrototype || !r.bundle.prototypeChunks.length ? '❌' : '✅'} The prototype is a separate chunk: ${r.bundle.prototypeChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ') || 'NOT FOUND'}`);
+  L.push(`- ${r.bundle.entryContainsLiving || !r.bundle.livingChunks.length ? '❌' : '✅'} The discovery preview is a separate chunk: ${r.bundle.livingChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ') || 'NOT FOUND'}`);
   L.push(`- ${r.bundle.entryContainsStyleGuide ? '❌' : '✅'} The style guide is a separate chunk: ${r.bundle.styleGuideChunks.map((c) => `${c.file} ${c.bytes} B (${c.gzip} B gzip)`).join(', ')}`);
   L.push(`- Caveat Bold, Latin: ${r.bundle.caveatLatinBold.map((c) => `${c.file} ${c.bytes} B`).join(', ')} (budget ${FONT_BUDGET} B; WOFF2 is already compressed)`);
   L.push(`- All Caveat files in the build: ${r.bundle.caveatFiles.join(', ')}`);
@@ -839,6 +950,7 @@ async function run() {
     const atmospheres = await atmosphereChecks(browser, origin, blocked);
     const prototype = await prototypeChecks(browser, origin, blocked);
     const shell = await shellChecks(browser, origin, blocked);
+    const living = await livingChecks(browser, origin, blocked);
     const b = await bundle();
     const fontOk = b.caveatLatinBold.length === 1 && b.caveatLatinBold.every((c) => c.bytes <= FONT_BUDGET);
     const findings =
@@ -863,8 +975,10 @@ async function run() {
       (b.entryContainsPrototype || !b.prototypeChunks.length ? 1 : 0) +
       (!b.entryDeclaresNewsreader || b.newsreaderFiles.length !== 3 ? 1 : 0) +
       shell.reduce((n, x) => n + (x.applied ? 0 : 1) + (x.serifOk ? 0 : 1) + x.axe.length + (x.overflowPx > 1 ? 1 : 0) + x.pageErrors.length, 0) +
+      living.reduce((n, x) => n + x.broken.length + x.axe.length + (x.overflowPx > 1 ? 1 : 0) + x.pageErrors.length, 0) +
+      (b.entryContainsLiving || !b.livingChunks.length ? 1 : 0) +
       (fontOk ? 0 : 1);
-    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, prototype, shell, home, bundle: b, blockedHosts: [...blocked].sort() };
+    return { branch: opt('branch') ?? 'local', commit: opt('commit') ?? 'local', findings, widths, reducedMotion: motion, cover, atmospheres, prototype, shell, living, home, bundle: b, blockedHosts: [...blocked].sort() };
   } finally {
     await browser.close();
     server.close();
