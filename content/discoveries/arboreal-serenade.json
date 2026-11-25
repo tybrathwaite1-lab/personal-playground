@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "arboreal-serenade",
+  "status": "ready",
+  "title": "A tree with something to say",
+  "subject": "Arboreal Serenade",
+  "context": "A tree changes throughout the day in ways we rarely notice. Live sensor readings shape an evolving audiovisual composition, creating an artistic portrait of processes normally hidden from our senses.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Sara Kieffer",
+      "role": "Artist"
+    },
+    {
+      "name": "Lucien Mike Woodtli",
+      "role": "Concept Director"
+    },
+    {
+      "name": "Lukas Matthys",
+      "role": "Creative Technologist"
+    },
+    {
+      "name": "Lino Asper",
+      "role": "Sound Specialist"
+    }
+  ],
+  "year": "2025",
+  "tags": [
+    "art",
+    "sound",
+    "nature",
+    "technology"
+  ],
+  "destination": {
+    "url": "https://www.arborealserenade.com/",
+    "label": "Arboreal Serenade (official site)",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "Arboreal Serenade: Team",
+      "url": "https://www.arborealserenade.com/team",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "UGT: Talking Tree at Art Basel (2025)",
+      "url": "https://ugt-online.de/en/news/news-und-events/talking-tree-at-art-basel/",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Catapult: KiefferWoodtli, Artist in Focus",
+      "url": "https://www.catapult-platform.art/sara-kieffer-lucien-woodtli-artist-focus/",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "related": [
+    {
+      "to": "edgerton-high-speed-photography",
+      "relation": "reveals the unseen, like",
+      "note": "Both use technology to show processes our senses miss: a tree's slow rhythms, and a splash too fast to see.",
+      "basis": "editorial"
+    }
+  ],
+  "editorialNotes": [
+    "Roles are as listed on the project's own Team page (2026-11-25). Partners include UGT (measurement system).",
+    "An artistic translation of a Japanese Pagoda Tree's live signals (e.g. light and sap movement), not a recording of a tree speaking.",
+    "First shown at Art Basel 2025; now in the permanent collection of the Enea Tree Museum (Catapult; art.salon).",
+    "The 'Arboreal Severance' installation (2025) is a separate, later work by the same artists."
+  ]
+}

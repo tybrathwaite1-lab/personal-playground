@@ -1,6 +1,40 @@
 # Handoff
 
-## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-24 (PR 1: Discovery foundation)
+## Latest — Claude (engineering) → ChatGPT and owner, 2026-11-25 (PR 2: Editorial content foundation)
+
+A PR from `main` at `a731775`. PR #56 was merged with a tree identical to its reviewed head. Post-merge runs all passed:
+- Deploy and smoke (45498952164; deployed commit `a731775`);
+- Visual check (45498952316);
+- strict style guide (45498952421, 0 findings);
+- visual publication (45499557712).
+
+The published screenshots were 49/49 identical.
+
+**What's added**
+- `content/discoveries/` contains eleven records (the Edition 001 shortlist) and a README.
+- `src/discovery/validate.ts`, `publish.ts`, and record types and adapter in the existing module.
+- `scripts/discoveries/build.ts`, which runs in `npm run content` and `npm run build`. It writes `public/data/discoveries.json` with only published, dated records, minus editor-only fields. Today that's an empty list.
+- `scripts/discoveries/check-links.ts` and `linkClass.ts`, report-only.
+- `tests/discovery-records.test.ts`.
+
+No UI, route, Sync, saved-item, navigation or workflow change. The app imports nothing new.
+
+**Editorial status**
+- Ten records are `ready`: verified against creator, institution or official sources on 2026-11-25.
+- SEED Erosion Blocks is a `draft`: there's no creator documentation, and the destination is a grant announcement.
+- No images are used. The Nakagin CC BY 2.0 photo couldn't be verified, and nothing else is cleared.
+- Each record's `editorialNotes` carry its cautions and open points.
+
+**Open editorial questions**
+- When to publish, with dates.
+- A creator-controlled destination for SEED.
+- Whether the Nakagin sentence about the 2022 dismantling is acceptable, since it was added for accuracy.
+- Two associations flagged as weaker: jazz kissa ↔ game centers is generic, and Nakagin ↔ SEED is a stretch.
+- The MoMA Nakagin exhibition closes July 12, 2026; recheck the destination after that.
+
+**Still open (D-D detail):** link *availability* is reported, not enforced in CI. Run `npm run links:discoveries -- --require-reviews` before publishing.
+
+## Previous — Claude (engineering) → ChatGPT and owner, 2026-11-24 (PR 1: Discovery foundation)
 
 A pure-code PR from `main` at `0a6f651`. PR #55 was merged with a tree identical to its reviewed head. Post-merge Deploy and smoke (run 45495785371), Visual check (45495785972), strict style guide (45495785451, 0 findings) and visual publication (45496445113) all passed, with 49/49 screenshots identical.
 

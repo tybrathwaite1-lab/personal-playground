@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "jazz-kissa",
+  "status": "ready",
+  "title": "The art of listening",
+  "subject": "Japanese jazz kissa",
+  "context": "Imagine going somewhere specifically to listen to a record. Japan's jazz kissa turn carefully assembled record collections and sound systems into shared listening experiences. Somewhere between a café, a record collection and a sanctuary, these spaces make music the main event.",
+  "nature": "subject",
+  "credits": [
+    {
+      "name": "Philip Arneill",
+      "role": "Photographer and creator, Tokyo Jazz Joints"
+    },
+    {
+      "name": "James Catchpole",
+      "role": "Collaborator and podcast co-host, Tokyo Jazz Joints"
+    }
+  ],
+  "tags": [
+    "music",
+    "jazz",
+    "japan",
+    "listening",
+    "places"
+  ],
+  "destination": {
+    "url": "https://www.tokyojazzjoints.com/who",
+    "label": "Tokyo Jazz Joints, by Philip Arneill with James Catchpole",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "National Geographic: Mastering the art of deep listening in Japan (Joe Hagan, 2026)",
+      "url": "https://www.nationalgeographic.com/culture/article/japanese-jazz-kissa-cafe",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Kehrer Verlag: Tokyo Jazz Joints (book, 2023)",
+      "url": "https://www.kehrerverlag.com/en/Philip-Arneill/978-3-96900-120-2",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Wallpaper*: Tokyo Jazz Joints captures the vanishing world of Japanese jazz kissa culture (2023)",
+      "url": "https://www.wallpaper.com/travel/tokyo-jazz-joints-book-kehrer-verlag",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "related": [
+    {
+      "to": "mauricio-lopez-60625",
+      "relation": "shares a focus on listening with",
+      "note": "In both, listening itself becomes the experience: a room built around records, and a sculpture built around the sounds that pass through apartment walls.",
+      "basis": "editorial"
+    },
+    {
+      "to": "japanese-game-centers",
+      "relation": "shares a kind of room with",
+      "note": "Both are public spaces in Japan organized around one shared interest, where strangers gather for the same thing.",
+      "basis": "editorial"
+    }
+  ],
+  "editorialNotes": [
+    "House rules vary: the strictest kissa forbid talking, others allow conversation (National Geographic). The copy doesn't imply all are silent.",
+    "Numbers differ by period (800+ at the 1960s peak; about 400 today per National Geographic); the copy avoids counts.",
+    "The destination is the project's 'Who' page; the project's 'What' page could not be fetched on 2026-11-25."
+  ]
+}

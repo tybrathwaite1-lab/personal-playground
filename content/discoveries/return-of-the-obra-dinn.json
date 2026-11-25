@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "return-of-the-obra-dinn",
+  "status": "ready",
+  "title": "Doing more with one bit",
+  "subject": "Return of the Obra Dinn",
+  "context": "Creating a memorable world doesn't necessarily require more detailed graphics. This maritime mystery embraces a stark monochromatic aesthetic, turning visual limitations into part of its identity.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Lucas Pope",
+      "role": "Creator"
+    }
+  ],
+  "year": "2018",
+  "tags": [
+    "games",
+    "design",
+    "mystery"
+  ],
+  "destination": {
+    "url": "https://obradinn.com/",
+    "label": "Return of the Obra Dinn (official site)",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "Return of the Obra Dinn: official site",
+      "url": "https://obradinn.com/",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "PlayStation Blog: Lucas Pope on Return of the Obra Dinn's 1-bit art style (2019)",
+      "url": "https://blog.playstation.com/archive/2019/10/17/lucas-pope-on-return-of-the-obra-dinns-art-style",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "related": [
+    {
+      "to": "low-tech-solar-website",
+      "relation": "shares a dithered look with",
+      "note": "Both turn a limitation into a look: Obra Dinn's two-colour dithering, and the solar website's dithered images that keep its pages light.",
+      "basis": "editorial"
+    }
+  ],
+  "editorialNotes": [
+    "No game artwork is cleared; no image is used.",
+    "Released for PC and Mac in October 2018; consoles followed in 2019 (official site lists platforms)."
+  ]
+}

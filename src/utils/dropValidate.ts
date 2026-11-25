@@ -23,12 +23,12 @@ const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object
 const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
 
 /** An absolute https URL with no whitespace that also passes the app's URL safety check. */
-function isHttpsUrl(v: unknown): v is string {
+export function isHttpsUrl(v: unknown): v is string {
   return typeof v === 'string' && /^https:\/\/[^\s]+$/.test(v) && isSafeUrl(v) && new URL(v).protocol === 'https:';
 }
 
 /** Relations (on items and thread nodes): each needs to, relation, note and a fact/editorial basis. */
-function checkRelations(related: unknown[], p: string, err: (path: string, message: string) => void) {
+export function checkRelations(related: unknown[], p: string, err: (path: string, message: string) => void) {
   related.forEach((r, j) => {
     const rp = `${p}.related[${j}]`;
     if (!isObj(r) || !str(r.to) || !str(r.relation) || !str(r.note)) return err(rp, 'needs to, relation and note');

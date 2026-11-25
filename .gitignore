@@ -9,6 +9,7 @@ npm-debug.log*
 personal-playground-backup*.json
 public/data/pulse.json
 public/data/drop.json
+public/data/discoveries.json
 public/data/candidates.json
 public/images/editorial/
 

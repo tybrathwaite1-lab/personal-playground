@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "edgerton-high-speed-photography",
+  "status": "ready",
+  "title": "The things we never see",
+  "subject": "Harold Edgerton's high-speed photography",
+  "context": "A drop of milk hits a surface. For an instant, it becomes a crown. Electrical engineer Harold Edgerton used remarkably brief flashes of light to reveal moments ordinarily hidden from human perception.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Harold E. \"Doc\" Edgerton",
+      "role": "Electrical engineer and photographer (MIT, 1903–1990)"
+    }
+  ],
+  "year": "1931 onward",
+  "tags": [
+    "photography",
+    "science",
+    "technology",
+    "history"
+  ],
+  "destination": {
+    "url": "https://mitmuseum.mit.edu/collections/harold-doc-edgerton/docs-life",
+    "label": "MIT Museum: Doc's life (Harold \"Doc\" Edgerton collection)",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "MIT Museum: Doc's life",
+      "url": "https://mitmuseum.mit.edu/collections/harold-doc-edgerton/docs-life",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Lemelson-MIT: Harold Edgerton",
+      "url": "https://lemelson.mit.edu/resources/harold-edgerton",
+      "kind": "reference",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "editorialNotes": [
+    "Milk Drop Coronet (1957) and the earlier milk-drop photographs are copyrighted (© Estate of Harold Edgerton / MIT). No image is used; do not reproduce without clearance.",
+    "The Metropolitan Museum of Art lead was not used: its collection pages could not be fetched on 2026-11-25. The MIT Museum is the primary source."
+  ]
+}

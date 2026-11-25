@@ -232,3 +232,39 @@ Earlier decisions stay in force where compatible. Nothing below is silently reco
 - Thread nodes are now validated at build (required fields; https URLs passing `isSafeUrl`), and invalid ones are left out of `drop.json`. `ThreadPanel` renders node links only when `isSafeUrl` passes.
 - Link *availability* checks and the content gate (D-D) are unchanged and still open.
 
+
+## 2026-11-25 — Editorial Room: direction, creator-first policy, Edition 001 shortlist (PR 2)
+
+**Editorial direction: Personal roots, limitless curiosity.**
+
+The Playground has a recognisable editorial perspective without restricting itself to particular subjects, cultures or interests.
+- A point of view, not a perimeter.
+- The curator should be as open to discovery as the visitor.
+- Balance should emerge over time, not be manufactured in every edition.
+- Cast a wide scouting net, and select discoveries on their individual merits.
+- Connections must be meaningful, never manufactured to satisfy a quota.
+- A discovery may stand on its own.
+- Categories, geography, historical periods and contemporary representation must not become mandatory editorial quotas. This settles D-L in favour of the blueprint's "balance without rigid quotas": the 60/40 figure in Editorial Strategy v1 is no longer guidance.
+
+**Creator-first policy (approved).**
+- Prominent creator recognition and attribution.
+- Meaningful pathways to the original work.
+- Respect for creator-controlled distribution and usage rights.
+- An intention to support and commission independent creators if the project becomes financially sustainable.
+- **Not authorised:** any compensation percentage, financial obligation or creator outreach programme.
+
+**Prototype-stage image rule (settles D-A for now).** We are validating the experience, not preparing a commercial launch.
+- The existing open-licence safeguards stay. Use only verified, compatible assets, original non-infringing graphics, or deliberately image-free presentation.
+- **Never used:** unlicensed artwork, album covers, game screenshots, hotlinked images or copyrighted editorial photography.
+- GitHub Pages previews are public even when unlisted. Neither prototype status nor the lack of monetisation overrides these safeguards.
+- Missing imagery never keeps an otherwise suitable discovery out.
+- **Deferred:** creator outreach, commissions, broader licensing and commercial publication review.
+
+**Engineering decisions in PR 2.**
+- **D-B:** option (b). Standalone records live in `content/discoveries/*.json`. They are validated, share one id namespace with Drop items and thread nodes, and join the discovery graph.
+- **D-D:** structural link errors fail validation. Whether links work is checked by a report-only command that classifies each link as invalid, permanent, blocked, transient or intentional. A permanent or blocked link needs a recorded `linkReviews` decision before publication. Transient network failures never block CI.
+- **D-C, Edition 001's working shortlist:** eleven discoveries, selected by the owner. Twelve was a target, not a requirement.
+  - Ten are verified and marked `ready`.
+  - SEED Erosion Blocks stays a `draft`: no creator documentation was found.
+  - None is published. A publication date is a separate decision.
+- **Relationships:** the eight proposed associations are recorded as editorial (interpretive) claims, each authored once. William Onyeabor has none, by design.

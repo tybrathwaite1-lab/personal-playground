@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "id": "low-tech-solar-website",
+  "status": "ready",
+  "title": "An internet that follows the sun",
+  "subject": "Low-tech Magazine's solar-powered website",
+  "context": "What if a website didn't need to be available all the time? Low-tech Magazine reduced its website's energy requirements through lightweight pages and deliberately simple design. Extended cloudy weather can take the solar-powered version offline.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Kris De Decker",
+      "role": "Founder and writer, Low-tech Magazine; solar hardware"
+    },
+    {
+      "name": "Marie Otsuka",
+      "role": "Web design and development"
+    },
+    {
+      "name": "Roel Roscam Abbing",
+      "role": "Web design and development; computer hardware"
+    },
+    {
+      "name": "Marie Verdeil",
+      "role": "Website maintenance"
+    },
+    {
+      "name": "Kathy Vanhout",
+      "role": "Content and translations"
+    }
+  ],
+  "year": "2018",
+  "tags": [
+    "web",
+    "design",
+    "energy",
+    "sustainability"
+  ],
+  "destination": {
+    "url": "https://solar.lowtechmagazine.com/",
+    "label": "Low-tech Magazine (solar-powered website)",
+    "verifiedAt": "2026-11-25",
+    "availability": "intermittent"
+  },
+  "sources": [
+    {
+      "label": "Low-tech Magazine: About the solar powered website",
+      "url": "https://solar.lowtechmagazine.com/about/the-solar-website/",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Low-tech Magazine: How to build a low-tech website? (2018)",
+      "url": "https://solar.lowtechmagazine.com/2018/09/how-to-build-a-low-tech-website/",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Low-tech Magazine: Team",
+      "url": "https://solar.lowtechmagazine.com/about/team",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "related": [
+    {
+      "to": "strandbeest",
+      "relation": "also designs around intermittent energy, like",
+      "note": "The website runs on sunlight and can go offline in long cloudy spells; the Strandbeests walk only when the wind blows.",
+      "basis": "editorial"
+    }
+  ],
+  "editorialNotes": [
+    "Credits follow the site's own 'About the solar powered website' page (2026-11-25).",
+    "Downtime is by design (target about 90% uptime, per the 2018 article); link checks treat outages as intentional, not failure.",
+    "The destination root wasn't fetched directly; three pages on the same host were, on 2026-11-25."
+  ]
+}
