@@ -18,6 +18,8 @@ import Rediscover from './pages/Rediscover';
 const StyleGuide = lazy(() => import('./styleguide/StyleGuide'));
 // Creative Slice 02 prototype (#/preview/make-it-yours): hidden, code-split and isolated from personal data.
 const MakeItYours = lazy(() => import('./prototype/make-it-yours/MakeItYours'));
+// Discovery experience preview (#/preview/living?d=<id>, PR 3): unlisted, code-split; sets its own title.
+const Living = lazy(() => import('./preview/living/Living'));
 
 export default function App() {
   const route = useRoute();
@@ -31,6 +33,7 @@ export default function App() {
       document.title = 'Make it yours (prototype) — Personal Playground';
       return;
     }
+    if (route.preview === 'preview/living') return;
     const label = NAV.find((n) => n.route === route.name)?.label ?? (route.name === 'backup' ? 'Backup' : '');
     document.title = route.name === 'home' ? 'Personal Playground' : `${label} — Personal Playground`;
   }, [route.name, route.preview]);
@@ -47,6 +50,14 @@ export default function App() {
     return (
       <Suspense fallback={<p className="p-6 font-mono text-xs uppercase tracking-label text-fg-muted">Loading prototype…</p>}>
         <MakeItYours params={route.params} />
+      </Suspense>
+    );
+  }
+
+  if (route.preview === 'preview/living') {
+    return (
+      <Suspense fallback={<p className="p-6 font-mono text-xs uppercase tracking-label text-fg-muted">Loading preview…</p>}>
+        <Living params={route.params} />
       </Suspense>
     );
   }

@@ -304,7 +304,7 @@ test('characterisation: on 2026-11-27 issue 3 publishes, with its reciprocal Cha
 });
 
 // ─── Isolation ───────────────────────────────────────────────────────
-test('the module is isolated: nothing in the app imports it, and it imports no UI', () => {
+test('the module is isolated: only the preview route (a lazy chunk) imports it, and it imports no UI', () => {
   const files = (dir: string): string[] =>
     readdirSync(join(root, dir)).flatMap((f) => {
       const p = join(dir, f);
@@ -321,7 +321,9 @@ test('the module is isolated: nothing in the app imports it, and it imports no U
     );
   // The resolver does see real imports (here: src/utils/discovery, a different module).
   assert.ok(files('src').some((f) => [...readFileSync(join(root, f), 'utf8').matchAll(/from\s*['"](\.{1,2}\/[^'"]*)['"]/g)].some((m) => join(dirname(f), m[1]) === 'src/utils/discovery')));
-  assert.deepEqual(importers, [], 'src/discovery is not wired into any route or component yet (src/utils/discovery is a different module)');
+  assert.deepEqual(importers, ['src/preview/living/data.ts'], 'only the unlisted preview route uses src/discovery (src/utils/discovery is a different module)');
+  // That route is code-split: App.tsx reaches it only through a lazy import.
+  assert.match(readFileSync(join(root, 'src/App.tsx'), 'utf8'), /lazy\(\(\) => import\('\.\/preview\/living\/Living'\)\)/);
   for (const f of files('src/discovery')) {
     const src = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     const imports = [...src.matchAll(/from\s+['"]([^'"]+)['"]/g)].map((m) => m[1]);

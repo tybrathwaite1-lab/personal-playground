@@ -9,7 +9,7 @@ The schema is the `DiscoveryRecord` type in `src/discovery/types.ts`. Validation
 | Status | Meaning | Shipped? |
 |---|---|---|
 | `draft` | Still being verified, or has an unresolved source or factual problem | Never |
-| `ready` | Verified and awaiting a publication decision | Never |
+| `ready` | Verified and awaiting a publication decision | Never in `discoveries.json`; included in the unlisted preview file (below) |
 | `published` | Public from `publishDate` (a New York date) | From that date, once a deploy runs |
 
 The build writes `public/data/discoveries.json` through `publicDiscoveryFile` (`src/discovery/publish.ts`), a content publication boundary:
@@ -18,6 +18,15 @@ The build writes `public/data/discoveries.json` through `publicDiscoveryFile` (`
 - **Relations:** only those whose target is available on the same date. A target can be a published standalone discovery, an item in a published Weekly Drop edition (as shipped in `public/data/drop.json`), or a thread node. Claims to drafts, ready or future records, unpublished Drop items, or ids that don't exist are left out, notes included. The source record keeps them, so they appear once their target is published.
 
 This decides what the app's public data contains. It is **not** access control: everything committed to this public repository, drafts included, is public there.
+
+### The unlisted preview file (PR 3)
+
+Approved by the owner on 2026-11-25 ([proposal](../../collaboration/PR3_PREVIEW_PROPOSAL.md), option A). The same build also writes `public/data/preview/living.json` through `previewDiscoveryFile` (`src/discovery/preview.ts`), so verified records can be evaluated at `#/preview/living?d=<id>` before any publication decision.
+- **Records:** `ready` records and available `published` ones, never drafts, and never a record with an unresolved link review (`replace` or `remove`). Statuses here are not changed.
+- **Fields:** the public allowlist, minus `status` and `publishDate`. Editor-only and unknown fields never ship.
+- **Relations:** only to other records in the preview file.
+- **Readers:** only the preview route. `discoveries.json`, the Weekly Drop and every existing view are unaffected.
+- **Visibility:** unlisted, not private. Anyone with the URL can read it, like everything on GitHub Pages, so only content that is publishable as is may become `ready`.
 
 ## Fields
 

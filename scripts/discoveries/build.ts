@@ -10,11 +10,16 @@
  * Ids share one namespace with Weekly Drop items and thread nodes (collisions are errors).
  * Output is deterministic: records sorted by id, no timestamps beyond the build date.
  *
+ * It also writes the unlisted preview file, public/data/preview/living.json (owner-approved for
+ * PR 3; src/discovery/preview.ts): ready records (never drafts) through the same allowlist, with
+ * no status or publish date, read only by #/preview/living. discoveries.json is unaffected.
+ *
  * Usage: npx tsx scripts/discoveries/build.ts [--strict] [--today YYYY-MM-DD]
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { IMAGES } from '../../src/data/images.ts';
+import { previewDiscoveryFile } from '../../src/discovery/preview.ts';
 import { publicDiscoveryFile } from '../../src/discovery/publish.ts';
 import type { DiscoveryRecord } from '../../src/discovery/types.ts';
 import { validateDiscoveryLibrary, validateDiscoveryRecord } from '../../src/discovery/validate.ts';
@@ -84,8 +89,12 @@ const shippable = file.discoveries;
 
 mkdirSync('public/data', { recursive: true });
 writeFileSync('public/data/discoveries.json', JSON.stringify(file, null, 2) + '\n');
+const preview = previewDiscoveryFile(valid.filter((r) => !colliding.has(r.id)), today);
+mkdirSync('public/data/preview', { recursive: true });
+writeFileSync('public/data/preview/living.json', JSON.stringify(preview, null, 2) + '\n');
 const by = (s: string) => valid.filter((r) => r.status === s).length;
 console.log(
   `Discoveries: ${files.length} records (${by('draft')} draft, ${by('ready')} ready, ${by('published')} published), ${shippable.length} public as of ${today}, ${errorCount} errors → public/data/discoveries.json`,
 );
+console.log(`Preview (unlisted, #/preview/living): ${preview.discoveries.length} records → public/data/preview/living.json`);
 if (strict && errorCount > 0) process.exit(1);

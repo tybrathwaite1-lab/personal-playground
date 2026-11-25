@@ -1,0 +1,460 @@
+/*
+ * Discovery experience preview (PR 3). One stylesheet for every appearance: colour comes only
+ * from the semantic surface tokens (--surface, --fg, --fg-muted, --accent, --focus, --rule),
+ * which each atmosphere's colour set re-points, and the title takes the atmosphere's display
+ * face where one is chosen (--shell-display, set in atmospheres/shell.css). No new colours.
+ *
+ * The idea: the discovery's own words are the object. Without an image the title carries the
+ * page at full size; with one, the image leads and the title follows. Nothing moves on its own.
+ */
+.living {
+  --living-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --living-text: var(--living-serif);
+  --living-meta: 'IBM Plex Sans', system-ui, sans-serif;
+  --living-gutter: 1rem;
+  min-height: 100dvh;
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  font-family: var(--living-text);
+  display: flex;
+  flex-direction: column;
+}
+html[data-look='studio'] .living {
+  --living-text: var(--living-meta);
+}
+@media (min-width: 600px) {
+  .living {
+    --living-gutter: 2rem;
+  }
+}
+@media (min-width: 1100px) {
+  .living {
+    --living-gutter: 3.5rem;
+  }
+}
+
+.living a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: rgb(var(--accent));
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+.living a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.living-skip {
+  position: absolute;
+  left: var(--living-gutter);
+  top: -4rem;
+  z-index: 70;
+  padding: 0.5rem 0.75rem;
+  background: rgb(var(--fg));
+  color: rgb(var(--surface)) !important;
+  font: 500 0.875rem/1.4 var(--living-meta);
+}
+.living-skip:focus {
+  top: 0.5rem;
+}
+
+/* ── Masthead and footer: quiet, so the discovery leads ─────────────── */
+.living-masthead,
+.living-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+  padding: 1rem var(--living-gutter);
+  font: 400 0.8125rem/1.5 var(--living-meta);
+  color: rgb(var(--fg-muted));
+}
+.living-masthead {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.living-wordmark {
+  color: rgb(var(--fg)) !important;
+  font: italic 400 1.0625rem/1.3 var(--shell-display, var(--living-serif));
+  text-transform: none;
+  text-decoration-line: none !important;
+}
+.living-wordmark:hover {
+  text-decoration-line: underline !important;
+}
+.living-status {
+  margin: 0;
+}
+.living-footer {
+  margin-top: auto;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+.living-footer p {
+  margin: 0;
+  max-width: 60ch;
+}
+
+.living-main {
+  width: 100%;
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 1rem + 4vw, 5rem) var(--living-gutter) 3rem;
+}
+.living-main:focus {
+  outline: none;
+}
+.living h1:focus,
+.living h2:focus {
+  outline: none;
+}
+.living h1:focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 4px;
+}
+
+.living-wait {
+  font: 400 1rem/1.5 var(--living-meta);
+  color: rgb(var(--fg-muted));
+}
+
+/* ── The discovery ───────────────────────────────────────────────────── */
+.living-discovery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+.living-head {
+  min-width: 0;
+}
+.living-subject {
+  margin: 0 0 0.75rem;
+  font: italic 400 clamp(1.125rem, 1rem + 0.6vw, 1.5rem) / 1.3 var(--living-serif);
+  color: rgb(var(--fg-muted));
+}
+.living-year {
+  display: inline-block;
+  margin-left: 0.75em;
+  font: normal 400 0.8125rem/1 var(--living-meta);
+  letter-spacing: 0.02em;
+  font-variant-numeric: oldstyle-nums;
+}
+.living-head h1 {
+  margin: 0;
+  max-width: 14ch;
+  font-family: var(--shell-display, var(--living-serif));
+  font-weight: var(--shell-display-weight, 400);
+  text-transform: var(--shell-display-case, none);
+  letter-spacing: var(--shell-display-tracking, -0.015em);
+  font-size: clamp(3rem, 1.6rem + 5.6vw, 6.75rem);
+  line-height: 0.98;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+/* With an image the title steps down a size: the picture is the object. */
+.living-discovery[data-composition='image'] .living-head h1 {
+  font-size: clamp(2.25rem, 1.4rem + 3.6vw, 5rem);
+}
+
+.living-figure {
+  margin: 0;
+  min-width: 0;
+}
+.living-figure img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: rgb(var(--fg) / 0.06);
+}
+
+.living-context {
+  margin: 0;
+  max-width: 34em;
+  font-size: clamp(1.125rem, 1.02rem + 0.45vw, 1.375rem);
+  line-height: 1.6;
+}
+/* A small-caps opening line, where the text is set in the serif. */
+html:not([data-look='studio']) .living-context::first-line {
+  font-variant-caps: small-caps;
+  letter-spacing: 0.02em;
+}
+
+/* Creators and the way to the original: a column of its own on wide screens. */
+.living-credits {
+  min-width: 0;
+  font-family: var(--living-meta);
+}
+.living-label {
+  margin: 0 0 0.75rem;
+  font: 500 0.8125rem/1.4 var(--living-meta);
+  letter-spacing: 0.02em;
+  color: rgb(var(--fg-muted));
+}
+.living-people {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.875rem;
+}
+.living-name {
+  display: block;
+  font: 400 clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem) / 1.15 var(--living-serif);
+  color: rgb(var(--fg));
+}
+.living-role {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgb(var(--fg-muted));
+}
+
+.living-visit {
+  display: block;
+  padding: 1rem 0 1rem 1rem;
+  border-left: 3px solid rgb(var(--accent));
+  text-decoration-line: none !important;
+}
+.living-visit:hover .living-visit-cta {
+  text-decoration-line: underline;
+  text-decoration-color: rgb(var(--accent));
+}
+.living-visit-cta {
+  display: block;
+  font: 400 clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem) / 1.2 var(--shell-display, var(--living-serif));
+  text-transform: var(--shell-display-case, none);
+}
+.living-visit-label {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.living-visit-host {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: rgb(var(--fg-muted));
+  overflow-wrap: anywhere;
+}
+.living-aside {
+  display: block;
+  margin: 0.5rem 0 0;
+  font: 400 0.875rem/1.5 var(--living-meta);
+  color: rgb(var(--fg-muted));
+  max-width: 44ch;
+}
+
+.living-sources {
+  margin-top: 1.75rem;
+  border-top: 1px solid rgb(var(--rule));
+  padding-top: 0.75rem;
+}
+.living-sources summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9375rem;
+  list-style: none;
+}
+.living-sources summary::-webkit-details-marker {
+  display: none;
+}
+.living-sources summary::before {
+  content: '+';
+  width: 1ch;
+  font: 400 1.25rem/1 var(--living-meta);
+  color: rgb(var(--fg-muted));
+}
+.living-sources[open] summary::before {
+  content: '\2212';
+}
+.living-sources ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.living-sources li a {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.living-sources .living-aside {
+  margin-top: 0.15rem;
+  font-size: 0.8125rem;
+}
+
+/* ── Connections: each claim as written, in a sentence ───────────────── */
+.living-connections {
+  min-width: 0;
+  padding-top: 1rem;
+}
+.living-connections h2 {
+  margin: 0 0 1.5rem;
+  font: italic 400 clamp(1.5rem, 1.25rem + 1vw, 2.25rem) / 1.15 var(--living-serif);
+}
+.living-connections ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2rem;
+}
+.living-connections li {
+  padding-left: 1.25rem;
+  border-left: 1px solid rgb(var(--rule));
+  max-width: 40em;
+}
+.living-connections li[data-basis='fact'] {
+  border-left: 3px solid rgb(var(--fg));
+}
+.living-claim {
+  margin: 0;
+  font-size: clamp(1.1875rem, 1.05rem + 0.5vw, 1.4375rem);
+  line-height: 1.4;
+}
+.living-claim a,
+.living-self {
+  font-style: italic;
+}
+.living-note {
+  margin: 0.5rem 0 0;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: rgb(var(--fg));
+}
+.living-basis {
+  margin: 0.5rem 0 0;
+  font: 400 0.8125rem/1.4 var(--living-meta);
+  color: rgb(var(--fg-muted));
+}
+
+/* ── Onward: the path so far and the rest of the preview ────────────── */
+.living-onward {
+  margin-top: clamp(3rem, 2rem + 4vw, 6rem);
+  padding-top: 1.5rem;
+  border-top: 1px solid rgb(var(--rule));
+  display: grid;
+  gap: 2.5rem;
+}
+.living-path ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0;
+  font: italic 400 1.0625rem/1.5 var(--living-serif);
+}
+.living-path li + li::before {
+  content: '/';
+  margin: 0 0.6em;
+  color: rgb(var(--fg-muted));
+  font-style: normal;
+}
+.living-path [aria-current] {
+  color: rgb(var(--fg-muted));
+}
+
+.living-index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 2.5rem;
+}
+.living-index li {
+  border-top: 1px solid rgb(var(--rule));
+}
+.living-index-entry {
+  display: block;
+  padding: 0.75rem 0;
+  min-height: 44px;
+  text-decoration-line: none !important;
+}
+.living-index a.living-index-entry:hover .living-index-subject {
+  text-decoration-line: underline;
+  text-decoration-color: rgb(var(--accent));
+}
+.living-index-subject {
+  display: block;
+  font: italic 400 1.125rem/1.3 var(--living-serif);
+}
+.living-index-title {
+  display: block;
+  margin-top: 0.15rem;
+  font: 400 0.875rem/1.4 var(--living-meta);
+  color: rgb(var(--fg-muted));
+}
+.living-index [aria-current] .living-index-subject::after {
+  content: ' (you are here)';
+  font: normal 400 0.8125rem/1 var(--living-meta);
+  color: rgb(var(--fg-muted));
+}
+
+/* ── Index, not-found and error states ───────────────────────────────── */
+.living-notice h1 {
+  margin: 0 0 1rem;
+  max-width: 16ch;
+  font-family: var(--shell-display, var(--living-serif));
+  font-weight: var(--shell-display-weight, 400);
+  text-transform: var(--shell-display-case, none);
+  letter-spacing: var(--shell-display-tracking, -0.01em);
+  font-size: clamp(2.25rem, 1.5rem + 3.5vw, 4.5rem);
+  line-height: 1;
+  text-wrap: balance;
+}
+.living-notice > p {
+  margin: 0 0 2.5rem;
+  max-width: 38em;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+@media (min-width: 720px) {
+  .living-index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Wide: the title spans; context and connections on the left, credits on the right. */
+@media (min-width: 960px) {
+  .living-discovery {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    column-gap: clamp(3rem, 1rem + 4vw, 6rem);
+    row-gap: 2.5rem;
+  }
+  .living-head,
+  .living-figure {
+    grid-column: 1 / -1;
+  }
+  .living-context {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .living-discovery[data-composition='image'] .living-context {
+    grid-row: 3;
+  }
+  .living-credits {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    align-self: start;
+    padding-top: 0.35rem;
+  }
+  .living-discovery[data-composition='image'] .living-credits {
+    grid-row: 3 / span 2;
+  }
+  .living-connections {
+    grid-column: 1;
+  }
+  .living-index {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

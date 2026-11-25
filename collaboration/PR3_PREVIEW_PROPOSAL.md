@@ -1,6 +1,8 @@
 # PR 3: preview content mechanism (proposal)
 
-**Status:** proposed, awaiting owner approval. Written before implementation, as PR 3 §3 asks.
+**Status:** option A **approved by the owner** (2026-11-25), then implemented in PR 3. Written before implementation, as PR 3 §3 asks.
+
+**One narrowing in implementation:** preview relations point only to other records in the preview file. No record relates to a Drop item or thread node today, so nothing is lost, and the preview stays self-contained.
 
 ## Why it needs a decision
 
