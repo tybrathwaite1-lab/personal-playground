@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "william-onyeabor",
+  "status": "ready",
+  "title": "The man who made his own sound",
+  "subject": "William Onyeabor",
+  "context": "A Nigerian musician whose distinctive electronic funk combines expansive grooves and synthesizers. His independently released recordings later found new audiences through international reissues.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "William Onyeabor",
+      "role": "Musician, composer and self-publisher (1946–2017)"
+    }
+  ],
+  "year": "1977–1985",
+  "tags": [
+    "music",
+    "funk",
+    "electronic",
+    "nigeria"
+  ],
+  "destination": {
+    "url": "https://www.luakabop.com/artists/william-onyeabor",
+    "label": "Luaka Bop: William Onyeabor",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "Luaka Bop: William Onyeabor (official artist page)",
+      "url": "https://www.luakabop.com/artists/william-onyeabor",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "NPR: William Onyeabor, mysterious funk musician, dies at 70 (2017)",
+      "url": "https://www.npr.org/sections/therecord/2017/01/18/510410574/william-onyeabor-mysterious-funk-musician-dies-at-70",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "editorialNotes": [
+    "Album counts differ (Luaka Bop: 8 self-released albums 1977–1985; NPR: nine); the copy avoids a number.",
+    "Biographical stories about him are unverified (NPR); the copy avoids them.",
+    "No album artwork is cleared; no image is used.",
+    "No connection proposed yet, by owner decision.",
+    "The 2013 Luaka Bop compilation 'Who Is William Onyeabor?' is the reissue referred to; its NPR First Listen page was found but not fetched, so it isn't cited."
+  ]
+}

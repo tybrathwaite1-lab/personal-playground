@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "mauricio-lopez-60625",
+  "status": "ready",
+  "title": "The sounds of shared walls",
+  "subject": "60625",
+  "context": "An apartment wall separates one person's home from another. Sound isn't quite as respectful of boundaries. This installation uses recordings and found objects to explore the acoustic relationship between private and shared space.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Mauricio López F.",
+      "role": "Artist"
+    }
+  ],
+  "year": "2024",
+  "tags": [
+    "art",
+    "sound",
+    "installation",
+    "chicago"
+  ],
+  "destination": {
+    "url": "https://mauriciolopezf.com/projects/",
+    "label": "Mauricio López F.: Projects",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "Mauricio López F.: Projects (60625, 2024)",
+      "url": "https://mauriciolopezf.com/projects/",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "SAIC Graduate Exhibition 2025: Mauricio López F.",
+      "url": "https://web.saic.edu/gradshow2025/artists/mauricio-lopez-f/",
+      "kind": "reference",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "related": [
+    {
+      "to": "arboreal-serenade",
+      "relation": "also makes the overlooked audible, like",
+      "note": "One amplifies the life heard through apartment walls; the other turns a tree's live signals into sound.",
+      "basis": "editorial"
+    }
+  ],
+  "editorialNotes": [
+    "Sound sculpture (2024): recordings of an inhabited apartment through an amplification system, with card catalog drawers, a stool, steel pipes and steel sheet (artist's site).",
+    "No installation imagery or audio is cleared; none is used.",
+    "There's no separate project page; the destination is the artist's Projects page."
+  ]
+}

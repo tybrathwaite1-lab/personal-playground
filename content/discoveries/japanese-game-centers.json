@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "japanese-game-centers",
+  "status": "ready",
+  "title": "Insert coin, find community",
+  "subject": "Japanese game centers",
+  "context": "A room full of strangers, familiar sounds and the unmistakable rhythm of arcade buttons. The machines may be the attraction, but the people around them are part of what makes these places memorable.",
+  "nature": "subject",
+  "credits": [],
+  "tags": [
+    "games",
+    "japan",
+    "places",
+    "community"
+  ],
+  "destination": {
+    "url": "https://www.japan.travel/en/guide/game-centers/",
+    "label": "Japan National Tourism Organization: Game centers",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "Routledge: Space and Play in Japanese Videogame Arcades (Jérémie Pelletier-Gagnon, 2024)",
+      "url": "https://www.routledge.com/Space-and-Play-in-Japanese-Videogame-Arcades/Pelletier-Gagnon/p/book/9781032226859",
+      "kind": "reference",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "The Japan Times: Japanese gaming arcades and the pandemic (2021)",
+      "url": "https://www.japantimes.co.jp/life/2021/06/06/digital/japanese-gaming-arcades-pandemic",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Japan National Tourism Organization: Game centers",
+      "url": "https://www.japan.travel/en/guide/game-centers/",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "editorialNotes": [
+    "Game centers are fewer than at their peak (police figures: 26,573 in 1986, 4,022 in 2019, via The Japan Times) but they and their communities continue; the copy doesn't suggest otherwise.",
+    "No single creator: a place and practice, so no credits.",
+    "Unconnected for now: the owner removed the proposed association with jazz kissa (too generic)."
+  ]
+}

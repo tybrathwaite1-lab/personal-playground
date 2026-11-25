@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "seed-erosion-blocks",
+  "status": "draft",
+  "title": "Building with what washes ashore",
+  "subject": "SEED Erosion Blocks",
+  "context": "Could the material accumulating along Florida's beaches become part of the infrastructure protecting them? This experimental project explores incorporating sargassum into concrete blocks through coastal design, scientific collaboration and public art.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Teri Watson",
+      "role": "Artist"
+    }
+  ],
+  "year": "2026",
+  "tags": [
+    "art",
+    "environment",
+    "design",
+    "florida"
+  ],
+  "destination": {
+    "url": "https://warholfoundation.org/2026/08/12/locust-projects-announces-11th-year-of-wavemaker-grants-with-60000-in-grants-to-12-miami-artists-and-collectives/",
+    "label": "Locust Projects WaveMaker Grants 2026 announcement",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "Andy Warhol Foundation: Locust Projects announces 11th year of WaveMaker Grants (August 2026)",
+      "url": "https://warholfoundation.org/2026/08/12/locust-projects-announces-11th-year-of-wavemaker-grants-with-60000-in-grants-to-12-miami-artists-and-collectives/",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "Artburst Miami: 12 Miami artists share in $60,000 for Locust Projects' WaveMaker Grants (August 2026)",
+      "url": "https://www.artburstmiami.com/?p=31793",
+      "kind": "press",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "editorialNotes": [
+    "DRAFT: no creator documentation or project page found (2026-11-25). The destination is a grant announcement, not the original work.",
+    "Status: awarded a $4,000 WaveMaker implementation grant (announced August 2026). Intended benefits (stabilising shorelines, supporting coastal plants) are aims, not demonstrated results.",
+    "The official grantee list (wavemakergrants.org) redirects to plain http, so it can't be a source under the https rule.",
+    "The owner removed the proposed Nakagin association. The Strandbeest → SEED claim stays on Strandbeest's record and is left out of public data while SEED is a draft."
+  ]
+}

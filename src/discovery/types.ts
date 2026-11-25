@@ -7,9 +7,74 @@
  *
  * Not used by any route yet. Presentation (pages, the constellation's geometry) lives elsewhere.
  */
-import type { DropColumn, DropEdition, DropItem, DropSource, ThreadNode } from '../types/drop';
+import type { DropColumn, DropEdition, DropItem, DropRelation, DropSource, ThreadNode } from '../types/drop';
 
-export type DiscoveryKind = 'drop-item' | 'thread-node';
+export type DiscoveryKind = 'drop-item' | 'thread-node' | 'standalone';
+
+// ─── Standalone discovery records (content/discoveries/*.json) ───────
+/** A credited person or group and what they did, as the original project states it. */
+export interface DiscoveryCredit {
+  name: string;
+  role: string;
+}
+
+/**
+ * Where a visitor goes for the original work or the primary source: distinct from the research
+ * sources that support the editorial text.
+ */
+export interface DiscoveryDestination {
+  url: string;
+  label: string;
+  /** When an editor last confirmed it was the right destination and reachable (YYYY-MM-DD). */
+  verifiedAt: string;
+  /**
+   * Known, intentional conditions, so a link check doesn't mistake them for failure:
+   * 'intermittent' (offline by design at times, e.g. solar-powered), 'javascript-required'
+   * (content renders only in a browser with JavaScript).
+   */
+  availability?: 'intermittent' | 'javascript-required';
+}
+
+/** An editor's recorded decision about a link that failed a check. */
+export interface LinkReview {
+  url: string;
+  finding: 'permanent-failure' | 'transient-failure' | 'blocked' | 'intentional-unavailability';
+  /** keep: the link stays (e.g. a temporary outage); replace/remove: unresolved until done. */
+  decision: 'keep' | 'replace' | 'remove';
+  note: string;
+  reviewedAt: string;
+}
+
+/**
+ * One standalone discovery, as stored. `draft`: still being verified; `ready`: verified,
+ * awaiting a publication decision; `published`: public from `publishDate` (New York).
+ * Only published records on or after their date are ever shipped or traversed.
+ */
+export interface DiscoveryRecord {
+  schemaVersion: 1;
+  id: string;
+  status: 'draft' | 'ready' | 'published';
+  publishDate?: string;
+  title: string;
+  /** What it is about, plainly ("Japanese jazz kissa", "Return of the Obra Dinn"). */
+  subject: string;
+  /** The editorial introduction. */
+  context: string;
+  /** 'work': something specific people made (credits required); 'subject': a place, practice or culture. */
+  nature: 'work' | 'subject';
+  credits: DiscoveryCredit[];
+  year?: string;
+  tags: string[];
+  destination: DiscoveryDestination;
+  sources: DropSource[];
+  /** Editorial associations and documented links, authored on this record (DropRelation rules). */
+  related?: DropRelation[];
+  /** An image id from the editorial image registry (src/data/images.ts); optional. */
+  image?: string;
+  linkReviews?: LinkReview[];
+  /** Notes for editors (open questions, cautions). Never shown to visitors. */
+  editorialNotes?: string[];
+}
 
 /** One discovery: a Drop item or a thread node, seen through the same shape. */
 export interface Discovery {
@@ -34,10 +99,15 @@ export interface Discovery {
   readonly column?: DropColumn;
   /** Thread nodes: what kind of thing it is. */
   readonly nodeType?: ThreadNode['type'];
+  /** Standalone discoveries: what it's about, credits with roles, where to go for the original. */
+  readonly subject?: string;
+  readonly credits?: readonly DiscoveryCredit[];
+  readonly destination?: DiscoveryDestination;
+  readonly publishDate?: string;
   /** Drop items: the edition it was published in. */
   readonly edition?: { readonly issue: number; readonly slug: string; readonly title: string; readonly publishDate: string };
   /** The original record, for anything else it holds. Read-only: never modify it. */
-  readonly record: DropItem | ThreadNode;
+  readonly record: DropItem | ThreadNode | DiscoveryRecord;
 }
 
 /**
@@ -103,6 +173,8 @@ export interface GraphProblem {
 export interface DiscoveryContent {
   readonly editions: readonly DropEdition[];
   readonly nodes: readonly ThreadNode[];
+  /** Standalone discovery records (validated); only published ones on or after their date count. */
+  readonly discoveries?: readonly DiscoveryRecord[];
 }
 
 export interface DiscoveryGraphOptions {

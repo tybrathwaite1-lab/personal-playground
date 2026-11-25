@@ -4,8 +4,10 @@
  * `today` and the same options always give the same answer, in the same order.
  *
  * Availability follows the Weekly Drop's own publication rule (visibleEditions): a Drop item is
- * available once its edition is published on or before `today`; drafts never are. Thread
- * nodes are always available, as in the Drop's thread panel. Anything unavailable is absent
+ * available once its edition is published on or before `today`; drafts never are. A standalone
+ * discovery record is available only when its status is `published` and its publishDate is on or
+ * before `today` (draft and ready records never are). Thread nodes are always available, as in
+ * the Drop's thread panel. Anything unavailable is absent
  * from the graph entirely, so it can't be reached directly, by relation, or through any number
  * of steps, and no claim authored on it is seen.
  *
@@ -23,7 +25,7 @@
  */
 import type { DropEdition, DropItem } from '../types/drop';
 import { visibleEditions } from '../utils/dropValidate';
-import { fromDropItem, fromThreadNode } from './adapters';
+import { fromDiscoveryRecord, fromDropItem, fromThreadNode } from './adapters';
 import type {
   Discovery,
   DiscoveryContent,
@@ -55,8 +57,18 @@ const limit = (v: number | undefined, fallback: number, name: string) => {
   return v;
 };
 
+/**
+ * Standalone records that are public on `today`: status `published` with a publishDate on or
+ * before it (string order is date order for YYYY-MM-DD). Sorted by id, so file order never matters.
+ */
+export function availableRecords<T extends { id: string; status: string; publishDate?: string }>(records: readonly T[], today: string): T[] {
+  return records
+    .filter((r) => r.status === 'published' && typeof r.publishDate === 'string' && r.publishDate <= today)
+    .sort((a, b) => byCodeUnit(a.id, b.id));
+}
+
 export interface DiscoveryGraph {
-  /** Available discoveries, in a stable order: Drop items by issue then position, then thread nodes. */
+  /** Available discoveries, in a stable order: Drop items by issue then position, standalone records by id, then thread nodes. */
   all(): readonly Discovery[];
   /** An available discovery, or null (unknown, scheduled, draft or never published). */
   get(id: string): Discovery | null;
@@ -77,6 +89,7 @@ export function createDiscoveryGraph(content: DiscoveryContent, options: Discove
   const known = new Set<string>();
   for (const e of content.editions) for (const it of e.items) known.add(it.id);
   for (const n of content.nodes) known.add(n.id);
+  for (const r of content.discoveries ?? []) known.add(r.id);
 
   // Available records, oldest issue first so the earliest publication wins an id collision.
   const published = [...visibleEditions([...content.editions] as DropEdition[], options.today)].reverse();
@@ -91,6 +104,7 @@ export function createDiscoveryGraph(content: DiscoveryContent, options: Discove
     order.push(d);
   };
   for (const e of published) for (const it of e.items) add(fromDropItem(it, e));
+  for (const r of availableRecords(content.discoveries ?? [], options.today)) add(fromDiscoveryRecord(r));
   for (const n of content.nodes) add(fromThreadNode(n));
 
   // Claims, authored on available records only (a scheduled record's claims stay unseen).

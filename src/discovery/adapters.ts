@@ -4,7 +4,7 @@
  * Nothing is invented: a node has no creators or sources, so its Discovery has none either.
  */
 import type { DropEdition, DropItem, ThreadNode } from '../types/drop';
-import type { Discovery } from './types';
+import type { Discovery, DiscoveryRecord } from './types';
 
 const frozen = <T>(a: readonly T[] | undefined): readonly T[] => Object.freeze([...(a ?? [])]);
 
@@ -38,5 +38,25 @@ export function fromThreadNode(node: ThreadNode): Discovery {
     tags: frozen<string>([]),
     nodeType: node.type,
     record: node,
+  });
+}
+
+/** A standalone discovery record (content/discoveries). Credits keep their roles; creators are their names. */
+export function fromDiscoveryRecord(r: DiscoveryRecord): Discovery {
+  return Object.freeze({
+    id: r.id,
+    kind: 'standalone' as const,
+    title: r.title,
+    context: r.context,
+    ...(r.year !== undefined && { year: r.year }),
+    creators: frozen(r.credits.map((c) => c.name)),
+    sources: frozen(r.sources),
+    ...(r.image !== undefined && { image: r.image }),
+    tags: frozen(r.tags),
+    subject: r.subject,
+    credits: frozen(r.credits.map((c) => Object.freeze({ ...c }))),
+    destination: Object.freeze({ ...r.destination }),
+    ...(r.publishDate !== undefined && { publishDate: r.publishDate }),
+    record: r,
   });
 }

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "nakagin-capsule-tower",
+  "status": "ready",
+  "title": "Tomorrow, imagined yesterday",
+  "subject": "Nakagin Capsule Tower",
+  "context": "What if a building could change as its inhabitants did? Architect Kisho Kurokawa explored that idea through prefabricated capsules attached to two central towers. Completed in Tokyo in 1972, the building became an enduring symbol of the Metabolist movement. It was dismantled in 2022; restored capsules survive in museum collections.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Kisho Kurokawa",
+      "role": "Architect"
+    }
+  ],
+  "year": "1972",
+  "tags": [
+    "architecture",
+    "design",
+    "japan",
+    "history"
+  ],
+  "destination": {
+    "url": "https://www.moma.org/collection/works/434291",
+    "label": "MoMA collection: Capsule A1305 from the Nakagin Capsule Tower Building",
+    "verifiedAt": "2026-11-25"
+  },
+  "sources": [
+    {
+      "label": "MoMA collection: Capsule A1305 from the Nakagin Capsule Tower Building (1970–1972, restored 2022–2023)",
+      "url": "https://www.moma.org/collection/works/434291",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "MoMA: The Many Lives of the Nakagin Capsule Tower (exhibition, ended July 12, 2026)",
+      "url": "https://www.moma.org/calendar/exhibitions/5830",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "SFMOMA: A Towering Acquisition (2024)",
+      "url": "https://www.sfmoma.org/read/a-towering-acquisition/",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "editorialNotes": [
+    "Owner-approved sentence: 'It was dismantled in 2022; restored capsules survive in museum collections.' Plural verified on 2026-11-25: MoMA's collection holds Capsule A1305 (restored 2022–2023), and SFMOMA acquired a restored capsule (Kurokawa's own), per its 2024 article.",
+    "MoMA describes the capsules as attached to two concrete-and-steel cores; 'two central towers' is kept from the draft.",
+    "Destination changed from the exhibition page to MoMA's collection page for Capsule A1305: the exhibition ended July 12, 2026. Its page still loads (it shows the run as 'Through Jul 12' without a year), so it stays as a source.",
+    "Image: a possible CC BY 2.0 photo by Dick Thomas Johnson on Wikimedia Commons could not be verified (file page not retrievable on 2026-11-25). No image is used.",
+    "The owner removed the proposed association with SEED Erosion Blocks (not compelling enough); none replaces it."
+  ]
+}

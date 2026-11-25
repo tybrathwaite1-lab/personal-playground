@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "strandbeest",
+  "status": "ready",
+  "title": "Creatures made of wind",
+  "subject": "Strandbeest",
+  "context": "They have no muscles or hearts, yet watching them walk, it's remarkably easy to forget that they're machines. Jansen's wind-powered sculptures occupy a fascinating space between engineering, sculpture and artificial life.",
+  "nature": "work",
+  "credits": [
+    {
+      "name": "Theo Jansen",
+      "role": "Artist"
+    }
+  ],
+  "year": "1990 onward",
+  "tags": [
+    "art",
+    "engineering",
+    "sculpture",
+    "netherlands"
+  ],
+  "destination": {
+    "url": "https://www.strandbeest.com/",
+    "label": "Strandbeest (Theo Jansen's official site)",
+    "verifiedAt": "2026-11-25",
+    "availability": "javascript-required"
+  },
+  "sources": [
+    {
+      "label": "Linda Hall Library: Scientist of the Day, Theo Jansen (2024)",
+      "url": "https://lindahall.org/about/news/scientist-of-the-day/theo-jansen",
+      "kind": "reference",
+      "verifiedAt": "2026-11-25"
+    }
+  ],
+  "related": [
+    {
+      "to": "seed-erosion-blocks",
+      "relation": "also works with the coast, like",
+      "note": "Both bring art and engineering to the beach: walking sculptures on the North Sea shore, and proposed seaweed-concrete blocks for Florida's.",
+      "basis": "editorial"
+    }
+  ],
+  "editorialNotes": [
+    "The official site renders only with JavaScript (a fetch returns a notice); content verified through the Linda Hall Library. Jansen, born 1948, Dutch; Strandbeests since 1990, mostly PVC pipe, driven by the wind."
+  ]
+}
