@@ -10,6 +10,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { IMAGES } from '../src/data/images.ts';
+import { isPermittedImageLicense, PERMITTED_IMAGE_LICENSES } from '../src/data/imageLicenses.ts';
 import { availableRecords, createDiscoveryGraph, fromDiscoveryRecord, publicDiscoveryFile, validateDiscoveryLibrary, validateDiscoveryRecord, type DiscoveryRecord } from '../src/discovery/index.ts';
 import type { DropEdition, ThreadNode } from '../src/types/drop.ts';
 import { classifyLink, NEEDS_REVIEW } from '../scripts/discoveries/linkClass.ts';
@@ -101,9 +102,30 @@ test('imagery is optional, but when present it must be in the registry with its 
   assert.deepEqual(errs(record({ image: real.id })), [], 'a registered, licensed image');
   assert.ok(errs(record({ image: 'img-not-registered' })).some((e) => /is not in the image registry/.test(e)));
   const thin = new Map([['img-thin', { license: 'CC BY 4.0', credit: '', sourceUrl: 'https://commons.wikimedia.org/x', alt: 'A' }]]);
-  assert.ok(validateDiscoveryRecord(record({ image: 'img-thin' }), { images: thin }).errors.some((e) => /lacks license, credit/.test(e.message)));
-  // Every registry entry carries a licence from the allowed list (the policy isn't broadened here).
-  for (const i of IMAGES) assert.ok(/^(CC0|Public domain|CC BY(-SA)? [234]\.0)$/.test(i.license), i.id);
+  assert.ok(validateDiscoveryRecord(record({ image: 'img-thin' }), { images: thin }).errors.some((e) => /lacks credit, https source or alt text/.test(e.message)));
+  // Every registry entry carries a licence from the one policy list.
+  for (const i of IMAGES) assert.ok(isPermittedImageLicense(i.license), i.id);
+});
+
+test('image licences: the approved open-licence policy is enforced, not just present', () => {
+  // Complete metadata, licence outside the policy: rejected (review finding 2).
+  const complete = { credit: 'A. Photographer', sourceUrl: 'https://commons.wikimedia.org/wiki/File:X.jpg', alt: 'A photo' };
+  const disallowed = ['All rights reserved', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'Fair use', 'cc by 4.0', 'CC BY 4.0 ', 'GPL', '', 42, undefined];
+  for (const license of disallowed) {
+    const images = new Map([['img-x', { ...complete, license }]]);
+    const e = validateDiscoveryRecord(record({ image: 'img-x' }), { images }).errors.map((x) => x.message);
+    assert.ok(e.some((m) => /is not in the approved open-licence policy/.test(m)), `${String(license)}: ${JSON.stringify(e)}`);
+  }
+  // Every licence in the policy is accepted, with the same metadata.
+  for (const license of PERMITTED_IMAGE_LICENSES) {
+    const images = new Map([['img-x', { ...complete, license }]]);
+    assert.deepEqual(validateDiscoveryRecord(record({ image: 'img-x' }), { images }).errors, [], license);
+  }
+  // The policy is the one the registry's own type uses (unchanged: CC0, PD, CC BY and CC BY-SA 2.0–4.0).
+  assert.deepEqual([...PERMITTED_IMAGE_LICENSES], ['CC0', 'Public domain', 'CC BY 2.0', 'CC BY 3.0', 'CC BY 4.0', 'CC BY-SA 2.0', 'CC BY-SA 3.0', 'CC BY-SA 4.0']);
+  assert.match(readFileSync(join(root, 'src/data/images.ts'), 'utf8'), /license: ImageLicense;/);
+  // Image-free records stay valid.
+  assert.deepEqual(errs(record()), []);
 });
 
 test('link reviews: about the record\'s own links; a published record cannot carry an unresolved one', () => {
@@ -220,12 +242,17 @@ test('Edition 001 shortlist: eleven records, all valid, none published; each fil
   assert.deepEqual(lib.warnings, [], 'every relation target exists');
 });
 
-test('Edition 001 relationships: eight editorial claims, one direction each, Onyeabor unconnected', () => {
+test('Edition 001 relationships: six editorial claims, one direction each, Onyeabor unconnected', () => {
   const claims = real.flatMap(({ raw }) => (raw.related ?? []).map((x) => ({ from: raw.id, ...x })));
-  assert.equal(claims.length, 8);
+  assert.equal(claims.length, 6);
+  // The owner removed two associations; nothing replaced them.
+  const has = (a: string, b: string) => claims.some((c) => (c.from === a && c.to === b) || (c.from === b && c.to === a));
+  assert.equal(has('jazz-kissa', 'japanese-game-centers'), false);
+  assert.equal(has('nakagin-capsule-tower', 'seed-erosion-blocks'), false);
+  assert.ok(has('strandbeest', 'seed-erosion-blocks'), 'the Strandbeest → SEED claim stays in the source record');
   assert.ok(claims.every((c) => c.basis === 'editorial'), 'interpretive associations, not claims of influence');
   const pairs = claims.map((c) => [c.from, c.to].sort().join('|'));
-  assert.equal(new Set(pairs).size, 8, 'no pair is authored twice: traversal gives both directions');
+  assert.equal(new Set(pairs).size, 6, 'no pair is authored twice: traversal gives both directions');
   assert.ok(!claims.some((c) => c.from === 'william-onyeabor' || c.to === 'william-onyeabor'));
   // In memory, as if every ready record were published today: the graph has no problems, and the
   // draft (SEED) and its two claims stay out.
@@ -237,25 +264,109 @@ test('Edition 001 relationships: eight editorial claims, one direction each, Ony
   assert.ok(!g.relationsFor('strandbeest').some((v) => v.other === 'seed-erosion-blocks'));
   assert.deepEqual(g.relationsFor('william-onyeabor'), []);
   const kissa = g.neighbourhood('jazz-kissa')!;
-  assert.deepEqual(kissa.inner.map((e) => e.discovery.id), ['mauricio-lopez-60625', 'japanese-game-centers']);
+  assert.deepEqual(kissa.inner.map((e) => e.discovery.id), ['mauricio-lopez-60625']);
   assert.deepEqual(kissa.outer.map((e) => [e.discovery.id, e.via]), [['arboreal-serenade', 'mauricio-lopez-60625']]);
+  // Five of the six would be available (SEED's one remaining claim waits for SEED), in public data too.
+  const asPublishedFile = publicDiscoveryFile({ editions, nodes, discoveries: asPublished }, '2026-11-25');
+  assert.equal(asPublishedFile.discoveries.reduce((n, r) => n + (r.related?.length ?? 0), 0), 5);
+  assert.equal(asPublishedFile.discoveries.find((r) => r.id === 'strandbeest')!.related, undefined, 'its only claim targets the draft');
+  assert.ok(!JSON.stringify(asPublishedFile).includes('seed-erosion-blocks'));
   // And on the real data with real statuses, nothing standalone is available.
   assert.equal(createDiscoveryGraph({ editions, nodes, discoveries: real.map((r) => r.raw) }, { today: '2026-11-25' }).all().filter((d) => d.kind === 'standalone').length, 0);
 });
 
-test('the public file ships only public records, without editor-only fields, deterministically', () => {
+test('the public file ships only public records, sorted, without editor-only fields, input untouched', () => {
   const rs = [
     record({ id: 'b-live', status: 'published', publishDate: '2026-11-20', editorialNotes: ['private'], linkReviews: [{ url: 'https://example.org/work', finding: 'transient-failure', decision: 'keep', note: 'n', reviewedAt: '2026-11-21' }] }),
     record({ id: 'a-live', status: 'published', publishDate: '2026-11-25' }),
     record({ id: 'c-ready', status: 'ready' }),
     record({ id: 'd-later', status: 'published', publishDate: '2026-11-26' }),
   ];
-  const f = publicDiscoveryFile(rs, '2026-11-25');
+  const before = JSON.stringify(rs);
+  const f = publicDiscoveryFile({ editions: [], nodes: [], discoveries: rs }, '2026-11-25');
   assert.equal(f.asOf, '2026-11-25');
   assert.deepEqual(f.discoveries.map((r) => r.id), ['a-live', 'b-live']);
   assert.ok(f.discoveries.every((r) => !('editorialNotes' in r) && !('linkReviews' in r)), 'editor-only fields never ship');
-  assert.equal(JSON.stringify(f), JSON.stringify(publicDiscoveryFile([...rs].reverse(), '2026-11-25')), 'file order never matters');
-  assert.equal(rs[0].editorialNotes?.length, 1, 'the input records are not modified');
+  assert.equal(JSON.stringify(f), JSON.stringify(publicDiscoveryFile({ editions: [], nodes: [], discoveries: [...rs].reverse() }, '2026-11-25')), 'file order never matters');
+  assert.equal(JSON.stringify(rs), before, 'the input records are not modified');
+});
+
+test('public fields are an explicit allowlist: unknown fields never ship, at any depth (review finding 1)', () => {
+  const full = record({
+    id: 'full',
+    status: 'published',
+    publishDate: '2026-11-20',
+    year: '1999',
+    image: IMAGES[0].id,
+    tags: ['a', 'b'],
+    credits: [{ name: 'A. Maker', role: 'Artist', secretCredit: 'X1' } as never],
+    destination: { url: 'https://example.org/work', label: 'The work', verifiedAt: '2026-11-20', availability: 'intermittent', internalDest: 'X2' } as never,
+    sources: [{ label: 'A source', url: 'https://example.org/about', kind: 'press', verifiedAt: '2026-11-20', memo: 'X3' } as never],
+    related: [{ to: 'other', relation: 'echoes', note: 'Shared note.', basis: 'editorial', aside: 'X4' } as never],
+    editorialNotes: ['X5'],
+    linkReviews: [{ url: 'https://example.org/work', finding: 'blocked', decision: 'keep', note: 'X6', reviewedAt: '2026-11-20' }],
+    unknownTop: 'X7',
+  } as never);
+  const other = record({ id: 'other', status: 'published', publishDate: '2026-11-20' });
+  const out = publicDiscoveryFile({ editions: [], nodes: [], discoveries: [full, other] }, '2026-11-25');
+  const json = JSON.stringify(out);
+  for (const x of ['X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'secretCredit', 'internalDest', 'memo', 'aside', 'unknownTop', 'editorialNotes', 'linkReviews']) assert.ok(!json.includes(x), `${x} must not ship`);
+  // Every supported field survives intact.
+  assert.deepEqual(out.discoveries.find((r) => r.id === 'full'), {
+    schemaVersion: 1,
+    id: 'full',
+    status: 'published',
+    publishDate: '2026-11-20',
+    title: 'A sample',
+    subject: 'Sample subject',
+    context: 'Concise context.',
+    nature: 'work',
+    credits: [{ name: 'A. Maker', role: 'Artist' }],
+    year: '1999',
+    tags: ['a', 'b'],
+    destination: { url: 'https://example.org/work', label: 'The work', verifiedAt: '2026-11-20', availability: 'intermittent' },
+    sources: [{ label: 'A source', url: 'https://example.org/about', kind: 'press', verifiedAt: '2026-11-20' }],
+    related: [{ to: 'other', relation: 'echoes', note: 'Shared note.', basis: 'editorial' }],
+    image: IMAGES[0].id,
+  });
+  assert.equal((full as unknown as Record<string, unknown>).unknownTop, 'X7', 'the input is not modified');
+});
+
+test('public relations: only targets available on the build date ship (review finding 3)', () => {
+  const r = (to: string) => ({ to, relation: `links to ${to}`, note: `NOTE-${to}`, basis: 'editorial' as const });
+  const item = (id: string) => ({ id, column: 'listen', format: 'brief', title: id, dek: 'd', body: ['b'], why: 'w', freshness: 'archive', depth: 'accessible', tags: [], sources: [{ label: 's', url: 'https://example.org/s', kind: 'press', verifiedAt: '2026-11-01' }] });
+  const edition = (issue: number, publishDate: string, items: unknown[], status = 'published') => ({ schemaVersion: 1, issue, slug: `i${issue}`, title: `I${issue}`, theme: 't', status, publishDate, intro: 'i', featured: 'x', items });
+  const editions = [edition(1, '2026-11-01', [item('drop-live')]), edition(2, '2026-12-01', [item('drop-future')], 'scheduled'), edition(3, '2026-11-01', [item('drop-draft')], 'draft')] as unknown as DropEdition[];
+  const nodes: ThreadNode[] = [{ id: 'a-node', title: 'Node', type: 'person', summary: 's' }];
+  const discoveries = [
+    record({ id: 'source', status: 'published', publishDate: '2026-11-01', related: [r('a-draft'), r('a-ready'), r('a-future'), r('nowhere'), r('a-live'), r('drop-live'), r('drop-future'), r('drop-draft'), r('a-node'), r('a-boundary')] }),
+    record({ id: 'a-draft', status: 'draft', publishDate: '2026-11-01' }),
+    record({ id: 'a-ready', status: 'ready', publishDate: '2026-11-01' }),
+    record({ id: 'a-future', status: 'published', publishDate: '2026-12-01' }),
+    record({ id: 'a-live', status: 'published', publishDate: '2026-11-10' }),
+    record({ id: 'a-boundary', status: 'published', publishDate: '2026-11-25' }),
+  ];
+  const shipped = (today: string) => publicDiscoveryFile({ editions, nodes, discoveries }, today).discoveries.find((d) => d.id === 'source')!;
+  const now = shipped('2026-11-25');
+  // Draft, ready, future, nonexistent, future Drop item and draft Drop item: absent, notes included.
+  assert.deepEqual(now.related!.map((x) => x.to), ['a-live', 'drop-live', 'a-node', 'a-boundary'], 'authored order kept');
+  const json = JSON.stringify(publicDiscoveryFile({ editions, nodes, discoveries }, '2026-11-25'));
+  for (const gone of ['a-draft', 'a-ready', 'a-future', 'nowhere', 'drop-future', 'drop-draft']) {
+    assert.ok(!now.related!.some((x) => x.to === gone), gone);
+    assert.ok(!json.includes(`NOTE-${gone}`), `${gone}: its note doesn't ship`);
+  }
+  // Direction, relation, basis and note are preserved for the ones that ship.
+  assert.deepEqual(now.related![0], { to: 'a-live', relation: 'links to a-live', note: 'NOTE-a-live', basis: 'editorial' });
+  // The boundary: a target published on the build date counts; the day before, it doesn't.
+  assert.ok(!shipped('2026-11-24').related!.some((x) => x.to === 'a-boundary'));
+  // On its publication date a previously unavailable target appears, with no change to the source record.
+  const later = shipped('2026-12-01').related!.map((x) => x.to);
+  assert.ok(later.includes('a-future') && later.includes('drop-future'));
+  assert.ok(!later.includes('a-draft') && !later.includes('a-ready') && !later.includes('nowhere') && !later.includes('drop-draft'));
+  assert.equal(discoveries[0].related!.length, 10, 'the editorial source record keeps every claim');
+  // A record whose every claim is unavailable ships with no related field at all.
+  const lone = publicDiscoveryFile({ editions: [], nodes: [], discoveries: [record({ id: 'lone', status: 'published', publishDate: '2026-11-01', related: [r('a-draft')] }), discoveries[1]] }, '2026-11-25');
+  assert.equal('related' in lone.discoveries[0], false);
 });
 
 test('the build script writes that file from the real content (nothing is published yet)', () => {

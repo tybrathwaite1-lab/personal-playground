@@ -325,7 +325,7 @@ test('the module is isolated: nothing in the app imports it, and it imports no U
   for (const f of files('src/discovery')) {
     const src = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     const imports = [...src.matchAll(/from\s+['"]([^'"]+)['"]/g)].map((m) => m[1]);
-    for (const i of imports) assert.match(i, /^\.\/|^\.\.\/types\/drop$|^\.\.\/utils\/dropValidate$/, `${f} imports ${i}`);
+    for (const i of imports) assert.match(i, /^\.\/|^\.\.\/types\/drop$|^\.\.\/utils\/dropValidate$|^\.\.\/data\/imageLicenses$/, `${f} imports ${i}`);
     assert.doesNotMatch(src, /localStorage|sessionStorage|fetch\(|Date\.now|new Date\(\)/, `${f}: no storage, network or clock`);
   }
 });

@@ -12,7 +12,12 @@ The schema is the `DiscoveryRecord` type in `src/discovery/types.ts`. Validation
 | `ready` | Verified and awaiting a publication decision | Never |
 | `published` | Public from `publishDate` (a New York date) | From that date, once a deploy runs |
 
-The build writes `public/data/discoveries.json`. It contains **only** published records whose date has arrived, sorted by id, without `editorialNotes` or `linkReviews`. Draft, ready and future records never leave the repository's content folder, and the discovery graph never traverses them.
+The build writes `public/data/discoveries.json` through `publicDiscoveryFile` (`src/discovery/publish.ts`), a content publication boundary:
+- **Records:** only those available on the build date by the discovery graph's own rule: published, on or after `publishDate`, no id collision. Sorted by id.
+- **Fields:** an explicit allowlist, applied to nested objects and arrays too (credits, destination, sources, relations). `editorialNotes`, `linkReviews` and any unknown field never ship, whatever a record contains.
+- **Relations:** only those whose target is available on the same date. A target can be a published standalone discovery, an item in a published Weekly Drop edition (as shipped in `public/data/drop.json`), or a thread node. Claims to drafts, ready or future records, unpublished Drop items, or ids that don't exist are left out, notes included. The source record keeps them, so they appear once their target is published.
+
+This decides what the app's public data contains. It is **not** access control: everything committed to this public repository, drafts included, is public there.
 
 ## Fields
 
@@ -25,7 +30,7 @@ The build writes `public/data/discoveries.json`. It contains **only** published 
   - `availability: "javascript-required"`: the content renders only in a browser with JavaScript.
 - **`sources`**: the research behind the text, in the Drop's shape: `{ label, url, kind, verifiedAt }`.
 - **`related`**: relations in the Drop's shape (`to`, `relation`, `note`, `basis`). Author each claim once, on one record. Graph traversal gives both directions, so a reciprocal record is only needed when the other side makes its own distinct claim. Duplicates, including the same claim with conflicting notes, are errors.
-- **`image`**: optional. It is an id in the editorial image registry (`src/data/images.ts`): open licences from Wikimedia Commons only, with credit, licence and alt text. Leave it out rather than use a placeholder.
+- **`image`**: optional. It is an id in the editorial image registry (`src/data/images.ts`). The entry's licence must be in the approved open-licence policy (`src/data/imageLicenses.ts`, the one list the registry type also uses), with credit, an https source and alt text. Leave the field out rather than use a placeholder.
 - **`linkReviews`**: an editor's recorded decision about a link that failed a check. A published record can't carry an unresolved one (`replace` or `remove`).
 - **`editorialNotes`**: notes for editors. They are never shipped.
 

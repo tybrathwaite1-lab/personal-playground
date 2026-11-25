@@ -7,6 +7,7 @@
  * Whether a link still *works* is not checked here (no network): see
  * scripts/discoveries/check-links.ts and the record's linkReviews.
  */
+import { isPermittedImageLicense } from '../data/imageLicenses';
 import type { SourceKind } from '../types/drop';
 import { checkRelations, isHttpsUrl, type Issue, type ValidationResult } from '../utils/dropValidate';
 import type { DiscoveryRecord } from './types';
@@ -114,7 +115,10 @@ export function validateDiscoveryRecord(raw: unknown, ctx: RecordCheckContext, p
   if (r.image !== undefined) {
     const img = typeof r.image === 'string' ? ctx.images.get(r.image) : undefined;
     if (!img) err(`${p}.image`, `"${String(r.image)}" is not in the image registry`);
-    else if (!str(img.license) || !str(img.credit) || !isHttpsUrl(img.sourceUrl) || !str(img.alt)) err(`${p}.image`, 'registry entry lacks license, credit, https source or alt text');
+    else {
+      if (!isPermittedImageLicense(img.license)) err(`${p}.image`, `licence "${String(img.license)}" is not in the approved open-licence policy`);
+      if (!str(img.credit) || !isHttpsUrl(img.sourceUrl) || !str(img.alt)) err(`${p}.image`, 'registry entry lacks credit, https source or alt text');
+    }
   }
 
   // Link reviews: about this record's own links; a published record can't carry an unresolved one.

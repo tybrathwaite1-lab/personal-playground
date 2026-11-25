@@ -25,12 +25,22 @@ No UI, route, Sync, saved-item, navigation or workflow change. The app imports n
 - No images are used. The Nakagin CC BY 2.0 photo couldn't be verified, and nothing else is cleared.
 - Each record's `editorialNotes` carry its cautions and open points.
 
+**Revision 1 (after independent review)**
+- **Public data is an explicit field allowlist,** applied at every depth.
+- **Image licences are checked against the shared policy list.**
+- **Public relations only point at targets available on the build date:**
+  - standalone discoveries;
+  - items in published Drop editions;
+  - thread nodes.
+- **Owner's edits:**
+  - two associations removed, leaving 6 authored;
+  - the Nakagin sentence kept (plural verified);
+  - the Nakagin destination is now MoMA's capsule A1305 collection page;
+  - SEED stays a draft.
+
 **Open editorial questions**
 - When to publish, with dates.
 - A creator-controlled destination for SEED.
-- Whether the Nakagin sentence about the 2022 dismantling is acceptable, since it was added for accuracy.
-- Two associations flagged as weaker: jazz kissa ↔ game centers is generic, and Nakagin ↔ SEED is a stretch.
-- The MoMA Nakagin exhibition closes July 12, 2026; recheck the destination after that.
 
 **Still open (D-D detail):** link *availability* is reported, not enforced in CI. Run `npm run links:discoveries -- --require-reviews` before publishing.
 

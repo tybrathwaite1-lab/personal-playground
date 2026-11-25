@@ -20,30 +20,35 @@
     "history"
   ],
   "destination": {
-    "url": "https://www.moma.org/calendar/exhibitions/5830",
-    "label": "MoMA: The Many Lives of the Nakagin Capsule Tower",
+    "url": "https://www.moma.org/collection/works/434291",
+    "label": "MoMA collection: Capsule A1305 from the Nakagin Capsule Tower Building",
     "verifiedAt": "2026-11-25"
   },
   "sources": [
     {
-      "label": "MoMA: The Many Lives of the Nakagin Capsule Tower (exhibition, through July 12, 2026)",
+      "label": "MoMA collection: Capsule A1305 from the Nakagin Capsule Tower Building (1970–1972, restored 2022–2023)",
+      "url": "https://www.moma.org/collection/works/434291",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "MoMA: The Many Lives of the Nakagin Capsule Tower (exhibition, ended July 12, 2026)",
       "url": "https://www.moma.org/calendar/exhibitions/5830",
+      "kind": "official",
+      "verifiedAt": "2026-11-25"
+    },
+    {
+      "label": "SFMOMA: A Towering Acquisition (2024)",
+      "url": "https://www.sfmoma.org/read/a-towering-acquisition/",
       "kind": "official",
       "verifiedAt": "2026-11-25"
     }
   ],
-  "related": [
-    {
-      "to": "seed-erosion-blocks",
-      "relation": "also builds in modules, like",
-      "note": "Nakagin's capsules were prefabricated units attached to a core; SEED's blocks are modular units meant to adapt a shoreline.",
-      "basis": "editorial"
-    }
-  ],
   "editorialNotes": [
-    "Added one sentence to the owner's draft: the building was dismantled in 2022 (MoMA), so the copy doesn't imply it still stands. 'Restored capsules survive in museum collections': MoMA shows restored capsule A1305.",
+    "Owner-approved sentence: 'It was dismantled in 2022; restored capsules survive in museum collections.' Plural verified on 2026-11-25: MoMA's collection holds Capsule A1305 (restored 2022–2023), and SFMOMA acquired a restored capsule (Kurokawa's own), per its 2024 article.",
     "MoMA describes the capsules as attached to two concrete-and-steel cores; 'two central towers' is kept from the draft.",
+    "Destination changed from the exhibition page to MoMA's collection page for Capsule A1305: the exhibition ended July 12, 2026. Its page still loads (it shows the run as 'Through Jul 12' without a year), so it stays as a source.",
     "Image: a possible CC BY 2.0 photo by Dick Thomas Johnson on Wikimedia Commons could not be verified (file page not retrievable on 2026-11-25). No image is used.",
-    "The MoMA exhibition closes July 12, 2026 per the page; recheck the destination after that."
+    "The owner removed the proposed association with SEED Erosion Blocks (not compelling enough); none replaces it."
   ]
 }

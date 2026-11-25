@@ -2,8 +2,10 @@
  * Validates every standalone discovery record in content/discoveries/*.json and writes
  * public/data/discoveries.json with only the records that are public on the build date:
  * status "published" with a publishDate on or before it (New York). Draft and ready records,
- * and anything scheduled later, are never written. Editor-only fields (editorialNotes,
- * linkReviews) are left out of the public file. Invalid records are reported and left out.
+ * and anything scheduled later, are never written. Each record is projected through an explicit
+ * field allowlist (src/discovery/publish.ts), so editor-only and unknown fields never ship, and
+ * its relations are kept only when their target is available on the same date. Invalid records
+ * are reported and left out.
  *
  * Ids share one namespace with Weekly Drop items and thread nodes (collisions are errors).
  * Output is deterministic: records sorted by id, no timestamps beyond the build date.
@@ -16,7 +18,7 @@ import { IMAGES } from '../../src/data/images.ts';
 import { publicDiscoveryFile } from '../../src/discovery/publish.ts';
 import type { DiscoveryRecord } from '../../src/discovery/types.ts';
 import { validateDiscoveryLibrary, validateDiscoveryRecord } from '../../src/discovery/validate.ts';
-import type { DropEdition, ThreadNode } from '../../src/types/drop.ts';
+import type { DropEdition, DropFile, ThreadNode } from '../../src/types/drop.ts';
 import { nyDate } from '../../src/utils/pulse.ts';
 
 const strict = process.argv.includes('--strict');
@@ -68,8 +70,14 @@ lib.warnings.forEach((w) => console.log(`  ! ${w.path}: ${w.message}`));
 lib.errors.forEach((e) => console.log(`✗ ${e.path}: ${e.message}`));
 errorCount += lib.errors.length;
 const colliding = new Set(lib.errors.map((e) => e.path));
+// Relation targets are judged against what the Weekly Drop actually ships: its build (run first
+// in npm run content / build) writes public/data/drop.json with only valid, non-draft editions and
+// valid nodes. Without it, no Drop item or node counts as available (the conservative choice).
+let drop: DropFile = { generatedAt: '', editions: [], nodes: [] };
+if (existsSync('public/data/drop.json')) drop = JSON.parse(readFileSync('public/data/drop.json', 'utf8')) as DropFile;
+else console.log('  ! public/data/drop.json not found: run the Drop build first; relations to Drop items and nodes are left out');
 const file = publicDiscoveryFile(
-  valid.filter((r) => !colliding.has(r.id)),
+  { editions: drop.editions, nodes: drop.nodes ?? [], discoveries: valid.filter((r) => !colliding.has(r.id)) },
   today,
 );
 const shippable = file.discoveries;

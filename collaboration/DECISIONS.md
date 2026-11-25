@@ -268,3 +268,14 @@ The Playground has a recognisable editorial perspective without restricting itse
   - SEED Erosion Blocks stays a `draft`: no creator documentation was found.
   - None is published. A publication date is a separate decision.
 - **Relationships:** the eight proposed associations are recorded as editorial (interpretive) claims, each authored once. William Onyeabor has none, by design.
+
+**PR 2 revision 1 (independent review, 2026-11-25).**
+- **Public data is an explicit allowlist.** Each record is projected field by field, nested objects and arrays included, so editor-only and unknown fields can't ship.
+- **Image licences are enforced** against one shared policy list (`src/data/imageLicenses.ts`), which the registry's type also uses. The policy itself is unchanged.
+- **Public relations are filtered by availability** on the build date, using the discovery graph's own rule. This is a content publication boundary, not confidentiality.
+- **Owner editorial changes:**
+  - The jazz kissa ↔ game centers and Nakagin ↔ SEED associations are removed, with no replacements. Six authored relationships remain; five would be available if the ten ready records were published while SEED stays a draft.
+  - The Nakagin sentence is approved. Its plural is verified by MoMA (capsule A1305) and SFMOMA (Kurokawa's capsule).
+  - Nakagin's destination is now MoMA's collection page for the capsule, because the exhibition has ended.
+  - SEED stays a draft.
+

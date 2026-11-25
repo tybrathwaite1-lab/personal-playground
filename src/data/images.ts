@@ -9,6 +9,8 @@
  *
  * To find new photos, see scripts/images/scout.ts.
  */
+import type { ImageLicense } from './imageLicenses';
+
 export interface EditorialImageMeta {
   id: string;
   kind: 'venue' | 'illustrative';
@@ -19,7 +21,8 @@ export interface EditorialImageMeta {
   /** Commons file page (attribution and license details). */
   sourceUrl: string;
   credit: string;
-  license: 'CC0' | 'Public domain' | 'CC BY 2.0' | 'CC BY 3.0' | 'CC BY 4.0' | 'CC BY-SA 2.0' | 'CC BY-SA 3.0' | 'CC BY-SA 4.0';
+  /** One of the approved open licences (src/data/imageLicenses.ts). */
+  license: ImageLicense;
   alt: string;
   /** Subjects this image is used for: experience ids, place ids, edition item ids, vibe ids… */
   subjects: string[];
